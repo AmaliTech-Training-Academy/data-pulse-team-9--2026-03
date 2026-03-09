@@ -18,6 +18,18 @@ services:
       timeout: 5s
       retries: 5
 
+  # --- Redis (Celery broker + result backend) ---
+  redis:
+    image: redis:7-alpine
+    container_name: datapulse-redis
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: [ "CMD", "redis-cli", "ping" ]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
   backend:
     build:
       context: ./backend
@@ -27,6 +39,8 @@ services:
       DJANGO_SETTINGS_MODULE: "datapulse.settings.prod"
       DATABASE_URL: postgresql://datapulse:datapulse@db:5432/datapulse
       SECRET_KEY: change-me-in-production
+      CELERY_BROKER_URL: redis://redis:6379/0
+      CELERY_RESULT_BACKEND: redis://redis:6379/0
     ports:
       - "8000:8000"
     volumes:
@@ -34,6 +48,29 @@ services:
       - upload_data:/app/uploads
     depends_on:
       db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  celery-worker:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: datapulse-celery-worker
+    command: celery -A datapulse worker --loglevel=info
+    environment:
+      DJANGO_SETTINGS_MODULE: "datapulse.settings.prod"
+      DATABASE_URL: postgresql://datapulse:datapulse@db:5432/datapulse
+      SECRET_KEY: change-me-in-production
+      CELERY_BROKER_URL: redis://redis:6379/0
+      CELERY_RESULT_BACKEND: redis://redis:6379/0
+    volumes:
+      - ./backend:/app
+      - upload_data:/app/uploads
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
         condition: service_healthy
 
 volumes:
