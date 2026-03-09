@@ -66,7 +66,12 @@ def test_update_rule(auth_client):
         {"name": "Updated Rule", "severity": "HIGH"},
         format="json",
     )
-    assert resp.status_code == 501
+    assert resp.status_code == 200
+    data = resp.json()
+    assert data["name"] == "Updated Rule"
+    assert data["severity"] == "HIGH"
+    # Ensure other fields remained unchanged
+    assert data["rule_type"] == "NOT_NULL"
 
 
 @pytest.mark.django_db
@@ -98,7 +103,7 @@ def test_update_nonexistent_rule(auth_client):
         {"name": "Ghost"},
         format="json",
     )
-    assert resp.status_code == 501
+    assert resp.status_code == 404
 
 
 @pytest.mark.django_db
