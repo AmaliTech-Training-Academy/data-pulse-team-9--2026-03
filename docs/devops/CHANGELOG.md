@@ -90,3 +90,21 @@ All notable changes to this project are documented here.
 ### Related
 - Issue #XX, PR #XX
 ```
+
+
+---
+
+## [2025-01-XX] - Branch Protection Workflow
+
+### Added
+- **Branch Protection** (`.github/workflows/branch-protection.yml`)
+  - Enforces branch merge rules:
+    - Only `feature/`, `bugfix/`, `hotfix/` branches can merge to `develop`
+    - Only `develop` or `hotfix/` branches can merge to `main`
+  - Runs on: PR opened, synchronize, reopened to main/develop
+  - Prevents unauthorized merges and maintains git flow
+
+### Impact
+- Enforces proper git branching strategy
+- Prevents direct merges from feature branches to main
+- Ensures code flows through develop before reaching main

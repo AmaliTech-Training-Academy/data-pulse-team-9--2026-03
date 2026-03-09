@@ -133,3 +133,23 @@ See `SETUP.md` for pre-commit installation instructions.
 3. **`.pre-commit-config.yaml`**
    - Local pre-commit hooks for code quality
    - Runs before every commit
+
+
+## Branch Protection Rules
+
+### Merge to `develop`
+Only these branch types can merge to `develop`:
+- `feature/*`
+- `bugfix/*`
+- `hotfix/*`
+
+### Merge to `main`
+Only these branches can merge to `main`:
+- `develop` (for releases)
+- `hotfix/*` (for emergency fixes)
+
+### Workflow File
+**`.github/workflows/branch-protection.yml`**
+- Validates branch merge rules
+- Blocks unauthorized merges
+- Enforces git flow strategy
