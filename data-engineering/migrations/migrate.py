@@ -9,10 +9,7 @@ STATE_FILE = MIGRATIONS_DIR / ".migration_state.json"
 
 
 def get_connection_string():
-    return os.getenv(
-        "TARGET_DB_URL",
-        "postgresql://datapulse:datapulse@localhost:5432/datapulse"
-    )
+    return os.getenv("TARGET_DB_URL", "postgresql://datapulse:datapulse@localhost:5432/datapulse")
 
 
 def get_applied_migrations() -> list:
@@ -29,18 +26,17 @@ def save_migration_state(applied: list):
 
 def get_pending_migrations() -> list:
     applied = set(get_applied_migrations())
-    all_migrations = sorted([
-        f.stem for f in MIGRATIONS_DIR.glob("V*.py")
-        if f.stem not in applied and f.name != "__init__.py"
-    ])
+    all_migrations = sorted(
+        [f.stem for f in MIGRATIONS_DIR.glob("V*.py") if f.stem not in applied and f.name != "__init__.py"]
+    )
     return all_migrations
 
 
 def run_migration(migration_name: str, engine):
     module = __import__(migration_name)
-    
+
     print(f"Running migration: {migration_name}")
-    
+
     if hasattr(module, "upgrade"):
         with engine.begin() as conn:
             module.upgrade(conn)
@@ -53,9 +49,9 @@ def run_migration(migration_name: str, engine):
 
 def rollback_migration(migration_name: str, engine):
     module = __import__(migration_name)
-    
+
     print(f"Rolling back: {migration_name}")
-    
+
     if hasattr(module, "downgrade"):
         with engine.begin() as conn:
             module.downgrade(conn)
@@ -69,14 +65,14 @@ def rollback_migration(migration_name: str, engine):
 def migrate():
     engine = create_engine(get_connection_string())
     pending = get_pending_migrations()
-    
+
     if not pending:
         print("No pending migrations.")
         return
-    
+
     print(f"Found {len(pending)} pending migration(s)")
     applied = get_applied_migrations()
-    
+
     for migration in pending:
         try:
             if run_migration(migration, engine):
@@ -86,20 +82,20 @@ def migrate():
             print(f"Migration failed: {migration}")
             print(f"Error: {e}")
             break
-    
+
     print(f"Applied {len(applied)} migration(s)")
 
 
 def rollback(steps: int = 1):
     engine = create_engine(get_connection_string())
     applied = get_applied_migrations()
-    
+
     if not applied:
         print("No migrations to rollback.")
         return
-    
+
     to_rollback = applied[-steps:]
-    
+
     for migration in reversed(to_rollback):
         try:
             if rollback_migration(migration, engine):
@@ -114,7 +110,7 @@ def rollback(steps: int = 1):
 def status():
     applied = get_applied_migrations()
     pending = get_pending_migrations()
-    
+
     print("Migration Status")
     print("-" * 40)
     print(f"Applied: {len(applied)}")
@@ -127,7 +123,7 @@ def status():
 
 if __name__ == "__main__":
     import sys
-    
+
     if len(sys.argv) < 2:
         status()
     elif sys.argv[1] == "migrate":

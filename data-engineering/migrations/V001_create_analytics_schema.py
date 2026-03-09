@@ -4,7 +4,9 @@ DESCRIPTION = "Create initial analytics star schema tables"
 
 
 def upgrade(conn):
-    conn.execute(text("""
+    conn.execute(
+        text(
+            """
         CREATE TABLE IF NOT EXISTS dim_datasets (
             id INTEGER PRIMARY KEY,
             name VARCHAR(255),
@@ -14,9 +16,13 @@ def upgrade(conn):
             status VARCHAR(20),
             uploaded_at TIMESTAMP
         )
-    """))
-    
-    conn.execute(text("""
+    """
+        )
+    )
+
+    conn.execute(
+        text(
+            """
         CREATE TABLE IF NOT EXISTS dim_rules (
             id INTEGER PRIMARY KEY,
             name VARCHAR(255),
@@ -26,17 +32,29 @@ def upgrade(conn):
             dataset_type VARCHAR(100),
             is_active BOOLEAN
         )
-    """))
-    
-    conn.execute(text("""
+    """
+        )
+    )
+
+    conn.execute(
+        text(
+            """
         CREATE INDEX IF NOT EXISTS idx_rules_type ON dim_rules(rule_type)
-    """))
-    
-    conn.execute(text("""
+    """
+        )
+    )
+
+    conn.execute(
+        text(
+            """
         CREATE INDEX IF NOT EXISTS idx_rules_severity ON dim_rules(severity)
-    """))
-    
-    conn.execute(text("""
+    """
+        )
+    )
+
+    conn.execute(
+        text(
+            """
         CREATE TABLE IF NOT EXISTS dim_date (
             date_key INTEGER PRIMARY KEY,
             full_date DATE,
@@ -45,13 +63,21 @@ def upgrade(conn):
             quarter INTEGER,
             year INTEGER
         )
-    """))
-    
-    conn.execute(text("""
+    """
+        )
+    )
+
+    conn.execute(
+        text(
+            """
         CREATE INDEX IF NOT EXISTS idx_date_year_month ON dim_date(year, month)
-    """))
-    
-    conn.execute(text("""
+    """
+        )
+    )
+
+    conn.execute(
+        text(
+            """
         CREATE TABLE IF NOT EXISTS fact_quality_checks (
             id SERIAL PRIMARY KEY,
             dataset_id INTEGER REFERENCES dim_datasets(id),
@@ -63,19 +89,33 @@ def upgrade(conn):
             score FLOAT,
             checked_at TIMESTAMP
         )
-    """))
-    
-    conn.execute(text("""
+    """
+        )
+    )
+
+    conn.execute(
+        text(
+            """
         CREATE INDEX IF NOT EXISTS idx_facts_dataset_date ON fact_quality_checks(dataset_id, date_key)
-    """))
-    
-    conn.execute(text("""
+    """
+        )
+    )
+
+    conn.execute(
+        text(
+            """
         CREATE INDEX IF NOT EXISTS idx_facts_rule ON fact_quality_checks(rule_id)
-    """))
-    
-    conn.execute(text("""
+    """
+        )
+    )
+
+    conn.execute(
+        text(
+            """
         CREATE INDEX IF NOT EXISTS idx_facts_date ON fact_quality_checks(date_key)
-    """))
+    """
+        )
+    )
 
 
 def downgrade(conn):
