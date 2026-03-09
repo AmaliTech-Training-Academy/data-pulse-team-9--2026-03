@@ -6,11 +6,19 @@ from schedule.models import Schedule
 
 class ScheduleSerializer(serializers.ModelSerializer):
     dataset_id = serializers.PrimaryKeyRelatedField(queryset=Dataset.objects.all(), source="dataset")
+    is_active = serializers.SerializerMethodField()
+    last_run = serializers.SerializerMethodField()
 
     class Meta:
         model = Schedule
-        fields = ["id", "dataset_id", "cron_expression", "created_at", "updated_at"]
-        read_only_fields = ["id", "created_at", "updated_at"]
+        fields = ["id", "dataset_id", "cron_expression", "is_active", "last_run", "created_at", "updated_at"]
+        read_only_fields = ["id", "is_active", "last_run", "created_at", "updated_at"]
+
+    def get_is_active(self, obj):
+        return obj.periodic_task.enabled if obj.periodic_task else False
+
+    def get_last_run(self, obj):
+        return obj.periodic_task.last_run_at if obj.periodic_task else None
 
     def validate_cron_expression(self, value):
         """

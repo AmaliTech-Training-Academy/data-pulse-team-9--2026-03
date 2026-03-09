@@ -7,10 +7,10 @@ from schedule.models import Schedule
 from schedule.serializers import ScheduleSerializer
 
 
-class ScheduleCreateView(generics.CreateAPIView):
+class ScheduleCreateView(generics.ListCreateAPIView):
     """
-    API View to create a schedule for a dataset.
-    Ensures a PeriodicTask is created in django-celery-beat.
+    API View to create or list schedules for datasets.
+    Ensures a PeriodicTask is created/managed in django-celery-beat.
     """
 
     queryset = Schedule.objects.all()
@@ -69,6 +69,7 @@ class ScheduleCreateView(generics.CreateAPIView):
         schedule_obj, created = Schedule.objects.update_or_create(
             dataset=dataset, defaults={"cron_expression": cron_expr, "periodic_task": periodic_task}
         )
+        serializer.instance = schedule_obj
         return schedule_obj
 
 
