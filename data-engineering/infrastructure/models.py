@@ -5,7 +5,7 @@ from infrastructure.db import AnalyticsBase
 
 class DimDataset(AnalyticsBase):
     __tablename__ = "dim_datasets"
-    
+
     id = Column(Integer, primary_key=True)
     name = Column(String(255))
     file_type = Column(String(10))
@@ -17,7 +17,7 @@ class DimDataset(AnalyticsBase):
 
 class DimRule(AnalyticsBase):
     __tablename__ = "dim_rules"
-    
+
     id = Column(Integer, primary_key=True)
     name = Column(String(255))
     field_name = Column(String(255))
@@ -29,7 +29,7 @@ class DimRule(AnalyticsBase):
 
 class DimDate(AnalyticsBase):
     __tablename__ = "dim_date"
-    
+
     date_key = Column(Integer, primary_key=True)
     full_date = Column(Date)
     day_of_week = Column(Integer)
@@ -40,7 +40,7 @@ class DimDate(AnalyticsBase):
 
 class FactQualityCheck(AnalyticsBase):
     __tablename__ = "fact_quality_checks"
-    
+
     id = Column(Integer, primary_key=True, autoincrement=True)
     dataset_id = Column(Integer, ForeignKey("dim_datasets.id"))
     rule_id = Column(Integer, ForeignKey("dim_rules.id"))
