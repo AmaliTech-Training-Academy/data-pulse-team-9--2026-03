@@ -4,6 +4,7 @@ ETL Pipeline Models and Type Definitions
 This module contains all the dataclasses and type definitions used throughout
 the ETL pipeline for type safety and better architecture.
 """
+
 from __future__ import annotations
 
 from dataclasses import dataclass, field
@@ -11,7 +12,6 @@ from datetime import datetime, timedelta, timezone
 from enum import Enum
 from typing import Any, Mapping, Optional
 import pandas as pd
-
 
 # =============================================================================
 # Enums
