@@ -26,3 +26,4 @@ app.conf.beat_schedule = {
         "schedule": crontab(minute=0),  # Every hour at :00
     },
 }
+# fix lint issues
