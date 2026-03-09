@@ -37,7 +37,6 @@ INSTALLED_APPS = [
     "rules",
     "checks",
     "reports",
-    "scheduling",
 ]
 
 

@@ -16,3 +16,5 @@ backend/uploads/*
 !backend/uploads/.gitkeep
 backendv2/gunicorn.ctl
 backend/gunicorn.ctl
+backend/staticfiles/
+staticfiles/
