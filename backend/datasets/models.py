@@ -11,9 +11,7 @@ class Dataset(models.Model):
     row_count = models.IntegerField(default=0)
     column_count = models.IntegerField(default=0)
     column_names = models.TextField(null=True, blank=True)
-    uploaded_by = models.ForeignKey(
-        "authentication.User", on_delete=models.SET_NULL, null=True, blank=True
-    )
+    uploaded_by = models.ForeignKey("authentication.User", on_delete=models.SET_NULL, null=True, blank=True)
     uploaded_at = models.DateTimeField(auto_now_add=True)
     status = models.CharField(max_length=20, default="PENDING")
 

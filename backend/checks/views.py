@@ -1,19 +1,17 @@
 """Quality checks router - IMPLEMENTED."""
 
-from rest_framework import status
-from rest_framework.response import Response
-from rest_framework.views import APIView
-from drf_spectacular.utils import extend_schema
-from django.db.models import Q
-
-from datasets.models import Dataset
-from rules.models import ValidationRule
 from checks.models import CheckResult, QualityScore
 from checks.serializers import CheckResultResponseSerializer, QualityScoreResponseSerializer
-from checks.services.validation_engine import ValidationEngine
 from checks.services.scoring_service import calculate_quality_score
-from datasets.services.file_parser import parse_csv, parse_json
+from checks.services.validation_engine import ValidationEngine
 from datapulse.exceptions import DatasetNotFoundException
+from datasets.models import Dataset
+from datasets.services.file_parser import parse_csv, parse_json
+from django.db.models import Q
+from drf_spectacular.utils import extend_schema
+from rest_framework.response import Response
+from rest_framework.views import APIView
+from rules.models import ValidationRule
 
 
 class RunChecksView(APIView):
@@ -27,10 +25,12 @@ class RunChecksView(APIView):
     def post(self, request, dataset_id):
         """Run all applicable validation checks on a dataset - TODO: Implement."""
         from rest_framework.exceptions import APIException
+
         class NotImplementedException(APIException):
             status_code = 501
             default_detail = "POST /api/checks/run not implemented"
-            default_code = 'not_implemented'
+            default_code = "not_implemented"
+
         raise NotImplementedException()
         # 1. Fetch dataset
         try:
@@ -58,8 +58,7 @@ class RunChecksView(APIView):
 
         # 4. Fetch rules
         rules = ValidationRule.objects.filter(
-            Q(dataset_type=dataset.file_type.lower()) | Q(dataset_type="all") | Q(dataset_type=""),
-            is_active=True
+            Q(dataset_type=dataset.file_type.lower()) | Q(dataset_type="all") | Q(dataset_type=""), is_active=True
         )
 
         # 5. Run checks
@@ -77,7 +76,7 @@ class RunChecksView(APIView):
                 passed=res["passed"],
                 failed_rows=res["failed_rows"],
                 total_rows=res["total_rows"],
-                details=res["details"]
+                details=res["details"],
             )
 
         # 7. Calculate quality score
@@ -90,7 +89,7 @@ class RunChecksView(APIView):
             score=score_data["score"],
             total_rules=score_data["total_rules"],
             passed_rules=score_data["passed_rules"],
-            failed_rules=score_data["failed_rules"]
+            failed_rules=score_data["failed_rules"],
         )
 
         # 9. Update dataset status
@@ -111,10 +110,12 @@ class CheckResultsView(APIView):
     def get(self, request, dataset_id):
         """Get all check results for a dataset - TODO: Implement."""
         from rest_framework.exceptions import APIException
+
         class NotImplementedException(APIException):
             status_code = 501
             default_detail = "GET /api/checks/results not implemented"
-            default_code = 'not_implemented'
+            default_code = "not_implemented"
+
         raise NotImplementedException()
         # Access control
         try:

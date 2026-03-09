@@ -1,7 +1,7 @@
 """Datasets URL configuration."""
 
+from datasets.views import DatasetListView, DatasetUploadView
 from django.urls import path
-from datasets.views import DatasetUploadView, DatasetListView
 
 urlpatterns = [
     path("upload", DatasetUploadView.as_view(), name="dataset-upload"),

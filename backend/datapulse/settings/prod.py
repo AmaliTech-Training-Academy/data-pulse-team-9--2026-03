@@ -13,9 +13,7 @@ CORS_ALLOWED_ORIGINS = env.list("CORS_ALLOWED_ORIGINS", default=["http://localho
 CORS_ALLOW_CREDENTIALS = True
 
 # Ensure only JSON responses in production
-REST_FRAMEWORK["DEFAULT_RENDERER_CLASSES"] = (
-    "rest_framework.renderers.JSONRenderer",
-)
+REST_FRAMEWORK["DEFAULT_RENDERER_CLASSES"] = ("rest_framework.renderers.JSONRenderer",)
 
 # Secure Cookies
 SESSION_COOKIE_SECURE = True
@@ -23,6 +21,5 @@ CSRF_COOKIE_SECURE = True
 
 # Use strictly JSON formatted structlog output in prod (easily parsable by ELK/Datadog)
 import structlog
-LOGGING["formatters"]["structlog_formatter"]["processors"].append(
-    structlog.processors.JSONRenderer()
-)
+
+LOGGING["formatters"]["structlog_formatter"]["processors"].append(structlog.processors.JSONRenderer())

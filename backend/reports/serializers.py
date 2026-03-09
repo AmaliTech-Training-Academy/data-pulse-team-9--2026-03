@@ -1,7 +1,7 @@
 """Report serializers matching original Pydantic schemas."""
 
-from rest_framework import serializers
 from checks.serializers import CheckResultResponseSerializer
+from rest_framework import serializers
 
 
 class QualityReportSerializer(serializers.Serializer):

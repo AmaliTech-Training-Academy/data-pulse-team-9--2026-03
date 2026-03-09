@@ -1,7 +1,7 @@
 """Reports URL configuration."""
 
 from django.urls import path
-from reports.views import QualityTrendsView, DatasetReportView, DashboardView
+from reports.views import DashboardView, DatasetReportView, QualityTrendsView
 
 urlpatterns = [
     path("trends", QualityTrendsView.as_view(), name="reports-trends"),

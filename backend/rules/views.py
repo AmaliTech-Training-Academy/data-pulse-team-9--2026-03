@@ -1,14 +1,13 @@
 """Validation rules router - PARTIAL implementation."""
 
+from datapulse.exceptions import InvalidRuleException
+from drf_spectacular.types import OpenApiTypes
+from drf_spectacular.utils import OpenApiParameter, extend_schema
 from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from drf_spectacular.utils import extend_schema, OpenApiParameter
-from drf_spectacular.types import OpenApiTypes
-
 from rules.models import ValidationRule
 from rules.serializers import RuleCreateSerializer, RuleResponseSerializer, RuleUpdateSerializer
-from datapulse.exceptions import InvalidRuleException
 
 VALID_TYPES = {"NOT_NULL", "DATA_TYPE", "RANGE", "UNIQUE", "REGEX"}
 VALID_SEVERITIES = {"HIGH", "MEDIUM", "LOW"}
@@ -31,14 +30,12 @@ class RuleListCreateView(APIView):
 
         if data["rule_type"] not in VALID_TYPES:
             raise InvalidRuleException(f"Invalid rule_type: {VALID_TYPES}")
-        
+
         if data["severity"] not in VALID_SEVERITIES:
             raise InvalidRuleException(f"Invalid severity: {VALID_SEVERITIES}")
 
         rule = ValidationRule.objects.create(**data)
-        return Response(
-            RuleResponseSerializer(rule).data, status=status.HTTP_201_CREATED
-        )
+        return Response(RuleResponseSerializer(rule).data, status=status.HTTP_201_CREATED)
 
     @extend_schema(
         parameters=[
@@ -54,9 +51,7 @@ class RuleListCreateView(APIView):
         queryset = ValidationRule.objects.filter(is_active=True)
         if dataset_type:
             queryset = queryset.filter(dataset_type=dataset_type)
-        return Response(
-            RuleResponseSerializer(queryset, many=True).data, status=status.HTTP_200_OK
-        )
+        return Response(RuleResponseSerializer(queryset, many=True).data, status=status.HTTP_200_OK)
 
 
 class RuleDetailView(APIView):
@@ -71,15 +66,18 @@ class RuleDetailView(APIView):
     def put(self, request, rule_id):
         """Update a validation rule - TODO: Implement."""
         from rest_framework.exceptions import APIException
+
         class NotImplementedException(APIException):
             status_code = 501
             default_detail = "PUT /api/rules/{id} not implemented"
-            default_code = 'not_implemented'
+            default_code = "not_implemented"
+
         raise NotImplementedException()
         try:
             rule = ValidationRule.objects.get(id=rule_id, is_active=True)
         except ValidationRule.DoesNotExist:
             from datapulse.exceptions import RuleNotFoundException
+
             raise RuleNotFoundException(f"Rule with id {rule_id} not found")
 
         serializer = RuleUpdateSerializer(rule, data=request.data, partial=True)
@@ -97,9 +95,7 @@ class RuleDetailView(APIView):
             raise InvalidRuleException(f"Invalid severity: {VALID_SEVERITIES}")
 
         rule.save()
-        return Response(
-            RuleResponseSerializer(rule).data, status=status.HTTP_200_OK
-        )
+        return Response(RuleResponseSerializer(rule).data, status=status.HTTP_200_OK)
 
     @extend_schema(
         responses={204: None},
@@ -109,18 +105,20 @@ class RuleDetailView(APIView):
     def delete(self, request, rule_id):
         """Soft-delete a validation rule - TODO: Implement."""
         from rest_framework.exceptions import APIException
+
         class NotImplementedException(APIException):
             status_code = 501
             default_detail = "DELETE /api/rules/{id} not implemented"
-            default_code = 'not_implemented'
+            default_code = "not_implemented"
+
         raise NotImplementedException()
         try:
             rule = ValidationRule.objects.get(id=rule_id, is_active=True)
         except ValidationRule.DoesNotExist:
             from datapulse.exceptions import RuleNotFoundException
+
             raise RuleNotFoundException(f"Rule with id {rule_id} not found")
 
         rule.is_active = False
         rule.save()
         return Response(status=status.HTTP_204_NO_CONTENT)
-

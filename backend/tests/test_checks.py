@@ -2,8 +2,6 @@
 
 import pytest
 from django.core.files.uploadedfile import SimpleUploadedFile
-
-
 from django.test import override_settings
 
 

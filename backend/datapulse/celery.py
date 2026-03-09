@@ -1,6 +1,7 @@
 """Celery configuration for DataPulse."""
 
 import os
+
 from celery import Celery
 from celery.schedules import crontab
 

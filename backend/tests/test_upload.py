@@ -1,6 +1,7 @@
 """Upload tests - IMPLEMENTED."""
 
 import io
+
 import pytest
 
 

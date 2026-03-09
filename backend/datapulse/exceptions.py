@@ -1,11 +1,12 @@
 """Custom exceptions for the DataPulse API."""
 
-from rest_framework.exceptions import APIException
 from rest_framework import status
+from rest_framework.exceptions import APIException
 
 
 class DataPulseException(APIException):
     """Base exception for all DataPulse API errors."""
+
     status_code = status.HTTP_500_INTERNAL_SERVER_ERROR
     default_detail = "An internal server error occurred."
     default_code = "internal_server_error"

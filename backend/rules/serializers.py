@@ -12,12 +12,13 @@ class RuleCreateSerializer(serializers.ModelSerializer):
             return value
         import json
         import re
+
         try:
             json.loads(value)
             return value
         except json.JSONDecodeError:
             # Auto-fix unescaped backslashes often sent by Swagger for regex rules
-            fixed_value = re.sub(r'(?<!\\)\\(?![\\"/bfnrtu])', r'\\\\', value)
+            fixed_value = re.sub(r'(?<!\\)\\(?![\\"/bfnrtu])', r"\\\\", value)
             try:
                 json.loads(fixed_value)
                 return fixed_value
@@ -29,8 +30,15 @@ class RuleResponseSerializer(serializers.ModelSerializer):
     class Meta:
         model = ValidationRule
         fields = [
-            "id", "name", "dataset_type", "field_name", "rule_type", 
-            "parameters", "severity", "is_active", "created_at"
+            "id",
+            "name",
+            "dataset_type",
+            "field_name",
+            "rule_type",
+            "parameters",
+            "severity",
+            "is_active",
+            "created_at",
         ]
 
 
@@ -53,12 +61,13 @@ class RuleUpdateSerializer(serializers.ModelSerializer):
             return value
         import json
         import re
+
         try:
             json.loads(value)
             return value
         except json.JSONDecodeError:
             # Auto-fix unescaped backslashes often sent by Swagger for regex rules
-            fixed_value = re.sub(r'(?<!\\)\\(?![\\"/bfnrtu])', r'\\\\', value)
+            fixed_value = re.sub(r'(?<!\\)\\(?![\\"/bfnrtu])', r"\\\\", value)
             try:
                 json.loads(fixed_value)
                 return fixed_value

@@ -1,7 +1,7 @@
 """Checks URL configuration."""
 
+from checks.views import CheckResultsView, RunChecksView
 from django.urls import path
-from checks.views import RunChecksView, CheckResultsView
 
 urlpatterns = [
     path("run/<int:dataset_id>", RunChecksView.as_view(), name="checks-run"),

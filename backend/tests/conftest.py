@@ -52,6 +52,7 @@ def sample_csv_content():
 def sample_json_content():
     """Return a sample JSON byte string."""
     import json
+
     data = [
         {"id": 1, "name": "Apple", "price": 1.2},
         {"id": 2, "name": "Banana", "price": 0.8},

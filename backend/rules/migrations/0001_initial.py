@@ -4,28 +4,26 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     initial = True
 
-    dependencies = [
-    ]
+    dependencies = []
 
     operations = [
         migrations.CreateModel(
-            name='ValidationRule',
+            name="ValidationRule",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('name', models.CharField(max_length=255)),
-                ('dataset_type', models.CharField(max_length=100)),
-                ('field_name', models.CharField(max_length=255)),
-                ('rule_type', models.CharField(max_length=20)),
-                ('parameters', models.TextField(blank=True, null=True)),
-                ('severity', models.CharField(default='MEDIUM', max_length=10)),
-                ('is_active', models.BooleanField(default=True)),
-                ('created_at', models.DateTimeField(auto_now_add=True)),
+                ("id", models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name="ID")),
+                ("name", models.CharField(max_length=255)),
+                ("dataset_type", models.CharField(max_length=100)),
+                ("field_name", models.CharField(max_length=255)),
+                ("rule_type", models.CharField(max_length=20)),
+                ("parameters", models.TextField(blank=True, null=True)),
+                ("severity", models.CharField(default="MEDIUM", max_length=10)),
+                ("is_active", models.BooleanField(default=True)),
+                ("created_at", models.DateTimeField(auto_now_add=True)),
             ],
             options={
-                'db_table': 'validation_rules',
+                "db_table": "validation_rules",
             },
         ),
     ]

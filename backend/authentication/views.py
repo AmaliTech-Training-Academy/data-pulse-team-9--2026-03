@@ -1,15 +1,14 @@
 """Authentication router - IMPLEMENTED."""
 
-from rest_framework import status
-from rest_framework.response import Response
-from rest_framework.views import APIView
-from rest_framework.throttling import AnonRateThrottle
-from rest_framework.permissions import AllowAny
-from rest_framework_simplejwt.tokens import AccessToken
+from authentication.serializers import LoginSerializer, TokenSerializer, UserCreateSerializer
+from authentication.services import authenticate_user, create_user
 from drf_spectacular.utils import extend_schema
-
-from authentication.serializers import UserCreateSerializer, LoginSerializer, TokenSerializer
-from authentication.services import create_user, authenticate_user
+from rest_framework import status
+from rest_framework.permissions import AllowAny
+from rest_framework.response import Response
+from rest_framework.throttling import AnonRateThrottle
+from rest_framework.views import APIView
+from rest_framework_simplejwt.tokens import AccessToken
 
 
 class RegisterView(APIView):
@@ -17,13 +16,13 @@ class RegisterView(APIView):
 
     permission_classes = [AllowAny]
     throttle_classes = [AnonRateThrottle]
+
     @extend_schema(
         request=UserCreateSerializer,
         responses={201: TokenSerializer},
         tags=["Auth"],
         summary="Register a new user",
     )
-    
     def post(self, request):
         serializer = UserCreateSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)

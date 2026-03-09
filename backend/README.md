@@ -78,7 +78,7 @@ We use `pytest` along with `pytest-django` for our automated test suite, coverin
 
 ## 4. Data Schema
 
-When uploading data, the engine parses `.csv` or `.json` (array of objects) files into Pandas DataFrames.  
+When uploading data, the engine parses `.csv` or `.json` (array of objects) files into Pandas DataFrames.
 When creating Validation Rules via API (`POST /api/rules/`), the backend expects the following structured payload:
 
 | Field | Type | Required | Description |

@@ -1,5 +1,5 @@
-from rest_framework import serializers
 from datasets.models import Dataset
+from rest_framework import serializers
 
 
 class DatasetResponseSerializer(serializers.ModelSerializer):

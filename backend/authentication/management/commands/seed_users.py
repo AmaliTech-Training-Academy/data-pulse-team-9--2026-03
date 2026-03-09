@@ -1,7 +1,7 @@
 """Management command to seed default users from the project spec."""
 
-from django.core.management.base import BaseCommand
 from authentication.models import User
+from django.core.management.base import BaseCommand
 
 
 class Command(BaseCommand):

@@ -9,10 +9,10 @@ BASE_URL = os.getenv("API_URL", "http://localhost:8000")
 
 def test_upload_valid_csv():
     """Upload a valid CSV file - expect 201."""
-    csv = "id,name,age
+    csv = """id,name,age
 1,Alice,30
 2,Bob,25
-"
+"""
     files = {"file": ("test.csv", csv.encode(), "text/csv")}
     resp = requests.post(f"{BASE_URL}/api/datasets/upload", files=files)
     assert resp.status_code == 201

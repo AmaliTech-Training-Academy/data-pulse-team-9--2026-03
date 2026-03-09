@@ -1,8 +1,7 @@
 """Unit tests for ValidationEngine — all 5 check types + edge cases."""
 
-import pytest
 import pandas as pd
-
+import pytest
 from checks.services.validation_engine import ValidationEngine
 
 
@@ -12,6 +11,7 @@ def engine():
 
 
 # ---------- null_check ----------
+
 
 class TestNullCheck:
     def test_no_nulls(self, engine):
@@ -35,6 +35,7 @@ class TestNullCheck:
 
 
 # ---------- type_check ----------
+
 
 class TestTypeCheck:
     def test_int_valid(self, engine):
@@ -90,6 +91,7 @@ class TestTypeCheck:
 
 # ---------- range_check ----------
 
+
 class TestRangeCheck:
     def test_in_range(self, engine):
         df = pd.DataFrame({"age": [20, 30, 40]})
@@ -129,6 +131,7 @@ class TestRangeCheck:
 
 # ---------- unique_check ----------
 
+
 class TestUniqueCheck:
     def test_all_unique(self, engine):
         df = pd.DataFrame({"id": [1, 2, 3, 4, 5]})
@@ -149,6 +152,7 @@ class TestUniqueCheck:
 
 
 # ---------- regex_check ----------
+
 
 class TestRegexCheck:
     def test_all_match(self, engine):
@@ -176,6 +180,7 @@ class TestRegexCheck:
 
 # ---------- run_all_checks ----------
 
+
 class TestRunAllChecks:
     def test_runs_multiple_rules(self, engine):
         """Create mock rules and verify all checks are dispatched."""
@@ -198,4 +203,4 @@ class TestRunAllChecks:
         assert results[0]["rule_id"] == 1
         assert results[0]["passed"] is False  # has a null
         assert results[1]["rule_id"] == 2
-        assert results[1]["passed"] is True   # all in range
+        assert results[1]["passed"] is True  # all in range
