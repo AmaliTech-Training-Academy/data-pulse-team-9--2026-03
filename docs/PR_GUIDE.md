@@ -153,3 +153,23 @@ Only these branches can merge to `main`:
 - Validates branch merge rules
 - Blocks unauthorized merges
 - Enforces git flow strategy
+
+
+## CI Pipeline
+
+**`.github/workflows/ci.yml`**
+
+Runs automatically on push/PR to main/develop:
+
+1. **Pre-commit Checks**
+   - Runs all pre-commit hooks
+   - Must pass before lint job runs
+
+2. **Lint Job**
+   - black: Code formatting check (backend/, data-engineering/, qa/)
+   - isort: Import sorting check (backend/)
+   - flake8: Linting (backend/)
+
+3. **Concurrency Control**
+   - Cancels duplicate workflow runs
+   - Saves CI resources

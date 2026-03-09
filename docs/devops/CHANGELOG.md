@@ -108,3 +108,24 @@ All notable changes to this project are documented here.
 - Enforces proper git branching strategy
 - Prevents direct merges from feature branches to main
 - Ensures code flows through develop before reaching main
+
+
+---
+
+## [2025-01-XX] - CI Workflow
+
+### Added
+- **CI Pipeline** (`.github/workflows/ci.yml`)
+  - Pre-commit checks job:
+    - Runs all pre-commit hooks in CI
+  - Lint job:
+    - black (code formatting check) for backend/, data-engineering/, qa/
+    - isort (import sorting check) for backend/
+    - flake8 (linting) for backend/
+  - Concurrency control: Cancels duplicate runs
+  - Runs on: Push/PR to main/develop
+
+### Impact
+- All code changes are automatically validated
+- Ensures code quality before merge
+- Prevents broken code from reaching main/develop
