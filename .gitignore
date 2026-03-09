@@ -19,3 +19,4 @@ backend/gunicorn.ctl
 backend/staticfiles/
 staticfiles/
 .actrc
+__init__.py
