@@ -37,6 +37,8 @@ INSTALLED_APPS = [
     "rules",
     "checks",
     "reports",
+    "django_celery_beat",
+    "schedule",
 ]
 
 
@@ -136,6 +138,11 @@ PASSWORD_HASHERS = [
 
 # --- File Uploads ---
 UPLOAD_DIR = env("UPLOAD_DIR", default=os.path.join(BASE_DIR, "uploads"))
+
+# --- Celery ---
+CELERY_BROKER_URL = env("CELERY_BROKER_URL", default="redis://localhost:6379/0")
+CELERY_RESULT_BACKEND = env("CELERY_RESULT_BACKEND", default="redis://localhost:6379/0")
+CELERY_BEAT_SCHEDULER = "django_celery_beat.schedulers:DatabaseScheduler"
 
 # --- Logging (Structlog Base) ---
 import structlog
