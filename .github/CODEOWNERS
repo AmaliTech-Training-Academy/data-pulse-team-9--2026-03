@@ -1,0 +1,26 @@
+# Code Owners - Auto-assigns reviewers for specific paths
+
+# Default owners for everything
+* @Asheryram
+
+# Backend
+/backend/ @lubandi @JoeBright1619 @IshimweDiane
+
+# Data Engineering
+/data-engineering/  @Zaina-M @Damas200
+
+# QA
+/qa/ @Kalisha1234
+
+# DevOps & CI/CD
+/.github/ @Asheryram @Benjamin-yankey
+/docker-compose.yml @Asheryram
+/devops/ @Asheryram
+
+# Documentation
+/docs/ @Zaina-M @lubandi @JoeBright1619 @IshimweDiane @Asheryram
+/docs/qa
+/docs/data-engineering
+/docs/backend
+
+*.md  @Zaina-M @lubandi @JoeBright1619 @IshimweDiane @Asheryram
