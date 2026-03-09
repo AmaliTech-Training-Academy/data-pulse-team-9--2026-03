@@ -26,3 +26,13 @@ Closes #
 - [ ] Pre-commit hooks passed
 - [ ] Documentation updated (if needed)
 - [ ] Ready for review
+
+---
+
+## Changes Made
+<!-- Optional: Add detailed breakdown of changes -->
+
+### Example:
+- Added new feature X
+- Fixed bug in Y
+- Updated documentation for Z
