@@ -93,7 +93,13 @@ def test_delete_rule_soft_delete(auth_client):
 
     # Delete
     resp = auth_client.delete(f"/api/rules/{rule_id}")
-    assert resp.status_code == 501
+    assert resp.status_code == 204
+
+    # Verify rule is soft-deleted (no longer in list)
+    list_resp = auth_client.get("/api/rules/")
+    assert list_resp.status_code == 200
+    rule_ids = [r["id"] for r in list_resp.json()]
+    assert rule_id not in rule_ids
 
 
 @pytest.mark.django_db
@@ -109,7 +115,7 @@ def test_update_nonexistent_rule(auth_client):
 @pytest.mark.django_db
 def test_delete_nonexistent_rule(auth_client):
     resp = auth_client.delete("/api/rules/99999")
-    assert resp.status_code == 501
+    assert resp.status_code == 404
 
 
 @pytest.mark.django_db
