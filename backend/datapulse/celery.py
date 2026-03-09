@@ -19,7 +19,7 @@ app.autodiscover_tasks()
 # The actual per-dataset frequency is controlled by ScheduleConfig model.
 app.conf.beat_schedule = {
     "run-scheduled-quality-checks": {
-        "task": "scheduling.tasks.run_scheduled_checks",
+        "task": "schedule.tasks.run_scheduled_checks",
         "schedule": crontab(minute=0),  # Every hour at :00
     },
 }
