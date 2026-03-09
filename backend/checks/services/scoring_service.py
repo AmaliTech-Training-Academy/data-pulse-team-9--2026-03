@@ -2,29 +2,49 @@
 
 
 def calculate_quality_score(results: list, rules: list) -> dict:
-    """Calculate weighted quality score.
+    """Calculate weighted quality score - IMPLEMENTED."""
+    if not rules:
+        return {"score": 100.0, "total_rules": 0, "passed_rules": 0, "failed_rules": 0}
 
-    TODO: Implement quality score calculation.
+    severity_weights = {"HIGH": 3, "MEDIUM": 2, "LOW": 1}
 
-    Weighting by severity:
-        HIGH = 3x weight
-        MEDIUM = 2x weight
-        LOW = 1x weight
+    total_weight = 0
+    total_passed_weight = 0
+    passed_count = 0
+    failed_count = 0
 
-    Steps:
-    1. Map each result to its corresponding rule
-    2. Calculate weighted pass/fail for each check
-    3. Compute overall score as weighted average (0-100)
-    4. Return dict with score, total_rules, passed_rules, failed_rules
+    # Map results to rules by rule_id
+    results_map = {r["rule_id"]: r for r in results}
 
-    Example return:
-        {"score": 85.5, "total_rules": 5, "passed_rules": 4, "failed_rules": 1}
-    """
-    # TODO: Implement weighted scoring
-    # severity_weights = {"HIGH": 3, "MEDIUM": 2, "LOW": 1}
+    for rule in rules:
+        weight = severity_weights.get(rule.severity, 1)
+        total_weight += weight
+
+        result = results_map.get(rule.id)
+        if result:
+            total_rows = result.get("total_rows", 0)
+            failed_rows = result.get("failed_rows", 0)
+
+            if total_rows > 0:
+                pass_rate = (total_rows - failed_rows) / total_rows
+            else:
+                pass_rate = 1.0 if result.get("passed", False) else 0.0
+
+            total_passed_weight += weight * pass_rate
+
+            if result.get("passed", False):
+                passed_count += 1
+            else:
+                failed_count += 1
+        else:
+            # Rule not run, counts as failed with 0% pass rate
+            failed_count += 1
+
+    score = (total_passed_weight / total_weight) * 100 if total_weight > 0 else 100.0
+
     return {
-        "score": 0.0,
+        "score": round(score, 2),
         "total_rules": len(rules),
-        "passed_rules": 0,
-        "failed_rules": 0,
+        "passed_rules": passed_count,
+        "failed_rules": failed_count,
     }
