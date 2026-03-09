@@ -4,6 +4,8 @@ import json
 
 import pandas as pd
 
+# import re
+
 
 class ValidationEngine:
     """Runs data quality checks against a DataFrame."""
@@ -52,144 +54,47 @@ class ValidationEngine:
         }
 
     def type_check(self, df, field, expected_type):
-        """Check data types - IMPLEMENTED."""
-        if field not in df.columns:
-            return {
-                "passed": False,
-                "failed_rows": len(df),
-                "total_rows": len(df),
-                "details": f"Field {field} not found",
-            }
+        """Check data types - TODO: Implement.
 
-        etype = expected_type.lower()
-
-        if etype == "str":
-            return {"passed": True, "failed_rows": 0, "total_rows": len(df), "details": "String type always match"}
-
-        if etype == "numeric":
-            passed_mask = pd.to_numeric(df[field], errors="coerce").notnull()
-            failed_count = int((~passed_mask).sum())
-            return {
-                "passed": failed_count == 0,
-                "failed_rows": failed_count,
-                "total_rows": len(df),
-                "details": f"{failed_count} non-numeric values found",
-            }
-
-        if etype == "datetime":
-            passed_mask = pd.to_datetime(df[field], errors="coerce").notnull()
-            failed_count = int((~passed_mask).sum())
-            return {
-                "passed": failed_count == 0,
-                "failed_rows": failed_count,
-                "total_rows": len(df),
-                "details": f"{failed_count} invalid datetime values found",
-            }
-
-        # Simple type mapping for others
-        type_map = {
-            "int": pd.api.types.is_integer_dtype,
-            "float": pd.api.types.is_float_dtype,
-            "bool": pd.api.types.is_bool_dtype,
-        }
-
-        check_func = type_map.get(etype)
-        if check_func and check_func(df[field]):
-            return {
-                "passed": True,
-                "failed_rows": 0,
-                "total_rows": len(df),
-                "details": f"All values in {field} are {expected_type}",
-            }
-
-        return {
-            "passed": False,
-            "failed_rows": len(df),
-            "total_rows": len(df),
-            "details": f"Field {field} is not of type {expected_type}",
-        }
+        Steps:
+        1. Verify field exists in df
+        2. Check if values can be cast to expected_type
+        3. Count rows that fail the type check
+        4. Return result dict with passed/failed_rows/details
+        """
+        # TODO: Implement type checking logic
+        return {"passed": False, "failed_rows": 0, "total_rows": len(df), "details": "type_check not yet implemented"}
 
     def range_check(self, df, field, min_val, max_val):
-        """Check value ranges - IMPLEMENTED."""
-        if field not in df.columns:
-            return {
-                "passed": False,
-                "failed_rows": len(df),
-                "total_rows": len(df),
-                "details": f"Field {field} not found",
-            }
+        """Check value ranges - TODO: Implement.
 
-        # Ensure field is numeric
-        if not pd.api.types.is_numeric_dtype(df[field]):
-            # Try to convert if it's not numeric
-            temp_numeric = pd.to_numeric(df[field], errors="coerce")
-            if temp_numeric.isnull().all():
-                return {
-                    "passed": False,
-                    "failed_rows": len(df),
-                    "total_rows": len(df),
-                    "details": f"Field {field} is not numeric",
-                }
-            series = temp_numeric
-        else:
-            series = df[field]
-
-        invalid_mask = pd.Series([False] * len(df), index=df.index)
-        if min_val is not None:
-            invalid_mask |= series < min_val
-        if max_val is not None:
-            invalid_mask |= series > max_val
-
-        # Handle cases where conversion failed
-        invalid_mask |= series.isnull()
-
-        failed_count = int(invalid_mask.sum())
-        return {
-            "passed": failed_count == 0,
-            "failed_rows": failed_count,
-            "total_rows": len(df),
-            "details": f"{failed_count} values outside range [{min_val}, {max_val}] or non-numeric",
-        }
+        Steps:
+        1. Verify field exists and is numeric
+        2. Count rows where value < min_val or value > max_val
+        3. Return result dict
+        """
+        # TODO: Implement range checking logic
+        return {"passed": False, "failed_rows": 0, "total_rows": len(df), "details": "range_check not yet implemented"}
 
     def unique_check(self, df, field):
-        """Check uniqueness - IMPLEMENTED."""
-        if field not in df.columns:
-            return {
-                "passed": False,
-                "failed_rows": len(df),
-                "total_rows": len(df),
-                "details": f"Field {field} not found",
-            }
+        """Check uniqueness - TODO: Implement.
 
-        duplicates = df[field].duplicated(keep=False).sum()
-        failed_count = int(duplicates)
-        return {
-            "passed": failed_count == 0,
-            "failed_rows": failed_count,
-            "total_rows": len(df),
-            "details": f"{failed_count} duplicate values found in {field}",
-        }
+        Steps:
+        1. Verify field exists
+        2. Count duplicate values
+        3. Return result dict
+        """
+        # TODO: Implement uniqueness checking logic
+        return {"passed": False, "failed_rows": 0, "total_rows": len(df), "details": "unique_check not yet implemented"}
 
     def regex_check(self, df, field, pattern):
-        """Check regex pattern matching - IMPLEMENTED."""
-        if field not in df.columns:
-            return {
-                "passed": False,
-                "failed_rows": len(df),
-                "total_rows": len(df),
-                "details": f"Field {field} not found",
-            }
+        """Check regex pattern matching - TODO: Implement.
 
-        if not pattern:
-            return {"passed": False, "failed_rows": len(df), "total_rows": len(df), "details": "No pattern provided"}
-
-        # Use fillna to handle nulls in regex check
-        matches = df[field].astype(str).str.match(pattern, na=False)
-        failed_count = int((~matches).sum())
-
-        return {
-            "passed": failed_count == 0,
-            "failed_rows": failed_count,
-            "total_rows": len(df),
-            "details": f"{failed_count} values do not match pattern {pattern}",
-        }
+        Steps:
+        1. Verify field exists
+        2. Apply regex pattern to each non-null value
+        3. Count rows that do not match
+        4. Return result dict
+        """
+        # TODO: Implement regex checking logic
+        return {"passed": False, "failed_rows": 0, "total_rows": len(df), "details": "regex_check not yet implemented"}
