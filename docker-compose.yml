@@ -1,0 +1,41 @@
+version: "3.8"
+
+services:
+  db:
+    image: postgres:15-alpine
+    container_name: datapulse-db
+    environment:
+      POSTGRES_USER: datapulse
+      POSTGRES_PASSWORD: datapulse
+      POSTGRES_DB: datapulse
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U datapulse" ]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: datapulse-backend
+    environment:
+      DJANGO_SETTINGS_MODULE: "datapulse.settings.prod"
+      DATABASE_URL: postgresql://datapulse:datapulse@db:5432/datapulse
+      SECRET_KEY: change-me-in-production
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./backend:/app
+      - upload_data:/app/uploads
+    depends_on:
+      db:
+        condition: service_healthy
+
+volumes:
+  pgdata:
+  upload_data:
