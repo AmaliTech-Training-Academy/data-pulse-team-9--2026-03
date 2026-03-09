@@ -1,11 +1,17 @@
+import os
+
+import pandas as pd
 import pytest
 from authentication.models import User
-from datasets.models import Dataset
+from checks.models import CheckResult, QualityScore
+from datasets.models import Dataset, DatasetFile
 from django.urls import reverse
 from django_celery_beat.models import PeriodicTask
 from rest_framework import status
 from rest_framework.test import APIClient
+from rules.models import ValidationRule
 from schedule.models import Schedule
+from schedule.tasks import run_scheduled_checks
 
 
 @pytest.fixture
@@ -87,6 +93,54 @@ class TestScheduleAPI:
         assert response.status_code == status.HTTP_204_NO_CONTENT
         assert not Schedule.objects.filter(id=schedule.id).exists()
         assert not PeriodicTask.objects.filter(id=periodic_task_id).exists()
+
+    def test_list_schedules(self, api_client):
+        user = User.objects.create_user(email="list@example.com", full_name="List User", password="password")
+        api_client.force_authenticate(user=user)
+        dataset = Dataset.objects.create(name="List Dataset", uploaded_by=user)
+
+        # Create schedule
+        url = reverse("schedule-create")
+        api_client.post(url, {"dataset_id": dataset.id, "cron_expression": "0 0 * * *"}, format="json")
+
+        # List schedules
+        response = api_client.get(url)
+
+        assert response.status_code == status.HTTP_200_OK
+        assert response.data["total"] >= 1
+        assert "is_active" in response.data["results"][0]
+        assert "last_run" in response.data["results"][0]
+        assert response.data["results"][0]["is_active"] is True
+
+    def test_run_scheduled_checks_task(self, api_client):
+        user = User.objects.create_user(email="task@example.com", full_name="Task User", password="password")
+        dataset = Dataset.objects.create(name="Task Dataset", uploaded_by=user, file_type="csv")
+
+        # Create a dummy CSV file
+        csv_file_path = "test_task_data.csv"
+        df = pd.DataFrame({"id": [1, 2, 3], "value": [10, 20, None]})
+        df.to_csv(csv_file_path, index=False)
+
+        DatasetFile.objects.create(dataset=dataset, file_path=csv_file_path, original_filename="test_task_data.csv")
+
+        # Create a validation rule
+        ValidationRule.objects.create(
+            name="Check nulls", dataset_type="csv", field_name="value", rule_type="NOT_NULL", severity="HIGH"
+        )
+
+        # Run the task synchronously
+        run_scheduled_checks(dataset.id)
+
+        # Verify results
+        assert CheckResult.objects.filter(dataset=dataset).exists()
+        assert QualityScore.objects.filter(dataset=dataset).exists()
+
+        dataset.refresh_from_db()
+        assert dataset.status == "FAILED"  # Because of the None value
+
+        # Cleanup
+        if os.path.exists(csv_file_path):
+            os.remove(csv_file_path)
 
     def test_create_schedule_invalid_cron(self, api_client):
         user = User.objects.create_user(email="test2@example.com", full_name="Test User 2", password="password")
