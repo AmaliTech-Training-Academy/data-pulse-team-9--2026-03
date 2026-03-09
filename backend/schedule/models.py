@@ -1,9 +1,11 @@
+from datasets.models import Dataset
 from django.db import models
 from django_celery_beat.models import PeriodicTask
-from datasets.models import Dataset
+
 
 class Schedule(models.Model):
     """Schedule linked to a dataset for periodic quality checks."""
+
     dataset = models.OneToOneField(Dataset, on_delete=models.CASCADE, related_name="schedule")
     cron_expression = models.CharField(max_length=100)
     periodic_task = models.OneToOneField(PeriodicTask, on_delete=models.CASCADE, null=True, blank=True)
