@@ -24,3 +24,8 @@ backendv2/gunicorn.ctl
 backend/gunicorn.ctl
 backend/staticfiles/*
 backend/.env
+staticfiles/
+.actrc
+
+#frontend
+frontend/.env.local
