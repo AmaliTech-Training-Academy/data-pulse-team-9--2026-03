@@ -22,6 +22,16 @@ CELERY_TASK_EAGER_PROPAGATES = True
 CORS_ALLOW_ALL_ORIGINS = True
 CORS_ALLOW_CREDENTIALS = True
 
+# Disable static file compression in development
+STORAGES = {
+    "default": {
+        "BACKEND": "django.core.files.storage.FileSystemStorage",
+    },
+    "staticfiles": {
+        "BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage",
+    },
+}
+
 # When running in dev, enable the Browsable API
 REST_FRAMEWORK["DEFAULT_RENDERER_CLASSES"] = (
     "rest_framework.renderers.JSONRenderer",

@@ -368,8 +368,8 @@ jobs:
         run: |
           curl -sf http://localhost:8000/health/
           echo "✓ Health check passed"
-          curl -sf http://localhost:8000/api/schema/swagger-ui/ > /dev/null
-          echo "✓ Swagger UI accessible"
+          curl -sf http://localhost:8000/docs > /dev/null
+          echo "✓ API docs accessible"
       - name: Show logs on failure
         if: failure()
         run: |
