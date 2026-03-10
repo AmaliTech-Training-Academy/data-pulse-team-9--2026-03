@@ -1,5 +1,7 @@
 """Quality checks router - IMPLEMENTED."""
 
+import logging
+
 from checks.models import CheckResult, QualityScore
 from checks.serializers import CheckResultResponseSerializer, QualityScoreResponseSerializer
 from checks.services.scoring_service import calculate_quality_score
@@ -13,6 +15,9 @@ from drf_spectacular.utils import extend_schema
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rules.models import ValidationRule
+
+
+logger = logging.getLogger(__name__)
 
 
 class RunChecksView(APIView):
@@ -69,9 +74,10 @@ class RunChecksView(APIView):
             engine = ValidationEngine()
             results = engine.run_all_checks(df, rules)
         except Exception as e:
+            logger.exception("Validation engine execution failed for dataset %s", dataset.id)
             dataset.status = "FAILED"
             dataset.save()
-            return Response({"detail": f"Validation engine execution failed: {str(e)}"}, status=500)
+            return Response({"detail": "Validation engine execution failed."}, status=500)
 
         # 6. Save CheckResult records and score atomically
         with transaction.atomic():
