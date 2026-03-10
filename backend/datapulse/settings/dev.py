@@ -14,6 +14,10 @@ DATABASES = {
     }
 }
 
+# Run Celery tasks synchronously in dev/test (no broker needed)
+CELERY_TASK_ALWAYS_EAGER = True
+CELERY_TASK_EAGER_PROPAGATES = True
+
 # Relaxed CORS for local dev
 CORS_ALLOW_ALL_ORIGINS = True
 CORS_ALLOW_CREDENTIALS = True
