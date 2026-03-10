@@ -37,7 +37,9 @@ def test_full_e2e_flow(client):
     upload_resp = client.post("/api/datasets/upload", {"file": uploaded}, format="multipart")
     assert upload_resp.status_code == 201
     dataset_id = upload_resp.json()["id"]
-    assert upload_resp.json()["row_count"] == 5
+    # Re-fetch: the Celery task (eager mode) has parsed the file by now
+    detail = client.get(f"/api/datasets/{dataset_id}")
+    assert detail.json()["row_count"] == 5
 
     # 3. Create rules
     rules_to_create = [

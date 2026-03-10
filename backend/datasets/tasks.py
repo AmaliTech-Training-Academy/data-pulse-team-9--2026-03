@@ -9,8 +9,8 @@ from django.db import transaction
 logger = structlog.get_logger(__name__)
 
 
-@shared_task
-def parse_dataset_file_task(dataset_id: int):
+@shared_task(name="datapulse.datasets.parse_file", bind=True, max_retries=3)
+def parse_dataset_file_task(self, dataset_id: int):
     """
     Asynchronously parses a previously uploaded dataset file.
     Extracts row count, column count, and column names, then marks the dataset as PENDING.
