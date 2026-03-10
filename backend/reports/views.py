@@ -1,6 +1,5 @@
 """Reports router - IMPLEMENTED."""
 
-
 from checks.serializers import CheckResultResponseSerializer, QualityScoreResponseSerializer
 from datapulse.exceptions import DatasetNotFoundException
 from datapulse.pagination import DataPulsePagination
