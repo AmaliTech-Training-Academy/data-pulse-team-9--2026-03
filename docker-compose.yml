@@ -60,8 +60,8 @@ services:
     command: celery -A datapulse worker --loglevel=info
     environment:
       DJANGO_SETTINGS_MODULE: "datapulse.settings.prod"
-      DATABASE_URL: postgresql://datapulse:datapulse@db:5432/datapulse
-      SECRET_KEY: change-me-in-production
+      DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}
+      SECRET_KEY: ${SECRET_KEY}
       CELERY_BROKER_URL: redis://redis:6379/0
       CELERY_RESULT_BACKEND: redis://redis:6379/0
     volumes:
