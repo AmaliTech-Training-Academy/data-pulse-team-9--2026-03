@@ -353,21 +353,32 @@ jobs:
           EOF
       - name: Start services
         run: docker compose up -d --build
+      - name: Wait for services to initialize
+        run: |
+          echo "Waiting 60 seconds for services to fully initialize..."
+          sleep 60
       - name: Wait for backend health
         run: |
-          echo "Waiting for backend..."
-          for i in {1..30}; do
+          echo "Checking backend health..."
+          for i in {1..20}; do
             if curl -sf http://localhost:8000/health/; then
               echo "Backend is healthy"
               break
             fi
-            echo "Attempt $i/30 - retrying in 5s..."
-            sleep 5
+            echo "Attempt $i/20 - retrying in 15s..."
+            sleep 15
+            if [ $i -eq 20 ]; then
+              echo "Backend failed to respond after additional 5 minutes"
+              docker compose logs backend
+              exit 1
+            fi
           done
       - name: Run smoke tests
         run: |
+          sleep 5  # Brief pause before tests
           curl -sf http://localhost:8000/health/
           echo "✓ Health check passed"
+          sleep 3  # Pause between requests
           curl -sf http://localhost:8000/docs > /dev/null
           echo "✓ API docs accessible"
       - name: Show logs on failure
