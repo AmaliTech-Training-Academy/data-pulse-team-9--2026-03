@@ -40,8 +40,9 @@ export default function RegisterPage() {
         try {
             await AuthService.register(fullName, email, password);
             router.push("/login"); // Redirect to login upon successful registration
-        } catch (err: any) {
-            setError(err.message || "Failed to create account. Please try again.");
+        } catch (error: unknown) {
+            const errorMessage = error instanceof Error ? error.message : "Failed to create account. Please try again.";
+            setError(errorMessage);
         } finally {
             setLoading(false);
         }

@@ -33,15 +33,16 @@ export default function LoginPage() {
           } else {
             router.push("/dashboard/user"); // Standard user dashboard
           }
-        } catch (e) {
+        } catch (profileError) {
           // Fallback if profile fetch fails
           router.push("/dashboard/user");
         }
       } else {
         router.push("/");
       }
-    } catch (err: any) {
-      setError(err.message || "Failed to login. Please check your credentials.");
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : "Failed to login. Please check your credentials.";
+      setError(errorMessage);
     } finally {
       setLoading(false);
     }
