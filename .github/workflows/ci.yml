@@ -90,7 +90,7 @@ jobs:
             --cov=. \
             --cov-report=term-missing \
             --cov-report=xml:coverage.xml \
-            --cov-fail-under=75 \                          # CHANGE 2: raised from 60 → 75
+            --cov-fail-under=75 \
             --ignore=backendv1
       - name: Upload coverage
         uses: actions/upload-artifact@v4
@@ -213,7 +213,7 @@ jobs:
             --severity-level medium \
             --confidence-level medium \
             --exclude backend/tests/,backend/migrations/ \
-            || true                                        # always write the report file
+            || true
       - name: Show Bandit results
         run: |
           bandit -r backend/ \
@@ -221,7 +221,7 @@ jobs:
             --severity-level medium \
             --confidence-level medium \
             --exclude backend/tests/,backend/migrations/
-      # CHANGE 3: fail the build on any HIGH-severity Bandit findings
+      # fail the build on any HIGH-severity Bandit findings
       - name: Fail on high-severity findings
         run: |
           python - <<'EOF'
@@ -276,7 +276,6 @@ jobs:
         with:
           name: safety-report
           path: safety-report.json
-
   gitleaks:
     name: Gitleaks - Secret Detection
     runs-on: ubuntu-latest
@@ -284,12 +283,13 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
+      - name: Install Gitleaks
+        run: |
+          wget -qO- https://github.com/gitleaks/gitleaks/releases/download/v8.21.2/gitleaks_8.21.2_linux_x64.tar.gz \
+            | tar -xz gitleaks
+          sudo mv gitleaks /usr/local/bin/
       - name: Run Gitleaks
-        # CHANGE 4: pinned from @v2 to a specific SHA
-        uses: gitleaks/gitleaks-action@ff98106e4c7b2bc287b24eaf42907196329070c7  # v2.3.9
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          GITLEAKS_LICENSE: ${{ secrets.GITLEAKS_LICENSE }}
+        run: gitleaks detect --source . --log-opts="origin/HEAD..HEAD" -v
 
   codeql:
     name: CodeQL - SAST Analysis
