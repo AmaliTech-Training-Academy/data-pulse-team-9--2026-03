@@ -9,7 +9,8 @@ export default function Home() {
             DataPulse
           </h1>
           <p className="text-lg leading-8 text-zinc-600 dark:text-zinc-400 max-w-2xl">
-            Upload your CSV or JSON datasets to instantly validate data quality and generate comprehensive reports.
+            Upload your CSV or JSON datasets to instantly validate data quality
+            and generate comprehensive reports.
           </p>
         </div>
 
