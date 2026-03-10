@@ -21,7 +21,9 @@ def api_client():
 @pytest.mark.django_db
 class TestAlertSystem:
     def test_set_alert_threshold(self, api_client):
-        user = User.objects.create_user(email="alert@example.com", full_name="Alert User", password="password")
+        user = User.objects.create_user(
+            email="alert@example.com", full_name="Alert User", password="password"  # pragma: allowlist secret
+        )
         api_client.force_authenticate(user=user)
         dataset = Dataset.objects.create(name="Alert Dataset", uploaded_by=user)
 
@@ -35,7 +37,9 @@ class TestAlertSystem:
 
     def test_update_alert_threshold(self, api_client):
         user = User.objects.create_user(
-            email="update_alert@example.com", full_name="Update Alert User", password="password"
+            email="update_alert@example.com",
+            full_name="Update Alert User",
+            password="password",  # pragma: allowlist secret
         )
         api_client.force_authenticate(user=user)
         dataset = Dataset.objects.create(name="Update Alert Dataset", uploaded_by=user)
@@ -50,7 +54,9 @@ class TestAlertSystem:
         assert AlertConfig.objects.get(dataset=dataset).threshold == 85
 
     def test_alert_email_sent_below_threshold(self, api_client):
-        user = User.objects.create_user(email="sender@example.com", full_name="Sender User", password="password")
+        user = User.objects.create_user(
+            email="sender@example.com", full_name="Sender User", password="password"  # pragma: allowlist secret
+        )
         dataset = Dataset.objects.create(name="Email Alert Dataset", uploaded_by=user, file_type="csv")
         AlertConfig.objects.create(dataset=dataset, threshold=90)
 
@@ -89,7 +95,9 @@ class TestAlertSystem:
             os.remove(csv_file_path)
 
     def test_alert_recovery_and_resend(self, api_client):
-        user = User.objects.create_user(email="recovery@example.com", full_name="Recovery User", password="password")
+        user = User.objects.create_user(
+            email="recovery@example.com", full_name="Recovery User", password="password"  # pragma: allowlist secret
+        )
         dataset = Dataset.objects.create(name="Recovery Dataset", uploaded_by=user, file_type="csv")
         alert_config = AlertConfig.objects.create(dataset=dataset, threshold=90, is_alert_active=True)
 
