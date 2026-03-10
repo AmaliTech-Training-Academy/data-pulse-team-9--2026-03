@@ -1,0 +1,26 @@
+name: Branch Protection
+
+on:
+  pull_request:
+    branches: [develop, main]
+    types: [opened, synchronize, reopened]
+
+jobs:
+  validate-branch:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Validate merge to develop
+        if: github.base_ref == 'develop'
+        run: |
+          if [[ ! "${{ github.head_ref }}" =~ ^(feature|bugfix|hotfix)/ ]]; then
+            echo "Error: Only feature/, bugfix/, or hotfix/ branches can merge to develop"
+            exit 1
+          fi
+
+      - name: Validate merge to main
+        if: github.base_ref == 'main'
+        run: |
+          if [[ "${{ github.head_ref }}" != "develop" && ! "${{ github.head_ref }}" =~ ^hotfix/ ]]; then
+            echo "Error: Only develop or hotfix/ branches can merge to main"
+            exit 1
+          fi
