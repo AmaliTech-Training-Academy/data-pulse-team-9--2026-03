@@ -24,6 +24,15 @@ CORS_ALLOW_CREDENTIALS = True
 
 # Use console email backend for development to see emails in logs
 EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
+# Disable static file compression in development
+STORAGES = {
+    "default": {
+        "BACKEND": "django.core.files.storage.FileSystemStorage",
+    },
+    "staticfiles": {
+        "BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage",
+    },
+}
 
 # When running in dev, enable the Browsable API
 REST_FRAMEWORK["DEFAULT_RENDERER_CLASSES"] = (
