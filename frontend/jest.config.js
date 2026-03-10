@@ -1,4 +1,4 @@
-const nextJest = require('next/jest')
+const nextJest = require('next/jest'); // eslint-disable-line @typescript-eslint/no-require-imports
 
 const createJestConfig = nextJest({
   dir: './',

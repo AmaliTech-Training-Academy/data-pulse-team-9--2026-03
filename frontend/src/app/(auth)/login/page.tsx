@@ -33,7 +33,7 @@ export default function LoginPage() {
           } else {
             router.push("/dashboard/user"); // Standard user dashboard
           }
-        } catch (profileError) {
+        } catch {
           // Fallback if profile fetch fails
           router.push("/dashboard/user");
         }
