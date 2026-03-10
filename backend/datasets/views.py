@@ -1,16 +1,14 @@
 """Dataset upload router - IMPLEMENTED."""
 
-import json
 import os
 import uuid
 
 from datapulse.exceptions import InvalidFileException
 from datasets.models import Dataset, DatasetFile
 from datasets.serializers import DatasetListSerializer, DatasetResponseSerializer
-from datasets.services.file_parser import parse_csv, parse_json
 from django.conf import settings
 from drf_spectacular.utils import extend_schema
-from rest_framework import generics, status
+from rest_framework import status
 from rest_framework.parsers import FormParser, MultiPartParser
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -23,7 +21,10 @@ class DatasetUploadView(APIView):
 
     @extend_schema(
         request={
-            "multipart/form-data": {"type": "object", "properties": {"file": {"type": "string", "format": "binary"}}}
+            "multipart/form-data": {
+                "type": "object",
+                "properties": {"file": {"type": "string", "format": "binary"}},
+            }
         },
         responses={201: DatasetResponseSerializer},
         tags=["Datasets"],
@@ -50,44 +51,62 @@ class DatasetUploadView(APIView):
         with open(file_path, "wb") as fh:
             fh.write(content)
 
-        try:
-            metadata = parse_csv(file_path) if ext == "csv" else parse_json(file_path)
-        except Exception as e:
-            os.remove(file_path)
-            raise InvalidFileException(f"Failed to parse: {e}")
-
         dataset = Dataset.objects.create(
             name=filename.rsplit(".", 1)[0],
             file_type=ext,
-            row_count=metadata["row_count"],
-            column_count=metadata["column_count"],
-            column_names=json.dumps(metadata["column_names"]),
-            uploaded_by=request.user,
-            status="PENDING",
+            row_count=0,
+            column_count=0,
+            column_names=None,
+            uploaded_by=request.user if request.user and request.user.is_authenticated else None,
+            status="PROCESSING",
         )
 
         DatasetFile.objects.create(dataset=dataset, file_path=file_path, original_filename=filename)
 
+        # Trigger Celery Task asynchronously
+        from datasets.tasks import parse_dataset_file_task
+
+        parse_dataset_file_task.delay(dataset.id)
+
         return Response(DatasetResponseSerializer(dataset).data, status=status.HTTP_201_CREATED)
 
 
+from rest_framework import generics  # noqa: E402
+
+
 class DatasetListView(generics.ListAPIView):
-    """List all datasets with role-based access control."""
+    """List all datasets."""
 
     serializer_class = DatasetResponseSerializer
-    pagination_key = "datasets"
 
     @extend_schema(
         responses={200: DatasetListSerializer},
         tags=["Datasets"],
-        summary="List all datasets",
+        summary="List previously uploaded datasets",
     )
     def get(self, request, *args, **kwargs):
-        # We override get to maintain the exact list serializer shape in docs
-        # but generics.ListAPIView + our custom pagination handles the data
         return super().get(request, *args, **kwargs)
 
     def get_queryset(self):
         if getattr(self.request.user, "role", "USER") == "ADMIN":
             return Dataset.objects.all().order_by("-uploaded_at")
         return Dataset.objects.filter(uploaded_by=self.request.user).order_by("-uploaded_at")
+
+
+class DatasetDetailView(generics.RetrieveAPIView):
+    """Retrieve a single dataset by ID (use to poll processing status)."""
+
+    serializer_class = DatasetResponseSerializer
+
+    @extend_schema(
+        responses={200: DatasetResponseSerializer},
+        tags=["Datasets"],
+        summary="Get dataset details by ID",
+    )
+    def get(self, request, *args, **kwargs):
+        return super().get(request, *args, **kwargs)
+
+    def get_queryset(self):
+        if getattr(self.request.user, "role", "USER") == "ADMIN":
+            return Dataset.objects.all()
+        return Dataset.objects.filter(uploaded_by=self.request.user)

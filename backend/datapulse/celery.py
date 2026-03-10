@@ -2,11 +2,15 @@
 
 import os
 
+import django
 from celery import Celery
 
 # from celery.schedules import crontab
 
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "datapulse.settings.prod")
+
+
+django.setup()
 
 app = Celery("datapulse")
 
@@ -25,3 +29,4 @@ app.conf.beat_schedule = {
     #     "schedule": crontab(minute=0),  # Every hour at :00
     # },
 }
+# fix lint issues
