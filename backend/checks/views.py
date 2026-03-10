@@ -19,6 +19,9 @@ from rules.models import ValidationRule
 logger = logging.getLogger(__name__)
 
 
+logger = logging.getLogger(__name__)
+
+
 class RunChecksView(APIView):
     """Run all applicable validation checks on a dataset."""
 
