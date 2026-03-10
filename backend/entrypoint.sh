@@ -1,6 +1,11 @@
 #!/bin/sh
 set -e
 
+if [ "$1" = 'celery' ]; then
+    echo "==> Starting Celery worker..."
+    exec "$@"
+fi
+
 echo "==> Running migrations..."
 python manage.py makemigrations authentication datasets rules checks reports  --noinput
 python manage.py migrate --noinput
