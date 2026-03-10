@@ -61,6 +61,9 @@ class ValidationEngine:
 
     def null_check(self, df: pd.DataFrame, field: str) -> Dict[str, Any]:
         """Check for null values in a field."""
+        if field not in df.columns:
+            return self._field_not_found(df, field)
+
         null_count = int(df[field].isnull().sum())
         return self._build_result(
             passed=(null_count == 0),
@@ -71,6 +74,9 @@ class ValidationEngine:
 
     def type_check(self, df: pd.DataFrame, field: str, expected_type: str) -> Dict[str, Any]:
         """Check data types."""
+        if field not in df.columns:
+            return self._field_not_found(df, field)
+
         etype = str(expected_type).lower()
 
         if etype == "str":
@@ -107,6 +113,9 @@ class ValidationEngine:
         self, df: pd.DataFrame, field: str, min_val: Optional[Union[int, float]], max_val: Optional[Union[int, float]]
     ) -> Dict[str, Any]:
         """Check value ranges."""
+        if field not in df.columns:
+            return self._field_not_found(df, field)
+
         # Ensure field is numeric, try to convert if not
         if not pd.api.types.is_numeric_dtype(df[field]):
             temp_numeric = pd.to_numeric(df[field], errors="coerce")
@@ -135,6 +144,9 @@ class ValidationEngine:
 
     def unique_check(self, df: pd.DataFrame, field: str) -> Dict[str, Any]:
         """Check uniqueness."""
+        if field not in df.columns:
+            return self._field_not_found(df, field)
+
         duplicates = int(df[field].duplicated(keep=False).sum())
         return self._build_result(
             passed=(duplicates == 0),
@@ -145,6 +157,9 @@ class ValidationEngine:
 
     def regex_check(self, df: pd.DataFrame, field: str, pattern: str) -> Dict[str, Any]:
         """Check regex pattern matching."""
+        if field not in df.columns:
+            return self._field_not_found(df, field)
+
         if not pattern:
             return self._build_result(False, len(df), len(df), "No pattern provided")
 
