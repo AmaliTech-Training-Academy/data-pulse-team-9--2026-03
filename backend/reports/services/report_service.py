@@ -1,32 +1,41 @@
-"""Report service - STUB: Needs implementation."""
+from typing import Any, List, Optional
+
+from checks.models import QualityScore
+from datasets.models import Dataset
+from django.db.models import QuerySet
 
 
-def generate_report(dataset_id: int, db=None) -> dict:
-    """Generate a quality report for a dataset.
-
-    TODO: Implement report generation.
-
-    Steps:
-    1. Fetch dataset info from DB
-    2. Fetch latest QualityScore for dataset
-    3. Fetch all CheckResults from latest run
-    4. Build report dict with dataset_id, name, score, results, timestamp
-    5. Return report dict
-    """
-    # TODO: Implement
-    return {"dataset_id": dataset_id, "error": "Not implemented"}
+def get_latest_report(dataset: Dataset) -> Optional[QualityScore]:
+    """Fetch the most recent quality score for a dataset."""
+    return QualityScore.objects.filter(dataset=dataset).order_by("-checked_at").first()
 
 
-def get_trend_data(days: int, db=None) -> list:
-    """Get quality score trend data.
+def get_report_by_id(report_id: int) -> Optional[QualityScore]:
+    """Fetch a specific quality report by its ID."""
+    return QualityScore.objects.select_related("dataset").filter(id=report_id).first()
 
-    TODO: Implement trend data retrieval.
 
-    Steps:
-    1. Calculate start_date = now - timedelta(days=days)
-    2. Query QualityScore records after start_date
-    3. Group by dataset_id and date
-    4. Return list of score entries ordered by date
-    """
-    # TODO: Implement
-    return []
+def get_dataset_trends(dataset: Dataset, start_date: Optional[str] = None, end_date: Optional[str] = None) -> QuerySet:
+    """Fetch historical quality scores for a dataset, optionally filtered by date."""
+    queryset = QualityScore.objects.filter(dataset=dataset)
+    if start_date:
+        queryset = queryset.filter(checked_at__date__gte=start_date)
+    if end_date:
+        queryset = queryset.filter(checked_at__date__lte=end_date)
+    return queryset.order_by("-checked_at")
+
+
+def get_dashboard_summary(user: Any) -> List[QualityScore]:
+    """Fetch the latest score for each dataset the user can access."""
+    if getattr(user, "role", "USER") == "ADMIN":
+        dataset_qs = Dataset.objects.all()
+    else:
+        dataset_qs = Dataset.objects.filter(uploaded_by=user)
+
+    latest_scores = []
+    for dataset in dataset_qs:
+        qs = get_latest_report(dataset)
+        if qs:
+            latest_scores.append(qs)
+
+    return latest_scores
