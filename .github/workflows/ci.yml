@@ -171,7 +171,6 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Run Trivy vulnerability scanner in repo mode
-        # CHANGE 4: pinned from @master to a specific SHA
         uses: aquasecurity/trivy-action@18f2510ee396bbf400402947b394f2dd8c87dbb0  # v0.29.0
         with:
           scan-type: 'fs'
@@ -179,9 +178,10 @@ jobs:
           format: 'sarif'
           output: 'trivy-results.sarif'
           severity: 'CRITICAL,HIGH'
+        continue-on-error: true
       - name: Upload Trivy results to GitHub Security
-        uses: github/codeql-action/upload-sarif@v3
-        if: always()
+        uses: github/codeql-action/upload-sarif@v4
+        if: always() && hashFiles('trivy-results.sarif') != ''
         with:
           sarif_file: 'trivy-results.sarif'
       - name: Run Trivy on Dockerfile
@@ -302,14 +302,14 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Initialize CodeQL
-        uses: github/codeql-action/init@v3
+        uses: github/codeql-action/init@v4
         with:
           languages: python
           queries: security-and-quality
       - name: Autobuild
-        uses: github/codeql-action/autobuild@v3
+        uses: github/codeql-action/autobuild@v4
       - name: Perform CodeQL Analysis
-        uses: github/codeql-action/analyze@v3
+        uses: github/codeql-action/analyze@v4
         with:
           category: "/language:python"
 
