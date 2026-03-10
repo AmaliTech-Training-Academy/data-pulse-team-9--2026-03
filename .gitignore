@@ -31,3 +31,7 @@ staticfiles/
 #frontend
 frontend/.env.local
 __init__.py
+
+#data engineering
+logs
+data-engineering/migrations/.migration_state.json
