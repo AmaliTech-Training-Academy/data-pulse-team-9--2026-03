@@ -33,15 +33,19 @@ export default function LoginPage() {
           } else {
             router.push("/dashboard/user"); // Standard user dashboard
           }
-        } catch (e) {
+        } catch {
           // Fallback if profile fetch fails
           router.push("/dashboard/user");
         }
       } else {
         router.push("/");
       }
-    } catch (err: any) {
-      setError(err.message || "Failed to login. Please check your credentials.");
+    } catch (error: unknown) {
+      const errorMessage =
+        error instanceof Error
+          ? error.message
+          : "Failed to login. Please check your credentials.";
+      setError(errorMessage);
     } finally {
       setLoading(false);
     }
@@ -64,8 +68,12 @@ export default function LoginPage() {
           </div>
 
           <div className="mb-8 text-center lg:text-left">
-            <h1 className="text-2xl font-bold text-primary mb-1">Welcome to login system</h1>
-            <p className="text-sm text-gray-500">Sign in by entering the information below</p>
+            <h1 className="text-2xl font-bold text-primary mb-1">
+              Welcome to login system
+            </h1>
+            <p className="text-sm text-gray-500">
+              Sign in by entering the information below
+            </p>
           </div>
 
           {error && (
@@ -143,7 +151,6 @@ export default function LoginPage() {
 
         {/* Main Primary Layer */}
         <div className="absolute top-[19%] left-0 bottom-0 w-[82%] bg-primary rounded-tr-[130px] flex flex-col items-center justify-center p-12 shadow-2xl overflow-hidden z-20">
-
           {/* Subtle interior glow/gradients */}
           <div className="absolute top-[-10%] right-[-10%] w-[60%] h-[60%] bg-accent rounded-full blur-[120px] opacity-20 transform rotate-45"></div>
           <div className="absolute bottom-[-10%] left-[-10%] w-[50%] h-[50%] bg-[#0ea5e9] rounded-full blur-[100px] opacity-10"></div>

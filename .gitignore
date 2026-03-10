@@ -30,3 +30,4 @@ staticfiles/
 
 #frontend
 frontend/.env.local
+__init__.py

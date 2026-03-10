@@ -33,12 +33,12 @@ jobs:
         run: |
           BRANCH="${{ github.head_ref }}"
           echo "Branch: $BRANCH"
-          if echo "$BRANCH" | grep -qE "^(feature|fix|hotfix|devops|docs|test|chore)/.+"; then
+          if echo "$BRANCH" | grep -qE "^(bugfix|feature|fix|hotfix|devops|docs|test|chore)/.+"; then
             echo " Branch name is valid"
           else
             echo " Invalid branch: $BRANCH"
             echo "Must follow: type/description"
-            echo "Examples: feature/auth-system, fix/null-check, devops/ci-pipeline"
+            echo "Examples: bugfix/auth-issue, feature/new-login, fix/null-check, devops/ci-pipeline"
             exit 1
           fi
 
