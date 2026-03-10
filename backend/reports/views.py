@@ -35,7 +35,10 @@ class DatasetReportView(APIView):
         qs = report_service.get_latest_report(dataset)
 
         if not qs:
-            return Response({"detail": f"Quality report for dataset {dataset_id} not found"}, status=404)
+            return Response(
+                {"detail": f"Quality report for dataset {dataset_id} not found"},
+                status=404,
+            )
 
         results = qs.results.all()
 
@@ -61,13 +64,29 @@ class QualityTrendsView(APIView):
     @extend_schema(
         parameters=[
             OpenApiParameter(
-                "start_date", OpenApiTypes.DATE, OpenApiParameter.QUERY, description="Filter from date (YYYY-MM-DD)"
+                "start_date",
+                OpenApiTypes.DATE,
+                OpenApiParameter.QUERY,
+                description="Filter from date (YYYY-MM-DD)",
             ),
             OpenApiParameter(
-                "end_date", OpenApiTypes.DATE, OpenApiParameter.QUERY, description="Filter to date (YYYY-MM-DD)"
+                "end_date",
+                OpenApiTypes.DATE,
+                OpenApiParameter.QUERY,
+                description="Filter to date (YYYY-MM-DD)",
             ),
-            OpenApiParameter("limit", OpenApiTypes.INT, OpenApiParameter.QUERY, description="Page size"),
-            OpenApiParameter("page", OpenApiTypes.INT, OpenApiParameter.QUERY, description="Page number"),
+            OpenApiParameter(
+                "limit",
+                OpenApiTypes.INT,
+                OpenApiParameter.QUERY,
+                description="Page size",
+            ),
+            OpenApiParameter(
+                "page",
+                OpenApiTypes.INT,
+                OpenApiParameter.QUERY,
+                description="Page number",
+            ),
         ],
         responses={200: QualityScoreResponseSerializer(many=True)},
         tags=["Reports"],
