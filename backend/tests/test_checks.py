@@ -31,7 +31,7 @@ def test_run_checks_on_dataset(auth_client, sample_csv_content):
 
     # Run checks
     resp = auth_client.post(f"/api/checks/run/{dataset_id}")
-    assert resp.status_code == 501
+    assert resp.status_code == 200
 
 
 @pytest.mark.django_db
@@ -43,13 +43,13 @@ def test_run_checks_no_rules(auth_client, sample_csv_content):
     dataset_id = upload_resp.json()["id"]
 
     resp = auth_client.post(f"/api/checks/run/{dataset_id}")
-    assert resp.status_code == 501
+    assert resp.status_code == 200
 
 
 @pytest.mark.django_db
 def test_run_checks_nonexistent_dataset(auth_client):
     resp = auth_client.post("/api/checks/run/99999")
-    assert resp.status_code == 501
+    assert resp.status_code == 404
 
 
 @pytest.mark.django_db
@@ -77,14 +77,14 @@ def test_get_check_results(auth_client, sample_csv_content):
 
     # Get results
     resp = auth_client.get(f"/api/checks/results/{dataset_id}")
-    assert resp.status_code == 501
+    assert resp.status_code == 200
 
 
 @pytest.mark.django_db
 def test_get_results_nonexistent_dataset(auth_client):
     resp = auth_client.get("/api/checks/results/99999")
-    # This also hits the view which returns 501
-    assert resp.status_code == 501
+    # This also hits the view which returns 404
+    assert resp.status_code == 404
 
 
 @pytest.mark.django_db

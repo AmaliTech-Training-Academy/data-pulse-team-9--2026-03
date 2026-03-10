@@ -20,18 +20,10 @@ class RunChecksView(APIView):
     @extend_schema(
         responses={200: QualityScoreResponseSerializer},
         tags=["Checks"],
-        summary="Run quality checks on a dataset (TODO)",
+        summary="Run quality checks on a dataset",
     )
     def post(self, request, dataset_id):
-        """Run all applicable validation checks on a dataset - TODO: Implement."""
-        from rest_framework.exceptions import APIException
-
-        class NotImplementedException(APIException):
-            status_code = 501
-            default_detail = "POST /api/checks/run not implemented"
-            default_code = "not_implemented"
-
-        raise NotImplementedException()
+        """Run all applicable validation checks on a dataset."""
         # 1. Fetch dataset
         try:
             if getattr(request.user, "role", "USER") == "ADMIN":
@@ -65,25 +57,12 @@ class RunChecksView(APIView):
         engine = ValidationEngine()
         results = engine.run_all_checks(df, rules)
 
-        # 6. Save CheckResult records
-        # First, clear old results for this dataset
-        CheckResult.objects.filter(dataset=dataset).delete()
-        for res in results:
-            rule = ValidationRule.objects.get(id=res["rule_id"])
-            CheckResult.objects.create(
-                dataset=dataset,
-                rule=rule,
-                passed=res["passed"],
-                failed_rows=res["failed_rows"],
-                total_rows=res["total_rows"],
-                details=res["details"],
-            )
-
-        # 7. Calculate quality score
+        # 6. Calculate quality score
         score_data = calculate_quality_score(results, rules)
 
-        # 8. Save QualityScore record
-        QualityScore.objects.filter(dataset=dataset).delete()
+        # 7. Save QualityScore record (The "Report" entry)
+        import json
+
         qs = QualityScore.objects.create(
             dataset=dataset,
             score=score_data["score"],
@@ -91,6 +70,23 @@ class RunChecksView(APIView):
             passed_rules=score_data["passed_rules"],
             failed_rules=score_data["failed_rules"],
         )
+
+        # 8. Save CheckResult records linked to this run
+        for res in results:
+            rule = ValidationRule.objects.get(id=res["rule_id"])
+
+            # Combine details and samples into a JSON structure
+            result_details = {"message": res["details"], "samples": res.get("samples", [])}
+
+            CheckResult.objects.create(
+                dataset=dataset,
+                rule=rule,
+                quality_score=qs,
+                passed=res["passed"],
+                failed_rows=res["failed_rows"],
+                total_rows=res["total_rows"],
+                details=json.dumps(result_details),
+            )
 
         # 9. Update dataset status
         dataset.status = "VALIDATED" if score_data["failed_rules"] == 0 else "FAILED"
@@ -109,14 +105,7 @@ class CheckResultsView(APIView):
     )
     def get(self, request, dataset_id):
         """Get all check results for a dataset - TODO: Implement."""
-        from rest_framework.exceptions import APIException
-
-        class NotImplementedException(APIException):
-            status_code = 501
-            default_detail = "GET /api/checks/results not implemented"
-            default_code = "not_implemented"
-
-        raise NotImplementedException()
+        # Access control
         # Access control
         try:
             if getattr(request.user, "role", "USER") == "ADMIN":
@@ -127,4 +116,4 @@ class CheckResultsView(APIView):
             raise DatasetNotFoundException(f"Dataset {dataset_id} not found or access denied")
 
         results = CheckResult.objects.filter(dataset=dataset).order_by("-checked_at")
-        return Response(CheckResultResponseSerializer(results, many=True).data)
+        return Response(list(CheckResultResponseSerializer(results, many=True).data))
