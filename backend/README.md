@@ -34,16 +34,19 @@ docker-compose up --build
 ## 2. API Documentation
 
 Authentication is required for all endpoints except `register` and `login`.
-- **Authentication Mechanism**: JWT (JSON Web Token)
+- **Authentication Mechanism**: JWT (JSON Web Token) with Access & Refresh tokens
 - **Token Type**: Bearer
 - **Header Format**: `Authorization: Bearer <your_access_token>`
+- **Role-Based Access Control (RBAC)**: Certain endpoints require specific roles (e.g., Admin vs User). Roles determine viewing/editing permissions for datasets and users.
 
 ### List of Endpoints
 
 | Method | Endpoint                        | Description & Request Format | Status |
 |--------|---------------------------------|------------------------------|--------|
 | **POST** | `/api/auth/register`            | Register user. Body: `{"email": "...", "password": "...", "full_name": "..."}` | ✅ Done |
-| **POST** | `/api/auth/login`               | Authenticate user. Body: `{"email": "...", "password": "..."}`. Returns JWT token. | ✅ Done |
+| **POST** | `/api/auth/login`               | Authenticate user. Body: `{"email": "...", "password": "..."}`. Returns JWT access and refresh token. | ✅ Done |
+| **GET**  | `/api/auth/me`                  | Retrieve current authenticated user profile and roles. Requires Bearer Token. | ✅ Done |
+| **POST** | `/api/auth/token/refresh`       | Refresh the JWT access token using the refresh token. Body: `{"refresh": "..."}` | ✅ Done |
 | **POST** | `/api/datasets/upload`          | Upload CSV/JSON file. Form-data: `file` (File object). | ✅ Done |
 | **GET**  | `/api/datasets/`                | List all datasets uploaded by the user. Supports `?skip=0&limit=100`. | ✅ Done |
 | **POST** | `/api/rules/`                   | Create a rule. Body requires rule schema (see Data Schema below). | ✅ Done |
@@ -72,6 +75,10 @@ We use `pytest` along with `pytest-django` for our automated test suite, coverin
   To execute all 60+ tests locally, run:
   ```bash
   docker-compose exec backend pytest -v
+  ```
+  To run specific tests (like the new role-based protection tests), run:
+  ```bash
+  docker-compose exec backend pytest backend/tests/test_protection.py -v
   ```
 
 ---

@@ -1,18 +1,16 @@
-"""Authentication router - IMPLEMENTED."""
-
-from authentication.serializers import LoginSerializer, TokenSerializer, UserCreateSerializer
+from authentication.serializers import LoginSerializer, TokenSerializer, UserCreateSerializer, UserResponseSerializer
 from authentication.services import authenticate_user, create_user
 from drf_spectacular.utils import extend_schema
 from rest_framework import status
-from rest_framework.permissions import AllowAny
+from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.throttling import AnonRateThrottle
 from rest_framework.views import APIView
-from rest_framework_simplejwt.tokens import AccessToken
+from rest_framework_simplejwt.tokens import RefreshToken
 
 
 class RegisterView(APIView):
-    """Register a new user and return a JWT token."""
+    """Register a new user and return JWT tokens (Access + Refresh)."""
 
     permission_classes = [AllowAny]
     throttle_classes = [AnonRateThrottle]
@@ -35,15 +33,21 @@ class RegisterView(APIView):
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
-        token = AccessToken.for_user(user)
+        refresh = RefreshToken.for_user(user)
         return Response(
-            TokenSerializer({"access_token": str(token), "token_type": "bearer"}).data,
+            TokenSerializer(
+                {
+                    "access_token": str(refresh.access_token),
+                    "refresh_token": str(refresh),
+                    "token_type": "bearer",
+                }
+            ).data,
             status=status.HTTP_201_CREATED,
         )
 
 
 class LoginView(APIView):
-    """Authenticate user and return a JWT token."""
+    """Authenticate user and return JWT tokens (Access + Refresh)."""
 
     permission_classes = [AllowAny]
     throttle_classes = [AnonRateThrottle]
@@ -52,7 +56,7 @@ class LoginView(APIView):
         request=LoginSerializer,
         responses={200: TokenSerializer},
         tags=["Auth"],
-        summary="Login and get JWT token",
+        summary="Login and get JWT tokens",
     )
     def post(self, request):
         serializer = LoginSerializer(data=request.data)
@@ -66,8 +70,29 @@ class LoginView(APIView):
                 status=status.HTTP_401_UNAUTHORIZED,
             )
 
-        token = AccessToken.for_user(user)
+        refresh = RefreshToken.for_user(user)
         return Response(
-            TokenSerializer({"access_token": str(token), "token_type": "bearer"}).data,
+            TokenSerializer(
+                {
+                    "access_token": str(refresh.access_token),
+                    "refresh_token": str(refresh),
+                    "token_type": "bearer",
+                }
+            ).data,
             status=status.HTTP_200_OK,
         )
+
+
+class UserMeView(APIView):
+    """Get the profile of the currently logged-in user."""
+
+    permission_classes = [IsAuthenticated]
+
+    @extend_schema(
+        responses={200: UserResponseSerializer},
+        tags=["Auth"],
+        summary="Get current user profile",
+    )
+    def get(self, request):
+        serializer = UserResponseSerializer(request.user)
+        return Response(serializer.data)
