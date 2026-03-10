@@ -7,6 +7,7 @@ Handles data extraction from source database with:
 - Exponential backoff retry logic
 - Chunked extraction for memory efficiency
 """
+
 from __future__ import annotations
 
 from datetime import datetime, timezone
