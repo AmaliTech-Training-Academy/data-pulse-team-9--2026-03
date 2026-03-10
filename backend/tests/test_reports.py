@@ -18,13 +18,13 @@ def test_get_report(auth_client, sample_csv_content):
 
     # Get report
     resp = auth_client.get(f"/api/reports/{dataset_id}")
-    assert resp.status_code == 501
+    assert resp.status_code == 200
 
 
 @pytest.mark.django_db
 def test_get_report_nonexistent_dataset(auth_client):
     resp = auth_client.get("/api/reports/99999")
-    assert resp.status_code == 501
+    assert resp.status_code == 404
 
 
 @pytest.mark.django_db
@@ -37,8 +37,8 @@ def test_get_trends(auth_client, sample_csv_content):
 
     auth_client.post(f"/api/checks/run/{dataset_id}")
 
-    resp = auth_client.get("/api/reports/trends?days=30")
-    assert resp.status_code == 501
+    resp = auth_client.get(f"/api/reports/{dataset_id}/trends?days=30")
+    assert resp.status_code == 200
 
 
 @pytest.mark.django_db
@@ -60,5 +60,5 @@ def test_get_dashboard(auth_client, sample_csv_content):
 
 @pytest.mark.django_db
 def test_reports_unauthenticated(client):
-    resp = client.get("/api/reports/trends")
+    resp = client.get("/api/reports/99/trends")
     assert resp.status_code == 401

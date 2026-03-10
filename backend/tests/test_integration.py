@@ -86,13 +86,11 @@ def test_full_e2e_flow(client):
     results_resp = client.get(f"/api/checks/results/{dataset_id}")
     assert results_resp.status_code == 200
 
-    # 6. Get report
     report_resp = client.get(f"/api/reports/{dataset_id}")
-    assert report_resp.status_code == 501
+    assert report_resp.status_code == 200
 
-    # 7. View trends
-    trends_resp = client.get("/api/reports/trends?days=30")
-    assert trends_resp.status_code == 501
+    trends_resp = client.get(f"/api/reports/{dataset_id}/trends")
+    assert trends_resp.status_code == 200
 
     # 8. Dashboard
     dash_resp = client.get("/api/reports/dashboard")

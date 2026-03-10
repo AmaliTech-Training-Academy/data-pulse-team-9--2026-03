@@ -56,8 +56,8 @@ Authentication is required for all endpoints except `register` and `login`.
 | **POST** | `/api/checks/run/{id}`          | Run validation checks on a dataset immediately. Returns `QualityScore` summary. | ✅ Done |
 | **GET**  | `/api/checks/results/{id}`      | Get detailed row-level check results for a dataset. | ✅ Done |
 | **POST** | `/api/scheduling/batch`         | Run checks asynchronously for multiple datasets via Celery. Body: `{"dataset_ids": [1,2,3]}` | ✅ Done |
-| **GET**  | `/api/reports/{id}`             | Generate a comprehensive quality report for a given dataset. | ✅ Done |
-| **GET**  | `/api/reports/trends?days=30`   | Get timeline of quality scores for line charts. | ✅ Done |
+| **GET**  | `/api/reports/{id}`             | Generate a comprehensive quality report for a given dataset, with sample rows. | ✅ Done |
+| **GET**  | `/api/reports/{dataset_id}/trends` | Get timeline of quality scores for line charts. Supports `start_date`, `end_date`, `limit`, `page`. | ✅ Done |
 | **GET**  | `/api/reports/dashboard`        | Get aggregated latest scores for all datasets. | ✅ Done |
 | **GET**  | `/metrics/`                     | Prometheus application metrics exposition. | ✅ Done |
 
@@ -65,7 +65,19 @@ Authentication is required for all endpoints except `register` and `login`.
 
 ---
 
-## 3. Test Environment Setup
+## 3. How to Test the Reporting & Trends API
+
+1. Start the server (e.g., `python manage.py runserver` or via Docker).
+2. Go to `http://localhost:8000/docs/` and **Authorize** with a JWT Token (use `/api/auth/login`).
+3. Upload a dataset via `POST /api/datasets/upload`.
+4. Run checks via `POST /api/checks/run/{dataset_id}`. Take note of the dataset ID.
+5. **Get Report**: Use `GET /api/reports/{dataset_id}` to see rules broken down by pass/fail + sample failing rows.
+6. **Get Trends**: Call `GET /api/reports/{dataset_id}/trends` to see historical runs for that dataset. You can also filter by `start_date` and `end_date` (YYYY-MM-DD format) and use `limit`/`page` for pagination.
+7. **Get Dashboard**: Call `GET /api/reports/dashboard` to get an overview of the latest scores for all your datasets.
+
+---
+
+## 4. Test Environment Setup
 
 We use `pytest` along with `pytest-django` for our automated test suite, covering both unit tests and e2e integration tests.
 

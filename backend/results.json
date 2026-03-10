@@ -4,6 +4,16 @@
         "failed_rows": 1,
         "total_rows": 4,
         "details": "1 null values found in name",
+        "samples": [
+            {
+                "id": 4,
+                "name": null,
+                "age": 40,
+                "score": 105.0,
+                "date": "2023-04-01",
+                "email": "d@d"
+            }
+        ],
         "rule_id": 1
     },
     {
@@ -11,6 +21,16 @@
         "failed_rows": 1,
         "total_rows": 4,
         "details": "1 non-numeric values found",
+        "samples": [
+            {
+                "id": 3,
+                "name": "Charlie",
+                "age": "invalid",
+                "score": 70.1,
+                "date": "not-a-date",
+                "email": "c@c.com"
+            }
+        ],
         "rule_id": 2
     },
     {
@@ -18,6 +38,16 @@
         "failed_rows": 1,
         "total_rows": 4,
         "details": "1 invalid datetime values found",
+        "samples": [
+            {
+                "id": 3,
+                "name": "Charlie",
+                "age": "invalid",
+                "score": 70.1,
+                "date": "not-a-date",
+                "email": "c@c.com"
+            }
+        ],
         "rule_id": 3
     },
     {
@@ -25,6 +55,16 @@
         "failed_rows": 1,
         "total_rows": 4,
         "details": "1 values outside range [0, 100] or non-numeric",
+        "samples": [
+            {
+                "id": 4,
+                "name": null,
+                "age": 40,
+                "score": 105.0,
+                "date": "2023-04-01",
+                "email": "d@d"
+            }
+        ],
         "rule_id": 4
     },
     {
@@ -32,6 +72,7 @@
         "failed_rows": 0,
         "total_rows": 4,
         "details": "0 duplicate values found in id",
+        "samples": [],
         "rule_id": 5
     },
     {
@@ -39,6 +80,16 @@
         "failed_rows": 1,
         "total_rows": 4,
         "details": "1 values do not match pattern ^[\\w\\.-]+@[\\w\\.-]+\\.\\w+$",
+        "samples": [
+            {
+                "id": 4,
+                "name": null,
+                "age": 40,
+                "score": 105.0,
+                "date": "2023-04-01",
+                "email": "d@d"
+            }
+        ],
         "rule_id": 6
     },
     {
@@ -46,6 +97,7 @@
         "failed_rows": 4,
         "total_rows": 4,
         "details": "Field missing_field not found in dataset",
+        "samples": [],
         "rule_id": 7
     }
 ]

@@ -51,7 +51,7 @@ class RuleListCreateView(APIView):
         queryset = ValidationRule.objects.filter(is_active=True)
         if dataset_type:
             queryset = queryset.filter(dataset_type=dataset_type)
-        return Response(RuleResponseSerializer(queryset, many=True).data, status=status.HTTP_200_OK)
+        return Response(list(RuleResponseSerializer(queryset, many=True).data), status=status.HTTP_200_OK)
 
 
 class RuleDetailView(APIView):

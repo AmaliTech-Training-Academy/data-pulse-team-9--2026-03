@@ -145,4 +145,4 @@ class CheckResultsView(APIView):
             raise DatasetNotFoundException(f"Dataset {dataset_id} not found or access denied")
 
         results = CheckResult.objects.filter(dataset=dataset).order_by("-checked_at")
-        return Response(CheckResultResponseSerializer(results, many=True).data)
+        return Response(list(CheckResultResponseSerializer(results, many=True).data))
