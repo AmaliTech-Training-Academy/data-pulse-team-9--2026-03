@@ -7,4 +7,4 @@ COPY . .
 RUN mkdir -p /app/uploads
 RUN chmod +x /app/entrypoint.sh
 EXPOSE 8000
-CMD ["/app/entrypoint.sh"]
+ENTRYPOINT ["/bin/sh", "/app/entrypoint.sh"]
