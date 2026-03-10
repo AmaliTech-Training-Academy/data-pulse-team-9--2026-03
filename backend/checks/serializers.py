@@ -18,12 +18,27 @@ class CheckResultResponseSerializer(serializers.Serializer):
     def get_pass_count(self, obj):
         return obj.total_rows - obj.failed_rows
 
+    def _clean_nan(self, data):
+        """Recursively replace NaN float values with None for JSON compliance."""
+        import math
+
+        if isinstance(data, dict):
+            return {k: self._clean_nan(v) for k, v in data.items()}
+        elif isinstance(data, list):
+            return [self._clean_nan(x) for x in data]
+        elif isinstance(data, float) and math.isnan(data):
+            return None
+        return data
+
     def get_sample_rows(self, obj):
         try:
             import json
 
+            if not obj.details:
+                return []
             data = json.loads(obj.details)
-            return data.get("samples", [])
+            samples = data.get("samples", [])
+            return self._clean_nan(samples)
         except (ValueError, TypeError):
             return []
 
@@ -31,6 +46,8 @@ class CheckResultResponseSerializer(serializers.Serializer):
         try:
             import json
 
+            if not obj.details:
+                return ""
             data = json.loads(obj.details)
             return data.get("message", obj.details)
         except (ValueError, TypeError):

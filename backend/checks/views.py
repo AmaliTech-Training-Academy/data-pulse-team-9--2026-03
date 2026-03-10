@@ -105,14 +105,7 @@ class CheckResultsView(APIView):
     )
     def get(self, request, dataset_id):
         """Get all check results for a dataset - TODO: Implement."""
-        from rest_framework.exceptions import APIException
-
-        class NotImplementedException(APIException):
-            status_code = 501
-            default_detail = "GET /api/checks/results not implemented"
-            default_code = "not_implemented"
-
-        raise NotImplementedException()
+        # Access control
         # Access control
         try:
             if getattr(request.user, "role", "USER") == "ADMIN":
@@ -123,4 +116,4 @@ class CheckResultsView(APIView):
             raise DatasetNotFoundException(f"Dataset {dataset_id} not found or access denied")
 
         results = CheckResult.objects.filter(dataset=dataset).order_by("-checked_at")
-        return Response(CheckResultResponseSerializer(results, many=True).data)
+        return Response(list(CheckResultResponseSerializer(results, many=True).data))
