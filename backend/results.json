@@ -1,0 +1,51 @@
+[
+    {
+        "passed": false,
+        "failed_rows": 1,
+        "total_rows": 4,
+        "details": "1 null values found in name",
+        "rule_id": 1
+    },
+    {
+        "passed": false,
+        "failed_rows": 1,
+        "total_rows": 4,
+        "details": "1 non-numeric values found",
+        "rule_id": 2
+    },
+    {
+        "passed": false,
+        "failed_rows": 1,
+        "total_rows": 4,
+        "details": "1 invalid datetime values found",
+        "rule_id": 3
+    },
+    {
+        "passed": false,
+        "failed_rows": 1,
+        "total_rows": 4,
+        "details": "1 values outside range [0, 100] or non-numeric",
+        "rule_id": 4
+    },
+    {
+        "passed": true,
+        "failed_rows": 0,
+        "total_rows": 4,
+        "details": "0 duplicate values found in id",
+        "rule_id": 5
+    },
+    {
+        "passed": false,
+        "failed_rows": 1,
+        "total_rows": 4,
+        "details": "1 values do not match pattern ^[\\w\\.-]+@[\\w\\.-]+\\.\\w+$",
+        "rule_id": 6
+    },
+    {
+        "passed": false,
+        "failed_rows": 4,
+        "total_rows": 4,
+        "details": "Field missing_field not found in dataset",
+        "rule_id": 7
+    }
+]

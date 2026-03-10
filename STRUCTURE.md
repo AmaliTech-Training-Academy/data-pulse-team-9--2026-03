@@ -231,7 +231,7 @@ Same variables, same defaults as the original:
 
 | Variable | Default | Used In |
 |----------|---------|---------|
-| `DATABASE_URL` | `postgresql://datapulse:datapulse@db:5432/datapulse` | `settings.py` |
+| `DATABASE_URL` | `postgresql://<user>:<password>@db:5432/<dbname>` | `settings.py` |
 | `SECRET_KEY` | `change-me-in-production` | `settings.py`, JWT signing |
 | `ALGORITHM` | `HS256` | `settings.py`, JWT |
 | `ACCESS_TOKEN_EXPIRE_MINUTES` | `1440` | `settings.py`, JWT lifetime |

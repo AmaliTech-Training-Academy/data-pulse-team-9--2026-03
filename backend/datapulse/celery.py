@@ -2,10 +2,15 @@
 
 import os
 
+import django
 from celery import Celery
-from celery.schedules import crontab
+
+# from celery.schedules import crontab
 
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "datapulse.settings.prod")
+
+
+django.setup()
 
 app = Celery("datapulse")
 
@@ -17,9 +22,11 @@ app.autodiscover_tasks()
 
 # Default beat schedule — runs the scheduled checks every hour.
 # The actual per-dataset frequency is controlled by ScheduleConfig model.
+# NOTE: Disabled temporarily because the `scheduling` app does not exist yet
 app.conf.beat_schedule = {
-    "run-scheduled-quality-checks": {
-        "task": "scheduling.tasks.run_scheduled_checks",
-        "schedule": crontab(minute=0),  # Every hour at :00
-    },
+    # "run-scheduled-quality-checks": {
+    #     "task": "scheduling.tasks.run_scheduled_checks",
+    #     "schedule": crontab(minute=0),  # Every hour at :00
+    # },
 }
+# fix lint issues
