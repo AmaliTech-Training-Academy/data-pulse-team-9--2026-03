@@ -55,7 +55,7 @@ def test_get_dashboard(auth_client, sample_csv_content):
     assert resp.status_code == 200
     data = resp.json()
     assert isinstance(data, list)
-    assert len(data) == 0  # No scores because run_checks is 501
+    assert len(data) > 0  # Score is calculated since run_checks works
 
 
 @pytest.mark.django_db
