@@ -2,7 +2,7 @@
 set -e
 
 echo "==> Running migrations..."
-python manage.py makemigrations authentication datasets rules checks reports scheduling --noinput
+python manage.py makemigrations authentication datasets rules checks reports  --noinput
 python manage.py migrate --noinput
 
 echo "==> Seeding default users..."
