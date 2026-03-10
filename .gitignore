@@ -26,3 +26,6 @@ backend/staticfiles/*
 backend/.env
 staticfiles/
 .actrc
+
+#frontend
+frontend/.env.local
