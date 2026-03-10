@@ -16,18 +16,6 @@ import { fetchApi } from "@/services/api";
 import Link from "next/link";
 
 // Helper functions
-const getStatusFromScore = (score: number | null) => {
-    if (score === null) return "Pending Check";
-    if (score >= 80) return "Clean";
-    if (score >= 50) return "Review Needed";
-    return "Critical Issues";
-};
-
-const getScoreColor = (score: number) => {
-    if (score >= 80) return "text-success bg-success/10 border-success/20";
-    if (score >= 50) return "text-warning bg-warning/10 border-warning/20";
-    return "text-danger bg-danger/10 border-danger/20";
-};
 
 const getStatusColor = (status: string) => {
     switch (status) {
@@ -69,7 +57,7 @@ export default function AdminDatasetsPage() {
 
                 const datasetsArray = Array.isArray(datasetsData) ? datasetsData : (datasetsData?.results || datasetsData?.datasets || []);
 
-                const processed = datasetsArray.map((d: any) => {
+                const processed = datasetsArray.map((d: { id: number; name?: string; file_type?: string; uploaded_by?: { email?: string }; uploaded_at: string; status: string }) => {
                     return {
                         id: d.id,
                         name: d.name || `dataset_file_${d.id}.${d.file_type || 'csv'}`,

@@ -6,7 +6,6 @@ import {
     ArrowLeft,
     FileText,
     FileJson,
-    Calendar,
     Database,
     Hash,
     Loader2,
@@ -28,7 +27,7 @@ interface DatasetData {
     file_type: string;
     row_count: number | null;
     column_count: number | null;
-    column_names: any;
+    column_names: unknown;
     status: string;
     uploaded_at: string;
 }
@@ -37,10 +36,10 @@ interface ReportData {
     score: number;
     total_rules: number;
     checked_at: string;
-    results: any[];
+    results: Record<string, unknown>[];
 }
 
-const getColumnNames = (cols: any): string[] => {
+const getColumnNames = (cols: unknown): string[] => {
     if (!cols) return [];
     if (Array.isArray(cols)) return cols;
     if (typeof cols === 'string') {
@@ -77,8 +76,8 @@ export default function DatasetDetails({ id, backUrl }: DatasetDetailsProps) {
                     // Report might not exist yet if pending
                     setReport(null);
                 }
-            } catch (err: any) {
-                setError(err.message || "Failed to load dataset details");
+            } catch (err: unknown) {
+                setError(err instanceof Error ? err.message : "Failed to load dataset details");
             } finally {
                 setIsLoading(false);
             }

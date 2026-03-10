@@ -4,7 +4,6 @@ import { useState } from "react";
 import {
     Search,
     MailPlus,
-    User,
     Database,
     Activity,
     MoreVertical,
@@ -137,8 +136,8 @@ export default function AdminUsersPage() {
                                     <td className="py-4 px-6 text-sm text-gray-500">{user.lastActive}</td>
                                     <td className="py-4 px-6">
                                         <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-bold border ${user.status === 'Active' ? 'text-success bg-success/10 border-success/20' :
-                                                user.status === 'Deactivated' ? 'text-danger bg-danger/10 border-danger/20' :
-                                                    'text-gray-500 bg-gray-100 border-gray-200'
+                                            user.status === 'Deactivated' ? 'text-danger bg-danger/10 border-danger/20' :
+                                                'text-gray-500 bg-gray-100 border-gray-200'
                                             }`}>
                                             <span className="w-1.5 h-1.5 rounded-full bg-current"></span>
                                             {user.status}
@@ -202,8 +201,8 @@ export default function AdminUsersPage() {
                             <p className="text-gray-500 text-sm mb-4">{selectedUser.email}</p>
 
                             <div className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold border mb-6 ${selectedUser.status === 'Active' ? 'text-success bg-success/10 border-success/20' :
-                                    selectedUser.status === 'Deactivated' ? 'text-danger bg-danger/10 border-danger/20' :
-                                        'text-gray-500 bg-gray-100 border-gray-200'
+                                selectedUser.status === 'Deactivated' ? 'text-danger bg-danger/10 border-danger/20' :
+                                    'text-gray-500 bg-gray-100 border-gray-200'
                                 }`}>
                                 <span className="w-1.5 h-1.5 rounded-full bg-current"></span>
                                 {selectedUser.status}
