@@ -28,8 +28,10 @@ Every time you commit, pre-commit automatically:
 - ✅ Sorts imports (isort)
 - ✅ Checks code style (flake8)
 - ✅ Removes trailing spaces
-- ✅ Checks for secrets/keys
+- ✅ Checks for secrets/keys (detect-secrets)
 - ✅ Validates commit message format
+- ✅ Scans for security issues (bandit)
+- ✅ Checks dependencies for vulnerabilities (safety)
 
 **You don't do anything - it's automatic!**
 
@@ -66,9 +68,9 @@ git commit -m "feat(auth): add login"
 
 ---
 
-## Manual Formatting (Optional)
+## Manual Formatting & Security Checks (Optional)
 
-If you want to format code before committing:
+If you want to format code and run security scans before committing:
 
 ```bash
 # Windows
@@ -82,6 +84,21 @@ This runs:
 1. isort (import sorting)
 2. black (code formatting)
 3. flake8 (linting)
+4. bandit (security scanning)
+5. safety (dependency vulnerability check)
+
+### Manual Security Scans
+
+```bash
+# Scan for security issues
+bandit -r backend/
+
+# Check dependencies for vulnerabilities
+safety check -r backend/requirements.txt
+
+# Check for secrets
+detect-secrets scan --all-files
+```
 
 ---
 
@@ -102,6 +119,34 @@ pre-commit --version
 # Now install hooks
 pre-commit install
 pre-commit install --hook-type commit-msg
+```
+
+**"bandit found security issues"**
+```bash
+# Review the security findings
+bandit -r backend/
+
+# Fix the issues or add # nosec comment if false positive
+# Then commit again
+```
+
+**"safety found vulnerabilities"**
+```bash
+# Review dependency vulnerabilities
+safety check -r backend/requirements.txt
+
+# Update vulnerable packages
+pip install --upgrade package-name
+pip freeze > backend/requirements.txt
+```
+
+**"detect-secrets found potential secrets"**
+```bash
+# Review the findings
+detect-secrets scan --all-files
+
+# Add # pragma: allowlist secret comment if false positive
+# Or remove the actual secret
 ```
 
 **"black not found"**
