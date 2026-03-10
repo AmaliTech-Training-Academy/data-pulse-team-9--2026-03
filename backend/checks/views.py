@@ -7,6 +7,7 @@ from checks.services.validation_engine import ValidationEngine
 from datapulse.exceptions import DatasetNotFoundException
 from datasets.models import Dataset
 from datasets.services.file_parser import parse_csv, parse_json
+from django.db import transaction
 from django.db.models import Q
 from drf_spectacular.utils import extend_schema
 from rest_framework.response import Response
@@ -20,18 +21,11 @@ class RunChecksView(APIView):
     @extend_schema(
         responses={200: QualityScoreResponseSerializer},
         tags=["Checks"],
-        summary="Run quality checks on a dataset (TODO)",
+        summary="Run quality checks on a dataset",
     )
     def post(self, request, dataset_id):
-        """Run all applicable validation checks on a dataset - TODO: Implement."""
-        from rest_framework.exceptions import APIException
+        """Run all applicable validation checks on a dataset."""
 
-        class NotImplementedException(APIException):
-            status_code = 501
-            default_detail = "POST /api/checks/run not implemented"
-            default_code = "not_implemented"
-
-        raise NotImplementedException()
         # 1. Fetch dataset
         try:
             if getattr(request.user, "role", "USER") == "ADMIN":
@@ -40,6 +34,13 @@ class RunChecksView(APIView):
                 dataset = Dataset.objects.get(id=dataset_id, uploaded_by=request.user)
         except Dataset.DoesNotExist:
             raise DatasetNotFoundException(f"Dataset {dataset_id} not found or access denied")
+
+        if dataset.status == "PROCESSING":
+            return Response(
+                {"detail": "Dataset is currently processing. Please wait for processing to finish."}, status=400
+            )
+        if dataset.status == "ERROR":
+            return Response({"detail": "Dataset parsing failed, cannot run checks."}, status=400)
 
         # 2. Get DatasetFile
         file_obj = dataset.files.first()
@@ -54,6 +55,8 @@ class RunChecksView(APIView):
                 parsed = parse_json(file_obj.file_path)
             df = parsed["dataframe"]
         except Exception as e:
+            dataset.status = "FAILED"
+            dataset.save()
             return Response({"detail": f"Failed to parse file: {str(e)}"}, status=400)
 
         # 4. Fetch rules
@@ -62,39 +65,53 @@ class RunChecksView(APIView):
         )
 
         # 5. Run checks
-        engine = ValidationEngine()
-        results = engine.run_all_checks(df, rules)
+        try:
+            engine = ValidationEngine()
+            results = engine.run_all_checks(df, rules)
+        except Exception as e:
+            dataset.status = "FAILED"
+            dataset.save()
+            return Response({"detail": f"Validation engine execution failed: {str(e)}"}, status=500)
 
-        # 6. Save CheckResult records
-        # First, clear old results for this dataset
-        CheckResult.objects.filter(dataset=dataset).delete()
-        for res in results:
-            rule = ValidationRule.objects.get(id=res["rule_id"])
-            CheckResult.objects.create(
+        # 6. Save CheckResult records and score atomically
+        with transaction.atomic():
+            # Map rules for fast O(1) lookup
+            rules_map = {r.id: r for r in rules}
+
+            check_results_to_create = []
+            for res in results:
+                rule = rules_map.get(res["rule_id"])
+                if not rule:
+                    continue
+                check_results_to_create.append(
+                    CheckResult(
+                        dataset=dataset,
+                        rule=rule,
+                        passed=res["passed"],
+                        failed_rows=res["failed_rows"],
+                        total_rows=res["total_rows"],
+                        details=res["details"],
+                    )
+                )
+
+            # Bulk create all results at once to save DML queries
+            CheckResult.objects.bulk_create(check_results_to_create)
+
+            # 7. Calculate quality score
+            score_data = calculate_quality_score(results, rules)
+
+            # 8. Save QualityScore record
+            qs = QualityScore.objects.create(
                 dataset=dataset,
-                rule=rule,
-                passed=res["passed"],
-                failed_rows=res["failed_rows"],
-                total_rows=res["total_rows"],
-                details=res["details"],
+                score=score_data["score"],
+                total_rules=score_data["total_rules"],
+                passed_rules=score_data["passed_rules"],
+                failed_rules=score_data["failed_rules"],
             )
 
-        # 7. Calculate quality score
-        score_data = calculate_quality_score(results, rules)
-
-        # 8. Save QualityScore record
-        QualityScore.objects.filter(dataset=dataset).delete()
-        qs = QualityScore.objects.create(
-            dataset=dataset,
-            score=score_data["score"],
-            total_rules=score_data["total_rules"],
-            passed_rules=score_data["passed_rules"],
-            failed_rules=score_data["failed_rules"],
-        )
-
-        # 9. Update dataset status
-        dataset.status = "VALIDATED" if score_data["failed_rules"] == 0 else "FAILED"
-        dataset.save()
+            # 9. Update dataset status
+            dataset.status = "VALIDATED" if score_data["failed_rules"] == 0 else "FAILED"
+            dataset.save()
 
         return Response(QualityScoreResponseSerializer(qs).data)
 
@@ -105,18 +122,11 @@ class CheckResultsView(APIView):
     @extend_schema(
         responses={200: CheckResultResponseSerializer(many=True)},
         tags=["Checks"],
-        summary="Get check results for a dataset (TODO)",
+        summary="Get check results for a dataset",
     )
     def get(self, request, dataset_id):
-        """Get all check results for a dataset - TODO: Implement."""
-        from rest_framework.exceptions import APIException
+        """Get all check results for a dataset."""
 
-        class NotImplementedException(APIException):
-            status_code = 501
-            default_detail = "GET /api/checks/results not implemented"
-            default_code = "not_implemented"
-
-        raise NotImplementedException()
         # Access control
         try:
             if getattr(request.user, "role", "USER") == "ADMIN":

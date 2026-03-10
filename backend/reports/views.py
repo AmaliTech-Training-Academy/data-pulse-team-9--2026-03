@@ -44,7 +44,7 @@ class DatasetReportView(APIView):
         if not qs:
             return Response({"detail": "No quality score found for this dataset"}, status=404)
 
-        results = CheckResult.objects.filter(dataset=dataset).order_by("-checked_at")
+        results = CheckResult.objects.filter(dataset=dataset).order_by("-checked_at")[: qs.total_rules]
 
         report_data = {
             "dataset_id": dataset.id,
