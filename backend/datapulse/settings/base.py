@@ -37,6 +37,8 @@ INSTALLED_APPS = [
     "rules",
     "checks",
     "reports",
+    "django_celery_beat",
+    "schedule",
 ]
 
 
@@ -147,6 +149,7 @@ CELERY_RESULT_BACKEND = env("CELERY_RESULT_BACKEND", default="redis://localhost:
 CELERY_ACCEPT_CONTENT = ["json"]
 CELERY_TASK_SERIALIZER = "json"
 CELERY_RESULT_SERIALIZER = "json"
+CELERY_BEAT_SCHEDULER = "django_celery_beat.schedulers:DatabaseScheduler"
 
 # --- Logging (Structlog Base) ---
 import structlog
