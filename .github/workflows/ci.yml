@@ -1,13 +1,13 @@
 name: CI
 
 on:
-  push:
-    branches: [main, develop]
   pull_request:
-    branches: [main, develop]
+    branches: [develop, main]   # runs on PRs targeting either branch
+    types: [opened, synchronize, reopened]
   schedule:
-    - cron: '0 0 * * 0'  # Weekly security scans on Sunday
+    - cron: '0 0 * * 0'        # weekly security scans on Sunday
 
+# Cancel in-progress runs when a new commit is pushed to the same PR
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
@@ -34,7 +34,7 @@ jobs:
         with:
           python-version: "3.11"
           cache: pip
-          cache-dependency-path: backend/requirements.txt   #  cache pip by lockfile
+          cache-dependency-path: backend/requirements.txt
       - name: Install linters
         run: pip install flake8 black isort
       - name: Run black
@@ -68,7 +68,7 @@ jobs:
         with:
           python-version: "3.11"
           cache: pip
-          cache-dependency-path: backend/requirements.txt   # CHANGE 2: cache pip by lockfile
+          cache-dependency-path: backend/requirements.txt
       - name: Install dependencies
         run: pip install -r backend/requirements.txt pytest-cov
       - name: Run migrations
@@ -99,8 +99,7 @@ jobs:
           name: coverage-report
           path: backend/coverage.xml
 
-  # ── Frontend pipeline ─────────────────────────────────────────────────────
-
+  # ── Frontend ──────────────────────────────────────────────────────────────
 
   frontend-lint:
     name: Frontend Lint
@@ -162,7 +161,7 @@ jobs:
           name: frontend-build
           path: frontend/dist/
 
-  # ── Security jobs (run in parallel with/after lint) ──────────────────────
+  # ── Security ──────────────────────────────────────────────────────────────
 
   trivy:
     name: Trivy - Container & Secrets Scan
@@ -176,19 +175,16 @@ jobs:
           sudo apt-get install wget apt-transport-https gnupg lsb-release
           wget -qO - https://aquasecurity.github.io/trivy-repo/deb/public.key | sudo apt-key add -
           echo "deb https://aquasecurity.github.io/trivy-repo/deb $(lsb_release -sc) main" | sudo tee -a /etc/apt/sources.list.d/trivy.list
-          sudo apt-get update
-          sudo apt-get install trivy
+          sudo apt-get update && sudo apt-get install trivy
       - name: Run Trivy vulnerability scanner
-        run: |
-          trivy fs --format sarif --output trivy-results.sarif --severity CRITICAL,HIGH . || true
+        run: trivy fs --format sarif --output trivy-results.sarif --severity CRITICAL,HIGH . || true
       - name: Upload Trivy results to GitHub Security
         uses: github/codeql-action/upload-sarif@v4
         if: always() && hashFiles('trivy-results.sarif') != ''
         with:
           sarif_file: 'trivy-results.sarif'
       - name: Run Trivy on Dockerfile
-        run: |
-          trivy config --format table --exit-code 1 --severity CRITICAL,HIGH ./backend/Dockerfile || true
+        run: trivy config --format table --exit-code 1 --severity CRITICAL,HIGH ./backend/Dockerfile || true
 
   bandit:
     name: Bandit - Python Security
@@ -201,33 +197,23 @@ jobs:
           python-version: "3.11"
       - name: Install Bandit
         run: pip install bandit[toml]
-      - name: Run Bandit scan (JSON report)
+      - name: Run Bandit scan
         run: |
-          bandit -r backend/ \
-            -f json \
-            -o bandit-report.json \
-            --severity-level medium \
-            --confidence-level medium \
-            --exclude backend/tests/,backend/migrations/ \
-            || true
+          bandit -r backend/ -f json -o bandit-report.json \
+            --severity-level medium --confidence-level medium \
+            --exclude backend/tests/,backend/migrations/ || true
       - name: Show Bandit results
         run: |
-          bandit -r backend/ \
-            -f screen \
-            --severity-level medium \
-            --confidence-level medium \
+          bandit -r backend/ -f screen \
+            --severity-level medium --confidence-level medium \
             --exclude backend/tests/,backend/migrations/
-      # fail the build on any HIGH-severity Bandit findings
       - name: Fail on high-severity findings
         run: |
           python - <<'EOF'
           import json, sys
           with open("bandit-report.json") as f:
               report = json.load(f)
-          high = [
-              r for r in report.get("results", [])
-              if r["issue_severity"] == "HIGH"
-          ]
+          high = [r for r in report.get("results", []) if r["issue_severity"] == "HIGH"]
           if high:
               print(f" {len(high)} HIGH-severity Bandit finding(s):")
               for r in high:
@@ -255,23 +241,17 @@ jobs:
         run: pip install safety
       - name: Run Safety check
         run: |
-          safety check \
-            -r backend/requirements.txt \
-            --json \
-            --output safety-report.json \
-            --continue-on-error || true
+          safety check -r backend/requirements.txt \
+            --json --output safety-report.json --continue-on-error || true
       - name: Show Safety results
-        run: |
-          safety check \
-            -r backend/requirements.txt \
-            --full-report \
-            --continue-on-error
+        run: safety check -r backend/requirements.txt --full-report --continue-on-error
       - name: Upload Safety report
         uses: actions/upload-artifact@v4
         if: always()
         with:
           name: safety-report
           path: safety-report.json
+
   gitleaks:
     name: Gitleaks - Secret Detection
     runs-on: ubuntu-latest
@@ -309,7 +289,7 @@ jobs:
         with:
           category: "/language:python"
 
-  # ── Build & Integration (gate on test + security) ────────────────────────
+  # ── Build (gates on test + all security) ─────────────────────────────────
 
   build:
     name: Build Docker Image
@@ -327,91 +307,24 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
-  # integration:
-  #   name: Integration Test
-  #   runs-on: ubuntu-latest
-  #   needs: build
-  #   steps:
-  #     - uses: actions/checkout@v4
-  #     - name: Create environment file
-  #       run: |
-  #         cat > .env << EOF
-  #         POSTGRES_DB=datapulse
-  #         POSTGRES_USER=datapulse
-  #         POSTGRES_PASSWORD=${{ secrets.CI_POSTGRES_PASSWORD }}
-  #         DATABASE_URL=postgresql://datapulse:${{ secrets.CI_POSTGRES_PASSWORD }}@db:5432/datapulse
-  #         ANALYTICS_DB=datapulse_analytics
-  #         ANALYTICS_USER=analytics
-  #         ANALYTICS_PASSWORD=${{ secrets.CI_ANALYTICS_PASSWORD }}
-  #         TARGET_DB_URL=postgresql://analytics:${{ secrets.CI_ANALYTICS_PASSWORD }}@db-analytics:5432/datapulse_analytics
-  #         SECRET_KEY=${{ secrets.CI_SECRET_KEY }}
-  #         DJANGO_SETTINGS_MODULE=datapulse.settings.dev
-  #         DEBUG=True
-  #         ACCESS_TOKEN_EXPIRE_MINUTES=1440
-  #         GRAFANA_USER=admin
-  #         GRAFANA_PASSWORD=${{ secrets.CI_GRAFANA_PASSWORD }}
-  #         EOF
-  #     - name: Start services
-  #       run: docker compose up -d --build
-  #     - name: Wait for services to initialize
-  #       run: |
-  #         echo "Waiting 60 seconds for services to fully initialize..."
-  #         sleep 60
-  #     - name: Wait for backend health
-  #       run: |
-  #         echo "Checking backend health..."
-  #         for i in {1..20}; do
-  #           if curl -sf http://localhost:8000/health/; then
-  #             echo "Backend is healthy"
-  #             break
-  #           fi
-  #           echo "Attempt $i/20 - retrying in 15s..."
-  #           sleep 15
-  #           if [ $i -eq 20 ]; then
-  #             echo "Backend failed to respond after additional 5 minutes"
-  #             docker compose logs backend
-  #             exit 1
-  #           fi
-  #         done
-  #     - name: Run smoke tests
-  #       run: |
-  #         sleep 5  # Brief pause before tests
-  #         curl -sf http://localhost:8000/health/
-  #         echo "✓ Health check passed"
-  #         sleep 3  # Pause between requests
-  #         curl -sf http://localhost:8000/docs > /dev/null
-  #         echo "✓ API docs accessible"
-  #     - name: Show logs on failure
-  #       if: failure()
-  #       run: |
-  #         echo "=== Backend Logs ==="
-  #         docker compose logs backend
-  #         echo "=== Database Logs ==="
-  #         docker compose logs db
-  #     - name: Cleanup
-  #       if: always()
-  #       run: docker compose down -v
-
+  # ── Summary ───────────────────────────────────────────────────────────────
 
   summary:
     name: CI Summary
     runs-on: ubuntu-latest
-    needs: [trivy, bandit, safety, gitleaks, codeql]
+    needs: [build, frontend-build]
     if: always()
     steps:
       - name: Write summary
         run: |
-          echo "## CI Results" >> $GITHUB_STEP_SUMMARY
+          echo "## CI Results — PR #${{ github.event.pull_request.number }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Base branch:** \`${{ github.base_ref }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "**Head branch:** \`${{ github.head_ref }}\`" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "### Security Scans" >> $GITHUB_STEP_SUMMARY
-          echo "- Trivy: Container & secrets scan (pinned SHA)" >> $GITHUB_STEP_SUMMARY
-          echo "- Bandit: Python security scan (blocks on HIGH)" >> $GITHUB_STEP_SUMMARY
-          echo "- Safety: Dependency check" >> $GITHUB_STEP_SUMMARY
-          echo "- Gitleaks: Secret detection (pinned SHA)" >> $GITHUB_STEP_SUMMARY
-          echo "- CodeQL: SAST analysis" >> $GITHUB_STEP_SUMMARY
+          echo "- Trivy, Bandit (blocks HIGH), Safety, Gitleaks, CodeQL" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "### Pipeline" >> $GITHUB_STEP_SUMMARY
-          echo "- Pre-commit → Lint → Test (≥75% cov) → Build → Integration → Deploy (main only)" >> $GITHUB_STEP_SUMMARY
-          echo "- Frontend: Lint → Test → Build" >> $GITHUB_STEP_SUMMARY
+          echo "Pre-commit → Lint → Test (≥75%) → Security → Build" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "Check individual job results for details." >> $GITHUB_STEP_SUMMARY
+          echo "_CD deploys automatically after this PR is merged._" >> $GITHUB_STEP_SUMMARY
