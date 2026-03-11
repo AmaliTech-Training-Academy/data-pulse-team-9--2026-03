@@ -17,3 +17,19 @@ class Schedule(models.Model):
 
     def __str__(self):
         return f"Schedule for {self.dataset.name}: {self.cron_expression}"
+
+
+class AlertConfig(models.Model):
+    """Configuration for quality alerts on a dataset."""
+
+    dataset = models.OneToOneField(Dataset, on_delete=models.CASCADE, related_name="alert_config")
+    threshold = models.IntegerField(default=80)  # 0-100
+    is_alert_active = models.BooleanField(default=False)  # Tracks if an alert email has been sent and not yet recovered
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        db_table = "alert_configs"
+
+    def __str__(self):
+        return f"Alert for {self.dataset.name} (Threshold: {self.threshold})"

@@ -39,6 +39,7 @@ INSTALLED_APPS = [
     "reports",
     "django_celery_beat",
     "schedule",
+    "core",
 ]
 
 
@@ -142,6 +143,18 @@ PASSWORD_HASHERS = [
 
 # --- File Uploads ---
 UPLOAD_DIR = env("UPLOAD_DIR", default=os.path.join(BASE_DIR, "uploads"))
+
+# --- Email Settings ---
+EMAIL_BACKEND = env("EMAIL_BACKEND", default="django.core.mail.backends.smtp.EmailBackend")
+EMAIL_HOST = env("EMAIL_HOST", default="localhost")
+EMAIL_PORT = env("EMAIL_PORT", default=1025)
+EMAIL_USE_TLS = env.bool("EMAIL_USE_TLS", default=False)
+EMAIL_HOST_USER = env("EMAIL_HOST_USER", default="")
+EMAIL_HOST_PASSWORD = env("EMAIL_HOST_PASSWORD", default="")
+DEFAULT_FROM_EMAIL = env("DEFAULT_FROM_EMAIL", default="noreply@datapulse.com")
+
+# --- Frontend URL for report links ---
+FRONTEND_URL = env("FRONTEND_URL", default="http://localhost:3000")
 
 # --- Celery (async task queue) ---
 CELERY_BROKER_URL = env("CELERY_BROKER_URL", default="redis://localhost:6379/0")

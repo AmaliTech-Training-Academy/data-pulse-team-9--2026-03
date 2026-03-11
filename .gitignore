@@ -34,6 +34,10 @@ __init__.py
 node_modules/
 dist/
 
+#data engineering
+logs
+data-engineering/migrations/.migration_state.json
+
 
 # Terraform
 **/.terraform/

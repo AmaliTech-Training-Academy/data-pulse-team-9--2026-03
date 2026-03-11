@@ -55,10 +55,10 @@ class CheckResultResponseSerializer(serializers.Serializer):
 
 
 class QualityScoreResponseSerializer(serializers.Serializer):
-    id = serializers.IntegerField()
+    id = serializers.IntegerField(required=False, allow_null=True)
     dataset_id = serializers.IntegerField(source="dataset.id")
-    score = serializers.FloatField()
-    total_rules = serializers.IntegerField()
-    passed_rules = serializers.IntegerField()
-    failed_rules = serializers.IntegerField()
-    checked_at = serializers.DateTimeField()
+    score = serializers.FloatField(required=False, allow_null=True)
+    total_rules = serializers.IntegerField(required=False, allow_null=True)
+    passed_rules = serializers.IntegerField(required=False, allow_null=True)
+    failed_rules = serializers.IntegerField(required=False, allow_null=True)
+    checked_at = serializers.DateTimeField(required=False, allow_null=True)
