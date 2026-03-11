@@ -22,7 +22,9 @@ def api_client():
 @pytest.mark.django_db
 class TestScheduleAPI:
     def test_create_schedule_success(self, api_client):
-        user = User.objects.create_user(email="test@example.com", full_name="Test User", password="password")
+        user = User.objects.create_user(
+            email="test@example.com", full_name="Test User", password="password"  # pragma: allowlist secret
+        )
         api_client.force_authenticate(user=user)
 
         dataset = Dataset.objects.create(name="Test Dataset", uploaded_by=user)
@@ -36,7 +38,9 @@ class TestScheduleAPI:
         assert PeriodicTask.objects.filter(name=f"Data Quality Check - Dataset {dataset.id}").exists()
 
     def test_pause_schedule(self, api_client):
-        user = User.objects.create_user(email="pause@example.com", full_name="Pause User", password="password")
+        user = User.objects.create_user(
+            email="pause@example.com", full_name="Pause User", password="password"  # pragma: allowlist secret
+        )
         api_client.force_authenticate(user=user)
         dataset = Dataset.objects.create(name="Pause Dataset", uploaded_by=user)
 
@@ -54,7 +58,9 @@ class TestScheduleAPI:
         assert schedule.periodic_task.enabled is False
 
     def test_resume_schedule(self, api_client):
-        user = User.objects.create_user(email="resume@example.com", full_name="Resume User", password="password")
+        user = User.objects.create_user(
+            email="resume@example.com", full_name="Resume User", password="password"  # pragma: allowlist secret
+        )
         api_client.force_authenticate(user=user)
         dataset = Dataset.objects.create(name="Resume Dataset", uploaded_by=user)
 
@@ -76,7 +82,9 @@ class TestScheduleAPI:
         assert schedule.periodic_task.enabled is True
 
     def test_delete_schedule(self, api_client):
-        user = User.objects.create_user(email="delete@example.com", full_name="Delete User", password="password")
+        user = User.objects.create_user(
+            email="delete@example.com", full_name="Delete User", password="password"  # pragma: allowlist secret
+        )
         api_client.force_authenticate(user=user)
         dataset = Dataset.objects.create(name="Delete Dataset", uploaded_by=user)
 
@@ -95,7 +103,9 @@ class TestScheduleAPI:
         assert not PeriodicTask.objects.filter(id=periodic_task_id).exists()
 
     def test_list_schedules(self, api_client):
-        user = User.objects.create_user(email="list@example.com", full_name="List User", password="password")
+        user = User.objects.create_user(
+            email="list@example.com", full_name="List User", password="password"  # pragma: allowlist secret
+        )
         api_client.force_authenticate(user=user)
         dataset = Dataset.objects.create(name="List Dataset", uploaded_by=user)
 
@@ -113,7 +123,9 @@ class TestScheduleAPI:
         assert response.data["results"][0]["is_active"] is True
 
     def test_run_scheduled_checks_task(self, api_client):
-        user = User.objects.create_user(email="task@example.com", full_name="Task User", password="password")
+        user = User.objects.create_user(
+            email="task@example.com", full_name="Task User", password="password"  # pragma: allowlist secret
+        )
         dataset = Dataset.objects.create(name="Task Dataset", uploaded_by=user, file_type="csv")
 
         # Create a dummy CSV file
@@ -143,7 +155,9 @@ class TestScheduleAPI:
             os.remove(csv_file_path)
 
     def test_create_schedule_invalid_cron(self, api_client):
-        user = User.objects.create_user(email="test2@example.com", full_name="Test User 2", password="password")
+        user = User.objects.create_user(
+            email="test2@example.com", full_name="Test User 2", password="password"  # pragma: allowlist secret
+        )
         api_client.force_authenticate(user=user)
 
         dataset = Dataset.objects.create(name="Test Dataset 2", uploaded_by=user)
@@ -156,7 +170,9 @@ class TestScheduleAPI:
         assert response.data["code"] == "validation_error"
 
     def test_create_schedule_wrong_parts_count(self, api_client):
-        user = User.objects.create_user(email="test3@example.com", full_name="Test User 3", password="password")
+        user = User.objects.create_user(
+            email="test3@example.com", full_name="Test User 3", password="password"  # pragma: allowlist secret
+        )
         api_client.force_authenticate(user=user)
 
         dataset = Dataset.objects.create(name="Test Dataset 3", uploaded_by=user)

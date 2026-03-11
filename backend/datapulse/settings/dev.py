@@ -15,6 +15,8 @@ CELERY_TASK_EAGER_PROPAGATES = True
 CORS_ALLOW_ALL_ORIGINS = True
 CORS_ALLOW_CREDENTIALS = True
 
+# Use console email backend for development to see emails in logs
+EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
 # Disable static file compression in development
 STORAGES = {
     "default": {
