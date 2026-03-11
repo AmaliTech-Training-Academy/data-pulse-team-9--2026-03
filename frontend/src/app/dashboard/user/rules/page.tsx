@@ -220,8 +220,8 @@ export default function UserRulesPage() {
       {/* Header */}
       <div className="flex justify-between items-center">
         <div>
-          <h2 className="text-2xl font-bold text-primary">Validation Rules</h2>
-          <p className="text-gray-500">
+          <h2 className="text-xl font-black text-[#08293c]">VALIDATION RULES</h2>
+          <p className="text-[12px] font-medium text-gray-400 mt-1">
             View and manage validation rules for your datasets.
           </p>
         </div>
@@ -237,9 +237,9 @@ export default function UserRulesPage() {
             });
             setIsAddModalOpen(true);
           }}
-          className="flex items-center gap-2 px-4 py-2 bg-accent text-white rounded-lg hover:opacity-90 shadow-sm transition-all"
+          className="flex items-center gap-2 px-5 py-2 bg-[#ff5a00] text-white text-[12px] font-bold rounded-xl hover:shadow-lg hover:shadow-[#ff5a00]/20 transition-all uppercase tracking-widest"
         >
-          <Plus size={18} />
+          <Plus size={16} />
           New Rule
         </button>
       </div>
@@ -339,22 +339,22 @@ export default function UserRulesPage() {
               <table className="w-full text-left border-collapse min-w-[1000px]">
                 <thead>
                   <tr className="bg-gray-50 border-b border-gray-200">
-                    <th className="py-4 px-6 text-xs font-bold text-primary uppercase tracking-wider">
+                    <th className="py-4 px-6 text-[10px] font-black text-[#08293c] uppercase tracking-widest">
                       Rule Information
                     </th>
-                    <th className="py-4 px-6 text-xs font-bold text-primary uppercase tracking-wider">
+                    <th className="py-4 px-6 text-[10px] font-black text-[#08293c] uppercase tracking-widest">
                       Type &amp; Parameters
                     </th>
-                    <th className="py-4 px-6 text-xs font-bold text-primary uppercase tracking-wider">
+                    <th className="py-4 px-6 text-[10px] font-black text-[#08293c] uppercase tracking-widest text-center">
                       Format
                     </th>
-                    <th className="py-4 px-6 text-xs font-bold text-primary uppercase tracking-wider">
+                    <th className="py-4 px-6 text-[10px] font-black text-[#08293c] uppercase tracking-widest">
                       Severity
                     </th>
-                    <th className="py-4 px-6 text-xs font-bold text-primary uppercase tracking-wider">
+                    <th className="py-4 px-6 text-[10px] font-black text-[#08293c] uppercase tracking-widest text-center">
                       Status
                     </th>
-                    <th className="py-4 px-6 text-xs font-bold text-primary uppercase tracking-wider text-right">
+                    <th className="py-4 px-6 text-[10px] font-black text-[#08293c] uppercase tracking-widest text-right">
                       Actions
                     </th>
                   </tr>
@@ -368,7 +368,7 @@ export default function UserRulesPage() {
                       >
                         <td className="py-4 px-6">
                           <div>
-                            <span className="font-semibold text-primary">
+                            <span className="text-sm font-black text-[#08293c]">
                               {rule.name}
                             </span>
                             <div className="text-sm text-gray-500 mt-1 flex items-center gap-1.5">
@@ -411,9 +411,9 @@ export default function UserRulesPage() {
                             {rule.severity}
                           </span>
                         </td>
-                        <td className="py-4 px-6">
+                        <td className="py-4 px-6 text-center">
                           <span
-                            className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold border ${getStatusColor(rule.is_active)}`}
+                            className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-black border uppercase tracking-widest ${getStatusColor(rule.is_active)}`}
                           >
                             <span className="w-1.5 h-1.5 rounded-full bg-current"></span>
                             {rule.is_active ? "Active" : "Disabled"}

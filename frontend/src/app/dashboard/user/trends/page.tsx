@@ -135,8 +135,8 @@ export default function TrendsPage() {
       {/* Header & Filters */}
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
         <div>
-          <h2 className="text-2xl font-bold text-primary">Quality Trends</h2>
-          <p className="text-gray-500">
+          <h2 className="text-xl font-black text-[#08293c]">QUALITY TRENDS</h2>
+          <p className="text-[12px] font-medium text-gray-400 mt-1">
             Track and compare dataset quality scores over time.
           </p>
         </div>
@@ -201,7 +201,7 @@ export default function TrendsPage() {
           </div>
         )}
         <div className="flex items-center justify-between mb-8">
-          <h3 className="text-lg font-bold text-primary">Score Comparison</h3>
+          <h3 className="text-sm font-black text-[#08293c] uppercase tracking-widest">Score Comparison</h3>
           <button
             className="p-2 text-gray-500 hover:text-accent hover:bg-gray-50 rounded-md transition-colors border border-gray-200"
             title="Export Chart"
@@ -286,19 +286,19 @@ export default function TrendsPage() {
       {/* Historical Scores Table */}
       <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
         <div className="p-6 border-b border-gray-100">
-          <h3 className="text-lg font-bold text-primary">Score History Log</h3>
+          <h3 className="text-sm font-black text-[#08293c] uppercase tracking-widest">Score History Log</h3>
         </div>
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse">
             <thead>
               <tr className="bg-gray-50 border-b border-gray-200">
-                <th className="py-4 px-6 text-xs font-bold text-primary uppercase tracking-wider">
+                <th className="py-4 px-6 text-[10px] font-black text-[#08293c] uppercase tracking-widest">
                   Date & Time
                 </th>
-                <th className="py-4 px-6 text-xs font-bold text-primary uppercase tracking-wider">
+                <th className="py-4 px-6 text-[10px] font-black text-[#08293c] uppercase tracking-widest">
                   Dataset Name
                 </th>
-                <th className="py-4 px-6 text-xs font-bold text-primary uppercase tracking-wider">
+                <th className="py-4 px-6 text-[10px] font-black text-[#08293c] uppercase tracking-widest">
                   Quality Score
                 </th>
               </tr>
@@ -321,7 +321,7 @@ export default function TrendsPage() {
                           ? new Date(record.checked_at).toLocaleString()
                           : "N/A"}
                       </td>
-                      <td className="py-4 px-6 font-semibold text-primary">
+                      <td className="py-4 px-6 text-sm font-black text-[#08293c]">
                         {dataset?.name || "Unknown Dataset"}
                       </td>
                       <td className="py-4 px-6">

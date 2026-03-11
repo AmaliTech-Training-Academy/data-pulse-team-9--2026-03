@@ -18,6 +18,8 @@ import {
   Menu,
   X,
   ShieldCheck,
+  ChevronLeft,
+  ChevronRight,
 } from "lucide-react";
 
 export default function AdminDashboardLayout({
@@ -27,6 +29,7 @@ export default function AdminDashboardLayout({
 }) {
   const pathname = usePathname();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isCollapsed, setIsCollapsed] = useState(false);
 
   const navigation = [
     { name: "Dashboard", href: "/dashboard/admin", icon: LayoutDashboard },
@@ -79,26 +82,29 @@ export default function AdminDashboardLayout({
   return (
     <div className="flex h-screen bg-background text-foreground overflow-hidden">
       {/* Sidebar - Desktop */}
-      <aside className="hidden lg:flex flex-col w-64 bg-primary text-white shadow-xl transition-all duration-300 z-50">
-        <div className="flex items-center gap-3 p-6 border-b border-white/10">
-          <Image
-            src="/images/logo.png"
-            alt="DataPulse Logo"
-            width={32}
-            height={32}
-            className="flex-shrink-0"
-          />
-          <div className="flex flex-col">
-            <span className="text-xl font-bold tracking-wide leading-none">
-              DataPulse
-            </span>
-            <span className="text-xs text-accent font-semibold tracking-wider uppercase mt-1">
-              Admin Panel
-            </span>
-          </div>
+      <aside
+        className={`hidden lg:flex flex-col bg-[#08293c] text-white shadow-xl transition-all duration-300 z-50 overflow-hidden h-full ${
+          isCollapsed ? "w-20" : "w-64"
+        }`}
+      >
+        <div className={`flex ${isCollapsed ? "flex-col justify-center py-2 gap-1.5" : "flex-row justify-between px-5"} items-center border-b border-white/5 h-20 min-h-[5rem]`}>
+          <Link href="/" className="flex items-center justify-center">
+            <img
+              src="/images/logo.png"
+              alt="DataPulse Logo"
+              className={`${isCollapsed ? "h-6" : "h-7"} w-auto object-contain flex-shrink-0 transition-all`}
+            />
+          </Link>
+          <button
+            onClick={() => setIsCollapsed(!isCollapsed)}
+            className="p-1.5 hover:bg-white/5 rounded-lg text-gray-400 hover:text-white transition-colors"
+            title={isCollapsed ? "Expand Sidebar" : "Collapse Sidebar"}
+          >
+            {isCollapsed ? <ChevronRight size={16} /> : <ChevronLeft size={18} />}
+          </button>
         </div>
 
-        <nav className="flex-1 overflow-y-auto py-6 px-4 space-y-2">
+        <nav className="flex-1 overflow-y-auto py-6 px-4 space-y-1.5 sidebar-scrollbar scroll-smooth">
           {navigation.map((item) => {
             const isActive = pathname === item.href;
             const Icon = item.icon;
@@ -107,29 +113,43 @@ export default function AdminDashboardLayout({
               <Link
                 key={item.href}
                 href={item.href}
-                className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-all ${
+                className={`flex items-center gap-3 px-3.5 py-3 rounded-xl transition-all relative group ${
                   isActive
-                    ? "bg-accent text-white font-medium shadow-md shadow-accent/20"
-                    : "text-gray-300 hover:bg-white/10 hover:text-white"
+                    ? "bg-[#ff5a00] text-white shadow-lg shadow-[#ff5a00]/20"
+                    : "text-gray-400 hover:bg-white/5 hover:text-white"
                 }`}
               >
                 <Icon
                   size={20}
-                  className={isActive ? "text-white" : "text-gray-400"}
+                  className={`flex-shrink-0 transition-colors ${isActive ? "text-white" : "group-hover:text-white"}`}
                 />
-                {item.name}
+                {!isCollapsed && (
+                  <span className="text-[13px] font-bold truncate animate-in fade-in slide-in-from-left-1">
+                    {item.name}
+                  </span>
+                )}
+                {isCollapsed && (
+                  <div className="absolute left-full ml-4 px-2 py-1 bg-[#08293c] text-white text-[10px] font-bold rounded opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity z-[100] whitespace-nowrap shadow-xl border border-white/10 uppercase tracking-widest">
+                    {item.name}
+                  </div>
+                )}
               </Link>
             );
           })}
         </nav>
 
-        <div className="p-4 border-t border-white/10">
+        <div className="p-4 border-t border-white/5">
           <Link
             href="/login"
-            className="flex items-center gap-3 px-4 py-3 text-gray-300 hover:text-red-400 hover:bg-white/5 rounded-lg transition-colors w-full"
+            className="flex items-center gap-3 px-3.5 py-3 text-gray-400 hover:text-red-400 hover:bg-red-500/10 rounded-xl transition-all w-full group overflow-hidden"
           >
-            <LogOut size={20} />
-            Logout
+            <LogOut size={20} className="flex-shrink-0" />
+            {!isCollapsed && <span className="text-[11px] font-bold uppercase tracking-widest truncate">Logout</span>}
+            {isCollapsed && (
+              <div className="absolute left-full ml-4 px-2 py-1 bg-[#08293c] text-white text-[10px] font-bold rounded opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity z-[100] whitespace-nowrap shadow-xl border border-white/10 uppercase tracking-widest">
+                Logout
+              </div>
+            )}
           </Link>
         </div>
       </aside>
@@ -246,10 +266,38 @@ export default function AdminDashboardLayout({
         )}
 
         {/* Child Pages Content Area */}
-        <main className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8 bg-background scroll-smooth">
+        <main className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8 bg-background scroll-smooth custom-scrollbar">
           <div className="max-w-7xl mx-auto h-full">{children}</div>
         </main>
       </div>
+
+      <style jsx global>{`
+        .custom-scrollbar::-webkit-scrollbar {
+          width: 6px;
+          height: 6px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+          background: transparent;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+          background: rgba(0, 0, 0, 0.05);
+          border-radius: 10px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+          background: rgba(0, 0, 0, 0.1);
+        }
+
+        .sidebar-scrollbar::-webkit-scrollbar {
+          width: 4px;
+        }
+        .sidebar-scrollbar::-webkit-scrollbar-track {
+          background: transparent;
+        }
+        .sidebar-scrollbar::-webkit-scrollbar-thumb {
+          background: rgba(255, 255, 255, 0.1);
+          border-radius: 10px;
+        }
+      `}</style>
     </div>
   );
 }
