@@ -1,5 +1,7 @@
 """Check result serializers matching original Pydantic schemas."""
 
+import json
+
 from rest_framework import serializers
 
 
@@ -32,8 +34,6 @@ class CheckResultResponseSerializer(serializers.Serializer):
 
     def get_sample_rows(self, obj):
         try:
-            import json
-
             if not obj.details:
                 return []
             data = json.loads(obj.details)

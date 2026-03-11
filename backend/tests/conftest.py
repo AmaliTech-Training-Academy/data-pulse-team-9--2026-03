@@ -1,5 +1,6 @@
 """Test fixtures for pytest-django."""
 
+import json
 import sys
 
 import pytest
@@ -71,7 +72,6 @@ def sample_csv_content():
 @pytest.fixture
 def sample_json_content():
     """Return a sample JSON byte string."""
-    import json
 
     data = [
         {"id": 1, "name": "Apple", "price": 1.2},

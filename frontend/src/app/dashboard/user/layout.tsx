@@ -3,7 +3,8 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import Image from "next/image";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { AuthService } from "@/services/auth";
 import {
   LayoutDashboard,
   Database,
@@ -42,6 +43,23 @@ export default function UserDashboardLayout({
     { name: "Trends", href: "/dashboard/user/trends", icon: TrendingUp },
     { name: "Settings", href: "/dashboard/user/settings", icon: Settings },
   ];
+
+  const [user, setUser] = useState<{ full_name: string; email: string } | null>(null);
+
+  useEffect(() => {
+    const fetchUser = async () => {
+      const token = localStorage.getItem("token");
+      if (token) {
+        try {
+          const userData = await AuthService.getMe(token);
+          setUser(userData);
+        } catch (err) {
+          console.error("Failed to fetch user profile:", err);
+        }
+      }
+    };
+    fetchUser();
+  }, []);
 
   const getPageTitle = () => {
     const currentNavItem =
@@ -120,12 +138,12 @@ export default function UserDashboardLayout({
             <div className="hidden sm:flex items-center gap-3 mr-4">
               <div className="text-right">
                 <p className="text-sm font-medium text-primary leading-tight">
-                  Sarah Designer
+                  {user?.full_name || "User"}
                 </p>
-                <p className="text-xs text-gray-500">sarah@amalitech.com</p>
+                <p className="text-xs text-gray-500">{user?.email || "loading..."}</p>
               </div>
               <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold overflow-hidden border-2 border-accent">
-                SD
+                {user?.full_name?.charAt(0) || "U"}
               </div>
             </div>
           </div>
