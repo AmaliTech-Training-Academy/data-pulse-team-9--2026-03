@@ -4,6 +4,7 @@ from checks.serializers import CheckResultResponseSerializer, QualityScoreRespon
 from datapulse.exceptions import DatasetNotFoundException
 from datapulse.pagination import DataPulsePagination
 from datasets.models import Dataset
+from django.core.cache import cache
 from drf_spectacular.types import OpenApiTypes
 from drf_spectacular.utils import OpenApiParameter, extend_schema
 from reports.permissions import IsDatasetOwnerOrAdmin
@@ -124,5 +125,16 @@ class DashboardView(APIView):
         summary="Get dashboard overview",
     )
     def get(self, request):
+        cache_key = f"dashboard_user_{request.user.id}"
+        cached_data = cache.get(cache_key)
+
+        if cached_data is not None:
+            return Response(cached_data)
+
         latest_scores = report_service.get_dashboard_summary(request.user)
-        return Response(list(QualityScoreResponseSerializer(latest_scores, many=True).data))
+        data = list(QualityScoreResponseSerializer(latest_scores, many=True).data)
+
+        # Cache for 5 minutes
+        cache.set(cache_key, data, timeout=60 * 5)
+
+        return Response(data)
