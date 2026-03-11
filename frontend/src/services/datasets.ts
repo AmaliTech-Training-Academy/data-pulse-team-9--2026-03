@@ -1,24 +1,24 @@
 import { fetchApi } from "./api";
 
 export interface Dataset {
-    id: number;
-    name: string;
-    file_type: string;
-    row_count: number;
-    column_count: number;
-    column_names: string[] | null;
-    status: string;
-    uploaded_at: string;
+  id: number;
+  name: string;
+  file_type: string;
+  row_count: number;
+  column_count: number;
+  column_names: string[] | null;
+  status: string;
+  uploaded_at: string;
 }
 
 export async function getDatasets(userId?: number): Promise<Dataset[]> {
-    const endpoint = userId ? `/datasets/?uploaded_by=${userId}` : "/datasets/";
-    const response = await fetchApi(endpoint);
-    if (response && response.results && Array.isArray(response.results)) {
-        return response.results;
-    }
-    if (Array.isArray(response)) {
-        return response;
-    }
-    return [];
+  const endpoint = userId ? `/datasets/?uploaded_by=${userId}` : "/datasets/";
+  const response = await fetchApi(endpoint);
+  if (response && response.results && Array.isArray(response.results)) {
+    return response.results;
+  }
+  if (Array.isArray(response)) {
+    return response;
+  }
+  return [];
 }
