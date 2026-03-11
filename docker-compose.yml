@@ -32,7 +32,7 @@ services:
     networks:
       - datapulse-network
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER}"]
+      test: [ "CMD-SHELL", "pg_isready -U ${POSTGRES_USER}" ]
       interval: 5s
       timeout: 5s
       retries: 5
@@ -52,7 +52,7 @@ services:
     networks:
       - datapulse-network
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${ANALYTICS_USER}"]
+      test: [ "CMD-SHELL", "pg_isready -U ${ANALYTICS_USER} -d ${ANALYTICS_DB}" ]
       interval: 5s
       timeout: 5s
       retries: 5
@@ -66,7 +66,7 @@ services:
     networks:
       - datapulse-network
     healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
+      test: [ "CMD", "redis-cli", "ping" ]
       interval: 5s
       timeout: 3s
       retries: 5
@@ -76,7 +76,7 @@ services:
   # Django + Gunicorn, Celery worker, Celery beat
   # -----------------------------------------------------------
   backend:
-    profiles: [backend, all]
+    profiles: [ backend, all ]
     build:
       context: ./backend
       dockerfile: Dockerfile
@@ -106,13 +106,13 @@ services:
     networks:
       - datapulse-network
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8000/health/"]
+      test: [ "CMD", "curl", "-f", "http://localhost:8000/health/" ]
       interval: 30s
       timeout: 10s
       retries: 3
 
   celery-worker:
-    profiles: [backend, all]
+    profiles: [ backend, all ]
     build:
       context: ./backend
       dockerfile: Dockerfile
@@ -137,7 +137,7 @@ services:
       - datapulse-network
 
   celery-beat:
-    profiles: [backend, all]
+    profiles: [ backend, all ]
     build:
       context: ./backend
       dockerfile: Dockerfile
@@ -166,13 +166,12 @@ services:
   # docker compose --profile etl run --rm etl
   # -----------------------------------------------------------
   etl:
-    profiles: [etl, all]
+    profiles: [ etl, all ]
     build:
       context: .
       dockerfile: devops/Dockerfile.pipeline
     container_name: datapulse-etl
     environment:
-      DATABASE_URL: ${DATABASE_URL}
       SOURCE_DB_URL: ${DATABASE_URL}
       TARGET_DB_URL: ${TARGET_DB_URL}
     depends_on:
@@ -189,13 +188,12 @@ services:
   # Initialization service to populate mock data on startup
   # -----------------------------------------------------------
   db-seed:
-    profiles: [backend, all]
+    profiles: [ backend, all ]
     build:
       context: .
       dockerfile: devops/Dockerfile.pipeline
     container_name: datapulse-db-seed
     environment:
-      DATABASE_URL: ${DATABASE_URL}
       SOURCE_DB_URL: ${DATABASE_URL}
       TARGET_DB_URL: ${TARGET_DB_URL}
       PYTHONPATH: /pipeline
@@ -210,7 +208,7 @@ services:
   # Profile: streamlit
   # -----------------------------------------------------------
   streamlit:
-    profiles: [streamlit, all]
+    profiles: [ streamlit, all ]
     build:
       context: ./data-engineering
       dockerfile: Dockerfile
@@ -231,7 +229,7 @@ services:
   # Prometheus, Grafana, Loki, Promtail, Tempo
   # -----------------------------------------------------------
   prometheus:
-    profiles: [monitoring, all]
+    profiles: [ monitoring, all ]
     image: prom/prometheus:latest
     container_name: datapulse-prometheus
     ports:
@@ -248,7 +246,7 @@ services:
       - datapulse-network
 
   loki:
-    profiles: [monitoring, all]
+    profiles: [ monitoring, all ]
     image: grafana/loki:latest
     container_name: datapulse-loki
     ports:
@@ -262,7 +260,7 @@ services:
       - datapulse-network
 
   promtail:
-    profiles: [monitoring, all]
+    profiles: [ monitoring, all ]
     image: grafana/promtail:latest
     container_name: datapulse-promtail
     volumes:
@@ -277,7 +275,7 @@ services:
       - datapulse-network
 
   tempo:
-    profiles: [monitoring, all]
+    profiles: [ monitoring, all ]
     image: grafana/tempo:latest
     container_name: datapulse-tempo
     ports:
@@ -293,7 +291,7 @@ services:
       - datapulse-network
 
   grafana:
-    profiles: [monitoring, all]
+    profiles: [ monitoring, all ]
     image: grafana/grafana:latest
     container_name: datapulse-grafana
     environment:
@@ -325,9 +323,9 @@ volumes:
   loki_data:
   tempo_data:
 
-# =============================================================
-# Networks
-# =============================================================
+    # =============================================================
+    # Networks
+    # =============================================================
 networks:
   datapulse-network:
     driver: bridge
