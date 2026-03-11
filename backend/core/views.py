@@ -27,6 +27,7 @@ class MetricsProxyView(APIView):
     """Prometheus Metrics Endpoint."""
 
     permission_classes = [AllowAny]
+    throttle_classes = []
 
     @extend_schema(
         responses={200: str},
@@ -41,6 +42,7 @@ class HealthCheckView(APIView):
     """Robust Health check endpoint."""
 
     permission_classes = [AllowAny]
+    throttle_classes = []
 
     @extend_schema(
         responses={200: dict, 503: dict},
