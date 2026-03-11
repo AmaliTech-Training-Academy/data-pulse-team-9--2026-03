@@ -88,9 +88,17 @@ class DatasetListView(generics.ListAPIView):
         return super().get(request, *args, **kwargs)
 
     def get_queryset(self):
+        queryset = Dataset.objects.all().order_by("-uploaded_at")
+
+        # Admin can filter by uploader
         if getattr(self.request.user, "role", "USER") == "ADMIN":
-            return Dataset.objects.all().order_by("-uploaded_at")
-        return Dataset.objects.filter(uploaded_by=self.request.user).order_by("-uploaded_at")
+            uploaded_by = self.request.query_params.get("uploaded_by")
+            if uploaded_by:
+                queryset = queryset.filter(uploaded_by_id=uploaded_by)
+            return queryset
+
+        # Standard user only sees their own
+        return queryset.filter(uploaded_by=self.request.user)
 
 
 class DatasetDetailView(generics.RetrieveAPIView):
