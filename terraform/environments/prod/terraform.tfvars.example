@@ -1,0 +1,22 @@
+aws_region           = "eu-west-1"
+vpc_cidr             = "10.0.0.0/16"
+availability_zones   = ["eu-west-1a", "eu-west-1b"]
+domain_name          = "datapulse.io"
+github_repo          = "YOUR_ORG/YOUR_REPO"
+github_access_token  = "ghp_CHANGE_ME"
+dev_ec2_ip           = "1.2.3.4"    # from: cd environments/dev && terraform output public_ip
+
+# Leave as placeholders on first apply — CD will update after first push
+backend_image        = "public.ecr.aws/nginx/nginx:latest"
+etl_image            = "public.ecr.aws/nginx/nginx:latest"
+streamlit_image      = "public.ecr.aws/nginx/nginx:latest"
+
+postgres_user        = "datapulse"
+postgres_password    = "CHANGE_ME"  # pragma: allowlist secret
+postgres_db          = "datapulse"
+analytics_user       = "analytics"
+analytics_password   = "CHANGE_ME"  # pragma: allowlist secret
+analytics_db         = "datapulse_analytics"
+secret_key           = "CHANGE_ME_LONG_RANDOM_STRING"  # pragma: allowlist secret
+grafana_user         = "admin"
+grafana_password     = "CHANGE_ME"  # pragma: allowlist secret
