@@ -39,6 +39,7 @@ INSTALLED_APPS = [
     "reports",
     "django_celery_beat",
     "schedule",
+    "audit",
 ]
 
 
