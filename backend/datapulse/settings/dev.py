@@ -6,13 +6,6 @@ DEBUG = env.bool("DEBUG", default=True)
 
 ALLOWED_HOSTS = ["*"]
 
-# Use SQLite for local development and testing to avoid native dependencies
-DATABASES = {
-    "default": {
-        "ENGINE": "django.db.backends.sqlite3",
-        "NAME": BASE_DIR / "db.sqlite3",
-    }
-}
 
 # Run Celery tasks synchronously in dev/test (no broker needed)
 CELERY_TASK_ALWAYS_EAGER = True
@@ -22,6 +15,8 @@ CELERY_TASK_EAGER_PROPAGATES = True
 CORS_ALLOW_ALL_ORIGINS = True
 CORS_ALLOW_CREDENTIALS = True
 
+# Use console email backend for development to see emails in logs
+EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
 # Disable static file compression in development
 STORAGES = {
     "default": {

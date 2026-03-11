@@ -1,7 +1,7 @@
 from celery.schedules import crontab
 from datasets.models import Dataset
 from rest_framework import serializers
-from schedule.models import Schedule
+from schedule.models import AlertConfig, Schedule
 
 
 class ScheduleSerializer(serializers.ModelSerializer):
@@ -37,4 +37,18 @@ class ScheduleSerializer(serializers.ModelSerializer):
             # Re-raise as ValidationError so it's handled by DRF
             raise serializers.ValidationError(f"Invalid cron expression: {str(e)}")
 
+        return value
+
+
+class AlertConfigSerializer(serializers.ModelSerializer):
+    dataset_id = serializers.PrimaryKeyRelatedField(queryset=Dataset.objects.all(), source="dataset", required=False)
+
+    class Meta:
+        model = AlertConfig
+        fields = ["id", "dataset_id", "threshold", "is_alert_active", "created_at", "updated_at"]
+        read_only_fields = ["id", "is_alert_active", "created_at", "updated_at"]
+
+    def validate_threshold(self, value):
+        if not (0 <= value <= 100):
+            raise serializers.ValidationError("Threshold must be between 0 and 100.")
         return value

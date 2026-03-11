@@ -8,6 +8,9 @@ class CheckResult(models.Model):
 
     dataset = models.ForeignKey("datasets.Dataset", on_delete=models.CASCADE)
     rule = models.ForeignKey("rules.ValidationRule", on_delete=models.CASCADE)
+    quality_score = models.ForeignKey(
+        "QualityScore", on_delete=models.CASCADE, related_name="results", null=True, blank=True
+    )
     passed = models.BooleanField()
     failed_rows = models.IntegerField(default=0)
     total_rows = models.IntegerField(default=0)

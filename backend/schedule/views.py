@@ -1,10 +1,11 @@
 import json
 
+from datasets.models import Dataset
 from django_celery_beat.models import CrontabSchedule, PeriodicTask
 from rest_framework import generics, status
 from rest_framework.response import Response
-from schedule.models import Schedule
-from schedule.serializers import ScheduleSerializer
+from schedule.models import AlertConfig, Schedule
+from schedule.serializers import AlertConfigSerializer, ScheduleSerializer
 
 
 class ScheduleCreateView(generics.ListCreateAPIView):
@@ -116,3 +117,45 @@ class ScheduleToggleView(generics.UpdateAPIView):
             return Response({"status": "resumed", "schedule_id": schedule.id})
 
         return Response({"detail": "Invalid action"}, status=status.HTTP_400_BAD_REQUEST)
+
+
+class AlertConfigView(generics.CreateAPIView):
+    """
+    API View to set or update an alert threshold for a dataset.
+    Endpoint: POST /alerts/{dataset_id}
+    """
+
+    queryset = AlertConfig.objects.all()
+    serializer_class = AlertConfigSerializer
+    lookup_field = "dataset_id"
+
+    def post(self, request, *args, **kwargs):
+        dataset_id = self.kwargs.get("dataset_id")
+        try:
+            dataset = Dataset.objects.get(id=dataset_id)
+        except Dataset.DoesNotExist:
+            return Response({"detail": "Dataset not found."}, status=status.HTTP_404_NOT_FOUND)
+
+        # We use update_or_create to handle both setting and updating the threshold
+        serializer = self.get_serializer(data=request.data)
+        if not serializer.is_valid():
+            return Response(
+                {
+                    "detail": "Validation error.",
+                    "code": "validation_error",
+                    "errors": serializer.errors,
+                },
+                status=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            )
+
+        threshold = serializer.validated_data["threshold"]
+        alert_config, created = AlertConfig.objects.update_or_create(dataset=dataset, defaults={"threshold": threshold})
+
+        # Set is_alert_active to False when updating/creating threshold to allow re-alerting if needed
+        # Or keep its state? Requirement implies "Repeat alerts are suppressed until ... recovers".
+        # Resetting it on threshold change is a reasonable default.
+        alert_config.is_alert_active = False
+        alert_config.save()
+
+        response_serializer = self.get_serializer(alert_config)
+        return Response(response_serializer.data, status=status.HTTP_201_CREATED if created else status.HTTP_200_OK)
