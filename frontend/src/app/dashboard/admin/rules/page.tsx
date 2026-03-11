@@ -25,7 +25,6 @@ import {
     GetRulesParams,
 } from "@/services/rules";
 import { getDatasets, Dataset } from "@/services/datasets";
-import { getUsers, User } from "@/services/user";
 
 // Status color helper adapted for is_active
 const getStatusColor = (isActive: boolean) => {
@@ -67,10 +66,7 @@ export default function AdminRulesPage() {
     });
 
     // Dynamic Parameters UI state
-    const [parsedParams, setParsedParams] = useState<Record<string, any>>({});
-
-    // For dynamic column selection
-    const availableColumns: string[] = [];
+    const [parsedParams, setParsedParams] = useState<Record<string, unknown>>({});
 
     const fetchData = useCallback(async () => {
         setLoading(true);
@@ -118,13 +114,13 @@ export default function AdminRulesPage() {
     }, [isAddModalOpen, isEditModalOpen, formData.rule_type, formData.parameters]);
 
     // Sync parsedParams back to formData.parameters
-    const updateParam = (key: string, value: unknown) => {
+    const updateParam = useCallback((key: string, value: unknown) => {
         const newParams = { ...parsedParams, [key]: value };
         setParsedParams(newParams);
         setFormData(prev => ({ ...prev, parameters: JSON.stringify(newParams) }));
-    };
+    }, [parsedParams]);
 
-    const handleAddRule = async (e: React.FormEvent) => {
+    const handleAddRule = useCallback(async (e: React.FormEvent) => {
         e.preventDefault();
         try {
             await createRule(formData);
@@ -133,9 +129,9 @@ export default function AdminRulesPage() {
         } catch (err: unknown) {
             alert(err instanceof Error ? err.message : "Failed to create rule");
         }
-    };
+    }, [formData, fetchData]);
 
-    const handleEditRule = async (e: React.FormEvent) => {
+    const handleEditRule = useCallback(async (e: React.FormEvent) => {
         e.preventDefault();
         if (!currentRule) return;
         try {
@@ -145,9 +141,9 @@ export default function AdminRulesPage() {
         } catch (err: unknown) {
             alert(err instanceof Error ? err.message : "Failed to update rule");
         }
-    };
+    }, [currentRule, formData, fetchData]);
 
-    const handleDeleteRule = async () => {
+    const handleDeleteRule = useCallback(async () => {
         if (!currentRule) return;
         try {
             await deleteRule(currentRule.id);
@@ -156,9 +152,9 @@ export default function AdminRulesPage() {
         } catch (err: unknown) {
             alert(err instanceof Error ? err.message : "Failed to delete rule");
         }
-    };
+    }, [currentRule, fetchData]);
 
-    const openEditModal = (rule: ValidationRule) => {
+    const openEditModal = useCallback((rule: ValidationRule) => {
         setCurrentRule(rule);
         setFormData({
             name: rule.name,
@@ -169,12 +165,12 @@ export default function AdminRulesPage() {
             severity: rule.severity,
         });
         setIsEditModalOpen(true);
-    };
+    }, []);
 
-    const openDeleteModal = (rule: ValidationRule) => {
+    const openDeleteModal = useCallback((rule: ValidationRule) => {
         setCurrentRule(rule);
         setIsDeleteModalOpen(true);
-    };
+    }, []);
 
     // Client-side pagination logic
     const totalItems = rules.length;
@@ -310,7 +306,7 @@ export default function AdminRulesPage() {
                                             Rule Details
                                         </th>
                                         <th className="py-4 px-6 text-xs font-bold text-primary uppercase tracking-wider">
-                                            Type & Parameters
+                                            Type &amp; Parameters
                                         </th>
                                         <th className="py-4 px-6 text-xs font-bold text-primary uppercase tracking-wider">
                                             Dataset Type
@@ -527,32 +523,17 @@ export default function AdminRulesPage() {
                                     <label className="text-sm font-semibold text-gray-700">
                                         Target Column
                                     </label>
-                                    {isAddModalOpen && availableColumns.length > 0 ? (
-                                        <select
-                                            required
-                                            className="w-full px-4 py-2 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-accent/20 focus:border-accent outline-none cursor-pointer"
-                                            value={formData.field_name}
-                                            onChange={(e) =>
-                                                setFormData({ ...formData, field_name: e.target.value })
-                                            }
-                                        >
-                                            <option value="">Select column</option>
-                                            {availableColumns.map(col => (
-                                                <option key={col} value={col}>{col}</option>
-                                            ))}
-                                        </select>
-                                    ) : (
-                                        <input
-                                            required
-                                            type="text"
-                                            placeholder="Enter column name"
-                                            className="w-full px-4 py-2 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-accent/20 focus:border-accent outline-none"
-                                            value={formData.field_name}
-                                            onChange={(e) =>
-                                                setFormData({ ...formData, field_name: e.target.value })
-                                            }
-                                        />
-                                    )}
+                                    {/* availableColumns is not used, so removed the conditional rendering */}
+                                    <input
+                                        required
+                                        type="text"
+                                        placeholder="Enter column name"
+                                        className="w-full px-4 py-2 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-accent/20 focus:border-accent outline-none"
+                                        value={formData.field_name}
+                                        onChange={(e) =>
+                                            setFormData({ ...formData, field_name: e.target.value })
+                                        }
+                                    />
                                 </div>
                                 <div className="space-y-1.5">
                                     <label className="text-sm font-semibold text-gray-700">

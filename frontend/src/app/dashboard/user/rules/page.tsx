@@ -2,20 +2,18 @@
 
 import { useState, useEffect, useCallback } from "react";
 import {
-    ClipboardCheck,
-    Plus,
-    Search,
     Filter,
-    Settings2,
+    Search,
+    Settings,
     Trash2,
-    Edit3,
-    Database,
     Activity,
-    Save,
+    Database,
+    Plus,
+    X,
     AlertCircle,
+    Save,
     ChevronLeft,
     ChevronRight,
-    X,
 } from "lucide-react";
 import {
     getRules,
@@ -28,7 +26,14 @@ import {
 } from "@/services/rules";
 import { getDatasets, Dataset } from "@/services/datasets";
 
-export default function RulesPage() {
+// Status color helper adapted for is_active
+const getStatusColor = (isActive: boolean) => {
+    return isActive
+        ? "text-success bg-success/10 border-success/20"
+        : "text-gray-500 bg-gray-100 border-gray-200";
+};
+
+export default function UserRulesPage() {
     const [rules, setRules] = useState<ValidationRule[]>([]);
     const [datasets, setDatasets] = useState<Dataset[]>([]);
     const [loading, setLoading] = useState(true);
@@ -62,7 +67,6 @@ export default function RulesPage() {
 
     // Dynamic Parameters UI state
     const [parsedParams, setParsedParams] = useState<Record<string, unknown>>({});
-
 
     const fetchData = useCallback(async () => {
         setLoading(true);
@@ -110,13 +114,13 @@ export default function RulesPage() {
     }, [isAddModalOpen, isEditModalOpen, formData.rule_type, formData.parameters]);
 
     // Sync parsedParams back to formData.parameters
-    const updateParam = (key: string, value: unknown) => {
+    const updateParam = useCallback((key: string, value: unknown) => {
         const newParams = { ...parsedParams, [key]: value };
         setParsedParams(newParams);
         setFormData(prev => ({ ...prev, parameters: JSON.stringify(newParams) }));
-    };
+    }, [parsedParams]);
 
-    const handleAddRule = async (e: React.FormEvent) => {
+    const handleAddRule = useCallback(async (e: React.FormEvent) => {
         e.preventDefault();
         try {
             await createRule(formData);
@@ -125,9 +129,9 @@ export default function RulesPage() {
         } catch (err: unknown) {
             alert(err instanceof Error ? err.message : "Failed to create rule");
         }
-    };
+    }, [formData, fetchData]);
 
-    const handleEditRule = async (e: React.FormEvent) => {
+    const handleEditRule = useCallback(async (e: React.FormEvent) => {
         e.preventDefault();
         if (!currentRule) return;
         try {
@@ -137,9 +141,9 @@ export default function RulesPage() {
         } catch (err: unknown) {
             alert(err instanceof Error ? err.message : "Failed to update rule");
         }
-    };
+    }, [currentRule, formData, fetchData]);
 
-    const handleDeleteRule = async () => {
+    const handleDeleteRule = useCallback(async () => {
         if (!currentRule) return;
         try {
             await deleteRule(currentRule.id);
@@ -148,9 +152,9 @@ export default function RulesPage() {
         } catch (err: unknown) {
             alert(err instanceof Error ? err.message : "Failed to delete rule");
         }
-    };
+    }, [currentRule, fetchData]);
 
-    const openEditModal = (rule: ValidationRule) => {
+    const openEditModal = useCallback((rule: ValidationRule) => {
         setCurrentRule(rule);
         setFormData({
             name: rule.name,
@@ -161,12 +165,12 @@ export default function RulesPage() {
             severity: rule.severity,
         });
         setIsEditModalOpen(true);
-    };
+    }, []);
 
-    const openDeleteModal = (rule: ValidationRule) => {
+    const openDeleteModal = useCallback((rule: ValidationRule) => {
         setCurrentRule(rule);
         setIsDeleteModalOpen(true);
-    };
+    }, []);
 
     // Client-side pagination logic
     const totalItems = rules.length;
@@ -176,19 +180,38 @@ export default function RulesPage() {
     return (
         <div className="space-y-6">
             {/* Header */}
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div className="flex justify-between items-center">
                 <div>
-                    <h2 className="text-2xl font-bold text-primary">Validation Rules</h2>
+                    <h2 className="text-2xl font-bold text-primary">
+                        Validation Rules
+                    </h2>
                     <p className="text-gray-500">
-                        Define and manage data quality rules for your datasets.
+                        View and manage validation rules for your datasets.
                     </p>
                 </div>
+                <button
+                    onClick={() => {
+                        setFormData({
+                            name: "",
+                            dataset_type: "",
+                            field_name: "",
+                            rule_type: "NOT_NULL",
+                            parameters: "",
+                            severity: "MEDIUM",
+                        });
+                        setIsAddModalOpen(true);
+                    }}
+                    className="flex items-center gap-2 px-4 py-2 bg-accent text-white rounded-lg hover:opacity-90 shadow-sm transition-all"
+                >
+                    <Plus size={18} />
+                    New Rule
+                </button>
             </div>
 
             {/* Filters Bar */}
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4 bg-white p-4 rounded-xl shadow-sm border border-gray-100">
                 {/* Search */}
-                <div className="relative group">
+                <div className="relative group col-span-1 md:col-span-1">
                     <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400 group-focus-within:text-accent transition-colors">
                         <Search size={16} />
                     </div>
@@ -197,19 +220,19 @@ export default function RulesPage() {
                         placeholder="Search rules..."
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
-                        className="block w-full pl-10 pr-4 py-2 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-accent/20 focus:border-accent outline-none text-sm"
+                        className="block w-full pl-10 pr-4 py-2 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-accent/20 focus:border-accent outline-none transition-all text-sm"
                     />
                 </div>
 
-                {/* Type Filter */}
-                <div className="flex items-center gap-2 px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm">
-                    <Database size={14} className="text-gray-400" />
+                {/* Dataset Type Filter */}
+                <div className="flex items-center gap-2 px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm text-gray-600">
+                    <Database size={14} />
                     <select
                         value={selectedDatasetType}
                         onChange={(e) => setSelectedDatasetType(e.target.value)}
                         className="bg-transparent outline-none cursor-pointer text-gray-700 w-full"
                     >
-                        <option value="all">All Dataset Types</option>
+                        <option value="all">All Files</option>
                         {Array.from(new Set(datasets.map((ds) => ds.file_type))).map(
                             (type) => (
                                 <option key={type} value={type}>
@@ -221,25 +244,25 @@ export default function RulesPage() {
                 </div>
 
                 {/* Rule Type Filter */}
-                <div className="flex items-center gap-2 px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm">
-                    <Activity size={14} className="text-gray-400" />
+                <div className="flex items-center gap-2 px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm text-gray-600">
+                    <Activity size={14} />
                     <select
                         value={selectedRuleType}
                         onChange={(e) => setSelectedRuleType(e.target.value)}
                         className="bg-transparent outline-none cursor-pointer text-gray-700 w-full"
                     >
-                        <option value="">All Rule Types</option>
-                        <option value="NOT_NULL">Not Null Check</option>
-                        <option value="DATA_TYPE">Type Validation</option>
-                        <option value="RANGE">Numerical Range</option>
-                        <option value="UNIQUE">Uniqueness</option>
-                        <option value="REGEX">Pattern Match</option>
+                        <option value="">All Rules</option>
+                        <option value="NOT_NULL">Not Null</option>
+                        <option value="DATA_TYPE">Data Type</option>
+                        <option value="RANGE">Range</option>
+                        <option value="UNIQUE">Unique</option>
+                        <option value="REGEX">Regex</option>
                     </select>
                 </div>
 
                 {/* Severity Filter */}
-                <div className="flex items-center gap-2 px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm">
-                    <Filter size={14} className="text-gray-400" />
+                <div className="flex items-center gap-2 px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm text-gray-600">
+                    <Filter size={14} />
                     <select
                         value={selectedSeverity}
                         onChange={(e) => setSelectedSeverity(e.target.value)}
@@ -253,317 +276,364 @@ export default function RulesPage() {
                 </div>
             </div>
 
-            {/* Rules Manager Content */}
-            <div className="space-y-4">
-                {/* Table Title & Actions */}
-                <div className="flex justify-between items-center px-2">
-                    <h3 className="font-bold text-gray-700 flex items-center gap-2 uppercase tracking-wider text-xs">
-                        <Activity size={14} className="text-accent" /> Active Rules List
-                    </h3>
+            {/* Content */}
+            {loading ? (
+                <div className="flex flex-col items-center justify-center p-24 bg-white rounded-xl border border-gray-100">
+                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-accent mb-4"></div>
+                    <p className="text-gray-500 font-medium">Loading rules...</p>
+                </div>
+            ) : error ? (
+                <div className="p-8 bg-danger/5 border border-danger/20 rounded-xl text-center">
+                    <AlertCircle size={48} className="text-danger mx-auto mb-4" />
+                    <h3 className="text-lg font-bold text-danger">Failed to Load Rules</h3>
+                    <p className="text-danger/70">{error}</p>
                     <button
-                        onClick={() => {
-                            setFormData({
-                                name: "",
-                                dataset_type: "",
-                                field_name: "",
-                                rule_type: "NOT_NULL",
-                                parameters: "",
-                                severity: "MEDIUM",
-                            });
-                            setIsAddModalOpen(true);
-                        }}
-                        className="flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-lg font-medium transition-all text-sm shadow-sm hover:opacity-90 active:scale-95"
+                        onClick={fetchData}
+                        className="mt-4 px-4 py-2 bg-danger text-white rounded-lg hover:bg-danger/90 transition-colors"
                     >
-                        <Plus size={16} strokeWidth={3} />
-                        Create New Rule
+                        Retry
                     </button>
                 </div>
-
-                {/* Rules Table */}
-                {loading ? (
-                    <div className="bg-white p-24 rounded-xl border border-gray-100 flex flex-col items-center justify-center">
-                        <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-accent mb-4"></div>
-                        <p className="text-gray-500 font-medium">Loading rules...</p>
-                    </div>
-                ) : error ? (
-                    <div className="bg-white p-12 rounded-xl border border-danger/20 text-center">
-                        <AlertCircle size={48} className="text-danger mx-auto mb-4" />
-                        <h4 className="text-danger font-bold">Fetch Error</h4>
-                        <p className="text-gray-500 mt-1">{error}</p>
-                        <button onClick={fetchData} className="mt-6 px-6 py-2 bg-danger text-white rounded-lg hover:opacity-90 transition-colors">Retry Connection</button>
-                    </div>
-                ) : (
-                    <div className="space-y-4">
-                        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-                            <div className="overflow-x-auto">
-                                <table className="w-full text-left border-collapse min-w-[700px]">
-                                    <thead>
-                                        <tr className="bg-gray-50/50 border-b border-gray-100">
-                                            <th className="py-4 px-6 text-[10px] font-bold text-gray-400 uppercase tracking-widest">Rule Name</th>
-                                            <th className="py-4 px-6 text-[10px] font-bold text-gray-400 uppercase tracking-widest">Column</th>
-                                            <th className="py-4 px-6 text-[10px] font-bold text-gray-400 uppercase tracking-widest">Type / Parameters</th>
-                                            <th className="py-4 px-6 text-[10px] font-bold text-gray-400 uppercase tracking-widest text-right">Actions</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody className="divide-y divide-gray-50">
-                                        {paginatedRules.length > 0 ? (
-                                            paginatedRules.map((rule) => (
-                                                <tr key={rule.id} className="hover:bg-gray-50/50 transition-colors group">
-                                                    <td className="py-4 px-6">
-                                                        <div className="flex items-center gap-3">
-                                                            <div className={`p-2 rounded-lg ${rule.severity === 'HIGH' ? 'bg-danger/5 text-danger' : rule.severity === 'MEDIUM' ? 'bg-warning/5 text-warning' : 'bg-success/5 text-success'}`}>
-                                                                <ClipboardCheck size={18} />
-                                                            </div>
-                                                            <div className="flex flex-col">
-                                                                <span className="font-bold text-primary">{rule.name}</span>
-                                                                <span className="text-[10px] text-gray-400 font-medium uppercase">{rule.dataset_type}</span>
-                                                            </div>
-                                                        </div>
-                                                    </td>
-                                                    <td className="py-4 px-6">
-                                                        <span className="font-mono text-sm bg-gray-100 text-primary px-2 py-0.5 rounded border border-gray-200">
-                                                            {rule.field_name}
+            ) : (
+                <div className="space-y-4">
+                    <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+                        <div className="overflow-x-auto">
+                            <table className="w-full text-left border-collapse min-w-[1000px]">
+                                <thead>
+                                    <tr className="bg-gray-50 border-b border-gray-200">
+                                        <th className="py-4 px-6 text-xs font-bold text-primary uppercase tracking-wider">
+                                            Rule Information
+                                        </th>
+                                        <th className="py-4 px-6 text-xs font-bold text-primary uppercase tracking-wider">
+                                            Type &amp; Parameters
+                                        </th>
+                                        <th className="py-4 px-6 text-xs font-bold text-primary uppercase tracking-wider">
+                                            Format
+                                        </th>
+                                        <th className="py-4 px-6 text-xs font-bold text-primary uppercase tracking-wider">
+                                            Severity
+                                        </th>
+                                        <th className="py-4 px-6 text-xs font-bold text-primary uppercase tracking-wider">
+                                            Status
+                                        </th>
+                                        <th className="py-4 px-6 text-xs font-bold text-primary uppercase tracking-wider text-right">
+                                            Actions
+                                        </th>
+                                    </tr>
+                                </thead>
+                                <tbody className="divide-y divide-gray-100">
+                                    {paginatedRules.length > 0 ? (
+                                        paginatedRules.map((rule) => (
+                                            <tr
+                                                key={rule.id}
+                                                className="hover:bg-gray-50/50 transition-colors group"
+                                            >
+                                                <td className="py-4 px-6">
+                                                    <div>
+                                                        <span className="font-semibold text-primary">
+                                                            {rule.name}
                                                         </span>
-                                                    </td>
-                                                    <td className="py-4 px-6">
-                                                        <div className="flex flex-col gap-1">
-                                                            <span className="text-xs font-bold text-gray-600 flex items-center gap-1">
-                                                                <Activity size={10} className="text-accent" /> {rule.rule_type}
-                                                            </span>
-                                                            <span className="text-[11px] text-gray-400 italic max-w-[180px] truncate" title={rule.parameters || ""}>
-                                                                {rule.parameters || "No params set"}
+                                                        <div className="text-sm text-gray-500 mt-1 flex items-center gap-1.5">
+                                                            Target field:{" "}
+                                                            <span className="font-mono bg-gray-100 px-1 py-0.5 rounded text-primary">
+                                                                {rule.field_name}
                                                             </span>
                                                         </div>
-                                                    </td>
-                                                    <td className="py-4 px-6 text-right">
-                                                        <div className="flex items-center justify-end gap-2">
-                                                            <button
-                                                                onClick={() => openEditModal(rule)}
-                                                                className="p-2 text-gray-400 hover:text-accent hover:bg-accent/5 rounded-lg transition-all"
-                                                                title="Edit Rule"
-                                                            >
-                                                                <Edit3 size={16} />
-                                                            </button>
-                                                            <button
-                                                                onClick={() => openDeleteModal(rule)}
-                                                                className="p-2 text-gray-400 hover:text-danger hover:bg-danger/5 rounded-lg transition-all"
-                                                                title="Delete Rule"
-                                                            >
-                                                                <Trash2 size={16} />
-                                                            </button>
-                                                        </div>
-                                                    </td>
-                                                </tr>
-                                            ))
-                                        ) : (
-                                            <tr>
-                                                <td colSpan={4} className="py-20 text-center text-gray-400 italic">No rules found matching your filters.</td>
+                                                    </div>
+                                                </td>
+                                                <td className="py-4 px-6">
+                                                    <div>
+                                                        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-semibold bg-gray-100 text-gray-700 border border-gray-200">
+                                                            <Activity size={12} className="text-gray-500" />{" "}
+                                                            {rule.rule_type}
+                                                        </span>
+                                                        <p
+                                                            className="text-xs text-gray-500 mt-1.5 italic max-w-[200px] truncate"
+                                                            title={rule.parameters || ""}
+                                                        >
+                                                            {rule.parameters || "No configuration"}
+                                                        </p>
+                                                    </div>
+                                                </td>
+                                                <td className="py-4 px-6">
+                                                    <div className="flex items-center gap-2 text-sm text-gray-700 uppercase font-medium text-center">
+                                                        {rule.dataset_type}
+                                                    </div>
+                                                </td>
+                                                <td className="py-4 px-6">
+                                                    <span
+                                                        className={`px-2 py-1 rounded-md text-xs font-bold ${rule.severity === "HIGH"
+                                                            ? "bg-danger/10 text-danger"
+                                                            : rule.severity === "MEDIUM"
+                                                                ? "bg-warning/10 text-warning"
+                                                                : "bg-success/10 text-success"
+                                                            }`}
+                                                    >
+                                                        {rule.severity}
+                                                    </span>
+                                                </td>
+                                                <td className="py-4 px-6">
+                                                    <span
+                                                        className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold border ${getStatusColor(rule.is_active)}`}
+                                                    >
+                                                        <span className="w-1.5 h-1.5 rounded-full bg-current"></span>
+                                                        {rule.is_active ? "Active" : "Disabled"}
+                                                    </span>
+                                                </td>
+                                                <td className="py-4 px-6 text-right">
+                                                    <div className="flex items-center justify-end gap-2 lg:opacity-0 lg:group-hover:opacity-100 transition-opacity">
+                                                        <button
+                                                            onClick={() => openEditModal(rule)}
+                                                            className="p-2 text-gray-400 hover:text-primary bg-white rounded-lg border border-gray-200 shadow-sm transition-colors"
+                                                            title="Edit Configuration"
+                                                        >
+                                                            <Settings size={16} />
+                                                        </button>
+                                                        <button
+                                                            onClick={() => openDeleteModal(rule)}
+                                                            className="p-2 text-danger/70 hover:text-danger bg-white rounded-lg border border-danger/20 shadow-sm transition-colors"
+                                                            title="Delete"
+                                                        >
+                                                            <Trash2 size={16} />
+                                                        </button>
+                                                    </div>
+                                                </td>
                                             </tr>
-                                        )}
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
-
-                        {/* Pagination Footer */}
-                        <div className="flex flex-col sm:flex-row items-center justify-between gap-4 bg-white p-4 rounded-xl shadow-sm border border-gray-100">
-                            <p className="text-xs text-gray-500 font-medium tracking-tight">
-                                Displaying <span className="text-primary font-bold">{paginatedRules.length}</span> of <span className="text-primary font-bold">{totalItems}</span> total rules
-                            </p>
-                            <div className="flex items-center gap-4">
-                                <div className="flex items-center gap-1">
-                                    <button
-                                        disabled={currentPage === 1}
-                                        onClick={() => setCurrentPage(prev => prev - 1)}
-                                        className="p-2 rounded-lg hover:bg-gray-100 disabled:opacity-30 transition-colors text-gray-600"
-                                    >
-                                        <ChevronLeft size={16} />
-                                    </button>
-                                    <div className="px-3 py-1 font-bold text-xs text-accent bg-accent/5 rounded border border-accent/10">
-                                        {currentPage} / {totalPages || 1}
-                                    </div>
-                                    <button
-                                        disabled={currentPage >= totalPages}
-                                        onClick={() => setCurrentPage(prev => prev + 1)}
-                                        className="p-2 rounded-lg hover:bg-gray-100 disabled:opacity-30 transition-colors text-gray-600"
-                                    >
-                                        <ChevronRight size={16} />
-                                    </button>
-                                </div>
-                            </div>
+                                        ))
+                                    ) : (
+                                        <tr>
+                                            <td
+                                                colSpan={6}
+                                                className="py-12 text-center text-gray-500 italic"
+                                            >
+                                                No rules match your criteria.
+                                            </td>
+                                        </tr>
+                                    )}
+                                </tbody>
+                            </table>
                         </div>
                     </div>
-                )}
-            </div>
 
-            {/* Add/Edit Modal Overlay */}
+                    {/* Pagination Footer */}
+                    <div className="flex flex-col sm:flex-row items-center justify-between gap-4 bg-white p-4 rounded-xl shadow-sm border border-gray-100">
+                        <p className="text-sm text-gray-500 font-medium">
+                            Showing <span className="text-primary">{paginatedRules.length}</span> of <span className="text-primary">{totalItems}</span> entries
+                        </p>
+                        <div className="flex items-center gap-1">
+                            <button
+                                disabled={currentPage === 1}
+                                onClick={() => setCurrentPage(prev => prev - 1)}
+                                className="p-2 rounded-lg hover:bg-gray-100 disabled:opacity-30 disabled:hover:bg-transparent transition-colors text-gray-600"
+                            >
+                                <ChevronLeft size={18} />
+                            </button>
+                            <div className="px-4 py-1.5 bg-accent/10 border border-accent/20 rounded-lg text-accent font-bold text-sm text-center">
+                                {currentPage} / {totalPages || 1}
+                            </div>
+                            <button
+                                disabled={currentPage >= totalPages}
+                                onClick={() => setCurrentPage(prev => prev + 1)}
+                                className="p-2 rounded-lg hover:bg-gray-100 disabled:opacity-30 disabled:hover:bg-transparent transition-colors text-gray-600"
+                            >
+                                <ChevronRight size={18} />
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Add/Edit Modal */}
             {(isAddModalOpen || isEditModalOpen) && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4 animate-in fade-in duration-200">
                     <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg max-h-[90vh] flex flex-col overflow-hidden animate-in slide-in-from-bottom-8 duration-300">
-                        <div className="p-6 border-b border-gray-100 bg-primary/5 text-primary flex items-center justify-between">
-                            <h3 className="font-bold flex items-center gap-2 text-sm uppercase tracking-wide">
-                                <Settings2 size={18} className="text-accent" /> {isEditModalOpen ? "Modify Rule Configuration" : "New Quality Constraint"}
+                        <div className="flex items-center justify-between p-6 border-b border-gray-100 bg-primary/5">
+                            <h3 className="text-xl font-bold text-primary flex items-center gap-2">
+                                {isAddModalOpen ? <Plus size={20} className="text-accent" /> : <Settings size={20} className="text-accent" />}
+                                {isAddModalOpen ? "New Validation Rule" : "Edit Rule Parameters"}
                             </h3>
                             <button
-                                onClick={() => { setIsAddModalOpen(false); setIsEditModalOpen(false); }}
-                                className="p-1 hover:bg-gray-200 rounded-full transition-colors text-gray-400"
+                                onClick={() => {
+                                    setIsAddModalOpen(false);
+                                    setIsEditModalOpen(false);
+                                }}
+                                className="p-2 text-gray-400 hover:text-gray-600 rounded-full hover:bg-gray-100 transition-colors"
                             >
                                 <X size={20} />
                             </button>
                         </div>
+                        <form
+                            onSubmit={isAddModalOpen ? handleAddRule : handleEditRule}
+                            className="p-6 space-y-4 overflow-y-auto flex-1"
+                        >
+                            <div className="grid grid-cols-2 gap-4">
+                                <div className="space-y-1.5 col-span-2">
+                                    <label className="text-sm font-semibold text-gray-700">
+                                        Rule Label
+                                    </label>
+                                    <input
+                                        required
+                                        type="text"
+                                        placeholder="Identification name"
+                                        className="w-full px-4 py-2 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-accent/20 focus:border-accent outline-none font-medium text-center"
+                                        value={formData.name}
+                                        onChange={(e) =>
+                                            setFormData({ ...formData, name: e.target.value })
+                                        }
+                                    />
+                                </div>
 
-                        <form onSubmit={isAddModalOpen ? handleAddRule : handleEditRule} className="p-6 space-y-4 overflow-y-auto flex-1">
-                            <div>
-                                <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1.5">Rule Identity</label>
-                                <input
-                                    required
-                                    type="text"
-                                    placeholder="e.g. Unique Transaction ID"
-                                    value={formData.name}
-                                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                                    className="w-full px-4 py-2 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-accent/20 focus:border-accent outline-none text-sm transition-all"
-                                />
-                            </div>
-                            <div>
-                                <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1.5">File Format</label>
-                                <input
-                                    required
-                                    type="text"
-                                    placeholder="csv, json..."
-                                    value={formData.dataset_type}
-                                    onChange={(e) => setFormData({ ...formData, dataset_type: e.target.value })}
-                                    className="w-full px-4 py-2 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-accent/20 focus:border-accent outline-none text-sm"
-                                />
-                            </div>
-                            <div>
-                                <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1.5">Target Column</label>
-                                <input
-                                    required
-                                    type="text"
-                                    placeholder="column_name"
-                                    value={formData.field_name}
-                                    onChange={(e) => setFormData({ ...formData, field_name: e.target.value })}
-                                    className="w-full px-4 py-2 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-accent/20 focus:border-accent outline-none text-sm"
-                                />
-                            </div>
-
-                            <div className="grid grid-cols-2 gap-3">
-                                <div>
-                                    <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1.5">Validation Logic</label>
+                                <div className="space-y-1.5">
+                                    <label className="text-sm font-semibold text-gray-700">
+                                        Dataset Type
+                                    </label>
+                                    <input
+                                        required
+                                        type="text"
+                                        placeholder="csv, json"
+                                        className="w-full px-4 py-2 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-accent/20 focus:border-accent outline-none text-center uppercase"
+                                        value={formData.dataset_type}
+                                        onChange={(e) =>
+                                            setFormData({ ...formData, dataset_type: e.target.value })
+                                        }
+                                    />
+                                </div>
+                                <div className="space-y-1.5">
+                                    <label className="text-sm font-semibold text-gray-700">
+                                        Target Character/Field
+                                    </label>
+                                    <input
+                                        required
+                                        type="text"
+                                        placeholder="Column name"
+                                        className="w-full px-4 py-2 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-accent/20 focus:border-accent outline-none text-center"
+                                        value={formData.field_name}
+                                        onChange={(e) =>
+                                            setFormData({ ...formData, field_name: e.target.value })
+                                        }
+                                    />
+                                </div>
+                                <div className="space-y-1.5">
+                                    <label className="text-sm font-semibold text-gray-700">
+                                        Rule Pattern
+                                    </label>
                                     <select
+                                        className="w-full px-4 py-2 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-accent/20 focus:border-accent outline-none cursor-pointer font-medium text-center"
                                         value={formData.rule_type}
-                                        onChange={(e) => setFormData({ ...formData, rule_type: e.target.value })}
-                                        className="w-full px-4 py-2 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-accent/20 focus:border-accent outline-none text-xs font-bold text-gray-700"
+                                        onChange={(e) =>
+                                            setFormData({ ...formData, rule_type: e.target.value })
+                                        }
                                     >
-                                        <option value="NOT_NULL">Not Null</option>
-                                        <option value="DATA_TYPE">Type Match</option>
-                                        <option value="RANGE">Boundaries</option>
-                                        <option value="UNIQUE">Duplicates</option>
-                                        <option value="REGEX">Pattern</option>
+                                        <option value="NOT_NULL">Required Value</option>
+                                        <option value="DATA_TYPE">Type Constraint</option>
+                                        <option value="RANGE">Numerical Range</option>
+                                        <option value="UNIQUE">Unique Value</option>
+                                        <option value="REGEX">Pattern Match</option>
                                     </select>
                                 </div>
-                                <div>
-                                    <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1.5">Impact Level</label>
+                                <div className="space-y-1.5">
+                                    <label className="text-sm font-semibold text-gray-700">
+                                        Condition
+                                    </label>
                                     <select
+                                        className="w-full px-4 py-2 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-accent/20 focus:border-accent outline-none cursor-pointer font-medium text-center"
                                         value={formData.severity}
-                                        onChange={(e) => setFormData({ ...formData, severity: e.target.value })}
-                                        className="w-full px-4 py-2 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-accent/20 focus:border-accent outline-none text-xs font-bold text-gray-700"
+                                        onChange={(e) =>
+                                            setFormData({ ...formData, severity: e.target.value })
+                                        }
                                     >
-                                        <option value="LOW">Minor</option>
-                                        <option value="MEDIUM">Warning</option>
-                                        <option value="HIGH">Critical</option>
+                                        <option value="LOW">Low Risk</option>
+                                        <option value="MEDIUM">Standard Risk</option>
+                                        <option value="HIGH">Critical Risk</option>
                                     </select>
                                 </div>
-                            </div>
+                                <div className="space-y-1.5 col-span-2">
+                                    <label className="text-sm font-semibold text-gray-700">
+                                        Parameters Setup
+                                    </label>
+                                    <div className="p-4 bg-gray-50 border border-gray-200 rounded-xl space-y-4">
+                                        {formData.rule_type === "RANGE" && (
+                                            <div className="grid grid-cols-2 gap-4">
+                                                <div className="space-y-1">
+                                                    <label className="text-[10px] font-bold text-gray-400 uppercase text-center block">Minimum</label>
+                                                    <input
+                                                        type="number"
+                                                        placeholder="0"
+                                                        className="w-full px-3 py-1.5 bg-white border border-gray-200 rounded-lg outline-none text-sm text-center"
+                                                        value={(parsedParams.min as string | number) ?? ""}
+                                                        onChange={(e) => updateParam("min", e.target.value === "" ? null : Number(e.target.value))}
+                                                    />
+                                                </div>
+                                                <div className="space-y-1">
+                                                    <label className="text-[10px] font-bold text-gray-400 uppercase text-center block">Maximum</label>
+                                                    <input
+                                                        type="number"
+                                                        placeholder="100"
+                                                        className="w-full px-3 py-1.5 bg-white border border-gray-200 rounded-lg outline-none text-sm text-center"
+                                                        value={(parsedParams.max as string | number) ?? ""}
+                                                        onChange={(e) => updateParam("max", e.target.value === "" ? null : Number(e.target.value))}
+                                                    />
+                                                </div>
+                                            </div>
+                                        )}
 
-                            <div>
-                                <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1.5">Configuration Parameters</label>
-                                <div className="p-4 bg-gray-50 border border-gray-200 rounded-xl space-y-4">
-                                    {formData.rule_type === "RANGE" && (
-                                        <div className="grid grid-cols-2 gap-4">
+                                        {formData.rule_type === "DATA_TYPE" && (
                                             <div className="space-y-1">
-                                                <label className="text-[10px] font-bold text-gray-400 uppercase">Minimum</label>
+                                                <label className="text-[10px] font-bold text-gray-400 uppercase text-center block">Enforce Type</label>
+                                                <select
+                                                    className="w-full px-3 py-1.5 bg-white border border-gray-200 rounded-lg outline-none text-sm text-center"
+                                                    value={(parsedParams.type as string) || ""}
+                                                    onChange={(e) => updateParam("type", e.target.value)}
+                                                >
+                                                    <option value="">Choose...</option>
+                                                    <option value="string">Text</option>
+                                                    <option value="integer">Integer</option>
+                                                    <option value="float">Decimal</option>
+                                                    <option value="boolean">Logic</option>
+                                                    <option value="datetime">Timestamp</option>
+                                                </select>
+                                            </div>
+                                        )}
+
+                                        {formData.rule_type === "REGEX" && (
+                                            <div className="space-y-1">
+                                                <label className="text-[10px] font-bold text-gray-400 uppercase text-center block">Pattern Expression</label>
                                                 <input
-                                                    type="number"
-                                                    placeholder="Min value"
-                                                    className="w-full px-3 py-1.5 bg-white border border-gray-200 rounded-lg outline-none text-xs"
-                                                    value={(parsedParams.min as string | number) ?? ""}
-                                                    onChange={(e) => updateParam("min", e.target.value === "" ? null : Number(e.target.value))}
+                                                    type="text"
+                                                    placeholder="Regex string"
+                                                    className="w-full px-3 py-1.5 bg-white border border-gray-200 rounded-lg outline-none text-sm font-mono text-center"
+                                                    value={(parsedParams.pattern as string) || ""}
+                                                    onChange={(e) => updateParam("pattern", e.target.value)}
                                                 />
                                             </div>
-                                            <div className="space-y-1">
-                                                <label className="text-[10px] font-bold text-gray-400 uppercase">Maximum</label>
-                                                <input
-                                                    type="number"
-                                                    placeholder="Max value"
-                                                    className="w-full px-3 py-1.5 bg-white border border-gray-200 rounded-lg outline-none text-xs"
-                                                    value={(parsedParams.max as string | number) ?? ""}
-                                                    onChange={(e) => updateParam("max", e.target.value === "" ? null : Number(e.target.value))}
-                                                />
+                                        )}
+
+                                        {["NOT_NULL", "UNIQUE"].includes(formData.rule_type) && (
+                                            <div className="flex items-center justify-center gap-2 text-xs text-gray-400 font-medium py-2">
+                                                <AlertCircle size={14} />
+                                                Automatic validation. No extra parameters needed.
                                             </div>
-                                        </div>
-                                    )}
-
-                                    {formData.rule_type === "DATA_TYPE" && (
-                                        <div className="space-y-1">
-                                            <label className="text-[10px] font-bold text-gray-400 uppercase">Required Type</label>
-                                            <select
-                                                className="w-full px-3 py-1.5 bg-white border border-gray-200 rounded-lg outline-none text-xs"
-                                                value={(parsedParams.type as string) || ""}
-                                                onChange={(e) => updateParam("type", e.target.value)}
-                                            >
-                                                <option value="">Select type...</option>
-                                                <option value="string">String</option>
-                                                <option value="integer">Integer</option>
-                                                <option value="float">Float</option>
-                                                <option value="boolean">Boolean</option>
-                                                <option value="datetime">DateTime</option>
-                                            </select>
-                                        </div>
-                                    )}
-
-                                    {formData.rule_type === "REGEX" && (
-                                        <div className="space-y-1">
-                                            <label className="text-[10px] font-bold text-gray-400 uppercase">Regex Pattern</label>
-                                            <input
-                                                type="text"
-                                                placeholder="e.g. ^[A-Z0-9]+$"
-                                                className="w-full px-3 py-1.5 bg-white border border-gray-200 rounded-lg outline-none text-xs font-mono"
-                                                value={(parsedParams.pattern as string) || ""}
-                                                onChange={(e) => updateParam("pattern", e.target.value)}
-                                            />
-                                        </div>
-                                    )}
-
-                                    {["NOT_NULL", "UNIQUE"].includes(formData.rule_type) && (
-                                        <div className="flex items-center gap-2 text-[10px] text-gray-400 font-medium py-1">
-                                            <AlertCircle size={12} />
-                                            No extra parameters needed.
-                                        </div>
-                                    )}
-
-                                    <div className="pt-2 border-t border-gray-100">
-                                        <label className="text-[8px] font-bold text-gray-400 uppercase tracking-widest block mb-1">Raw JSON (Preview)</label>
-                                        <code className="text-[10px] font-mono text-accent block bg-white border border-gray-100 p-1 rounded">
-                                            {formData.parameters || "{}"}
-                                        </code>
+                                        )}
                                     </div>
                                 </div>
                             </div>
-
-                            <div className="pt-4 flex gap-3">
+                            <div className="flex justify-end gap-3 pt-4 border-t border-gray-100">
                                 <button
                                     type="button"
-                                    onClick={() => { setIsAddModalOpen(false); setIsEditModalOpen(false); }}
-                                    className="flex-1 px-4 py-3 border border-gray-200 text-gray-500 font-bold rounded-xl hover:bg-gray-50 transition-all text-sm"
+                                    onClick={() => {
+                                        setIsAddModalOpen(false);
+                                        setIsEditModalOpen(false);
+                                    }}
+                                    className="px-6 py-2 border border-gray-200 text-gray-600 font-medium rounded-lg hover:bg-gray-50 transition-colors"
                                 >
                                     Cancel
                                 </button>
                                 <button
                                     type="submit"
-                                    className="flex-1 px-4 py-3 bg-accent text-white font-bold rounded-xl hover:opacity-95 transition-all shadow-lg shadow-accent/20 text-sm flex items-center justify-center gap-2 active:scale-95"
+                                    className="flex items-center gap-2 px-6 py-2 bg-accent text-white font-medium rounded-lg hover:opacity-90 shadow-lg shadow-accent/20 transition-all active:scale-[0.98]"
                                 >
-                                    <Save size={18} /> {isEditModalOpen ? "Update Constraint" : "Apply to Pipeline"}
+                                    <Save size={18} />
+                                    {isAddModalOpen ? "Register Rule" : "Update Config"}
                                 </button>
                             </div>
                         </form>
@@ -571,31 +641,32 @@ export default function RulesPage() {
                 </div>
             )}
 
-            {/* Delete Confirmation Modal */}
+            {/* Delete Modal */}
             {isDeleteModalOpen && currentRule && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4 animate-in fade-in duration-200">
-                    <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden animate-in zoom-in duration-300">
-                        <div className="p-8 text-center">
+                    <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden animate-in slide-in-from-bottom-8 duration-300 border-t-4 border-danger">
+                        <div className="p-8 text-center text-center">
                             <div className="w-16 h-16 bg-danger/10 text-danger rounded-full flex items-center justify-center mx-auto mb-4">
                                 <Trash2 size={32} />
                             </div>
-                            <h3 className="text-xl font-bold text-primary mb-2">Delete Validation Rule?</h3>
-                            <p className="text-gray-500 mb-6">
-                                You are about to remove <span className="font-semibold text-primary">&quot;{currentRule.name}&quot;</span>.
-                                This action cannot be undone and will affect future data quality checks.
+                            <h3 className="text-xl font-bold text-primary mb-2 text-center">
+                                Delete this rule?
+                            </h3>
+                            <p className="text-gray-500 mb-6 text-center">
+                                Rule <span className="font-semibold text-primary">&quot;{currentRule.name}&quot;</span> will be immediately deactivated.
                             </p>
                             <div className="flex gap-3">
                                 <button
                                     onClick={() => setIsDeleteModalOpen(false)}
                                     className="flex-1 px-6 py-2.5 border border-gray-200 text-gray-600 font-medium rounded-lg hover:bg-gray-50 transition-colors"
                                 >
-                                    No, Keep it
+                                    Back
                                 </button>
                                 <button
                                     onClick={handleDeleteRule}
                                     className="flex-1 px-6 py-2.5 bg-danger text-white font-medium rounded-lg hover:bg-danger/90 shadow-lg shadow-danger/20 transition-all active:scale-[0.98]"
                                 >
-                                    Yes, Delete Rule
+                                    Delete Rule
                                 </button>
                             </div>
                         </div>
