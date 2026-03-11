@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import {
   Filter,
   Search,
@@ -14,6 +14,7 @@ import {
   Save,
   ChevronLeft,
   ChevronRight,
+  MoreVertical,
 } from "lucide-react";
 import {
   getRules,
@@ -54,6 +55,22 @@ export default function AdminRulesPage() {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [currentRule, setCurrentRule] = useState<ValidationRule | null>(null);
+  const [openDropdownId, setOpenDropdownId] = useState<number | null>(null);
+
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        dropdownRef.current &&
+        !dropdownRef.current.contains(event.target as Node)
+      ) {
+        setOpenDropdownId(null);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
 
   // Form state
   const [formData, setFormData] = useState<RuleCreateData>({
@@ -404,21 +421,49 @@ export default function AdminRulesPage() {
                           </span>
                         </td>
                         <td className="py-4 px-6 text-right">
-                          <div className="flex items-center justify-end gap-2 lg:opacity-0 lg:group-hover:opacity-100 transition-opacity">
+                          <div className="relative flex justify-end">
                             <button
-                              onClick={() => openEditModal(rule)}
-                              className="p-2 text-gray-400 hover:text-primary bg-white rounded-lg border border-gray-200 shadow-sm transition-colors"
-                              title="Edit Rule"
+                              onClick={() =>
+                                setOpenDropdownId(
+                                  openDropdownId === rule.id ? null : rule.id
+                                )
+                              }
+                              className="p-2 text-gray-400 hover:text-primary rounded-lg transition-colors"
                             >
-                              <Settings size={16} />
+                              <MoreVertical size={20} />
                             </button>
-                            <button
-                              onClick={() => openDeleteModal(rule)}
-                              className="p-2 text-danger/70 hover:text-danger bg-white rounded-lg border border-danger/20 shadow-sm transition-colors"
-                              title="Delete Rule"
-                            >
-                              <Trash2 size={16} />
-                            </button>
+
+                            {openDropdownId === rule.id && (
+                              <div
+                                ref={dropdownRef}
+                                className="absolute right-0 top-full mt-1 w-48 bg-white rounded-xl shadow-lg border border-gray-100 py-2 z-50 text-left"
+                              >
+                                <button
+                                  onClick={() => {
+                                    setOpenDropdownId(null);
+                                    openEditModal(rule);
+                                  }}
+                                  className="w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-3"
+                                >
+                                  <Settings
+                                    size={16}
+                                    className="text-gray-400"
+                                  />
+                                  Edit Rule
+                                </button>
+                                <div className="h-px bg-gray-100 my-1"></div>
+                                <button
+                                  onClick={() => {
+                                    setOpenDropdownId(null);
+                                    openDeleteModal(rule);
+                                  }}
+                                  className="w-full px-4 py-2 text-sm text-danger hover:bg-red-50 flex items-center gap-3"
+                                >
+                                  <Trash2 size={16} className="text-danger" />
+                                  Delete Rule
+                                </button>
+                              </div>
+                            )}
                           </div>
                         </td>
                       </tr>

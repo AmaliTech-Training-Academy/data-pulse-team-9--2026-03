@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { fetchApi } from "@/services/api";
+import { runCheck } from "@/services/checks";
 import {
   ArrowLeft,
   FileText,
@@ -61,35 +62,54 @@ export default function DatasetDetails({ id, backUrl }: DatasetDetailsProps) {
   const [dataset, setDataset] = useState<DatasetData | null>(null);
   const [report, setReport] = useState<ReportData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [isChecking, setIsChecking] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    const loadDetails = async () => {
+  const loadDetails = useCallback(async () => {
+    try {
+      const token = localStorage.getItem("token");
+      const options = { headers: { Authorization: `Bearer ${token}` } };
+
+      const datasetRes = await fetchApi(`/datasets/${id}`, options);
+      setDataset(datasetRes);
+
       try {
-        const token = localStorage.getItem("token");
-        const options = { headers: { Authorization: `Bearer ${token}` } };
-
-        const datasetRes = await fetchApi(`/datasets/${id}`, options);
-        setDataset(datasetRes);
-
-        try {
-          const reportRes = await fetchApi(`/reports/${id}`, options);
-          setReport(reportRes);
-        } catch {
-          // Report might not exist yet if pending
-          setReport(null);
-        }
-      } catch (err: unknown) {
-        setError(
-          err instanceof Error ? err.message : "Failed to load dataset details"
-        );
-      } finally {
-        setIsLoading(false);
+        const reportRes = await fetchApi(`/reports/${id}`, options);
+        setReport(reportRes);
+      } catch {
+        // Report might not exist yet if pending
+        setReport(null);
       }
-    };
-
-    loadDetails();
+    } catch (err: unknown) {
+      setError(
+        err instanceof Error ? err.message : "Failed to load dataset details"
+      );
+    } finally {
+      setIsLoading(false);
+    }
   }, [id]);
+
+  useEffect(() => {
+    loadDetails();
+  }, [loadDetails]);
+
+  const handleRunCheck = async () => {
+    if (!dataset) return;
+    try {
+      setIsChecking(true);
+      await runCheck(dataset.id);
+      alert("Quality check completed successfully!");
+      // Refresh the page data
+      await loadDetails();
+    } catch (err: unknown) {
+      alert(
+        "Failed to run quality check: " +
+          (err instanceof Error ? err.message : String(err))
+      );
+    } finally {
+      setIsChecking(false);
+    }
+  };
 
   const getScoreColor = (score: number) => {
     if (score >= 80) return "text-success bg-success/10 border-success/20";
@@ -259,10 +279,18 @@ export default function DatasetDetails({ id, backUrl }: DatasetDetailsProps) {
               Current processing status of this dataset on the platform.
             </p>
 
-            {!report && dataset.status === "COMPLETED" && (
-              <button className="w-full flex items-center justify-center gap-2 bg-accent hover:bg-accent/90 text-white py-2.5 rounded-lg transition-colors font-medium">
-                <Play size={16} />
-                Run Quality Check
+            {!report && !["PROCESSING", "ERROR"].includes(dataset.status) && (
+              <button
+                onClick={handleRunCheck}
+                disabled={isChecking}
+                className="w-full flex items-center justify-center gap-2 bg-accent hover:bg-accent/90 text-white py-2.5 rounded-lg transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {isChecking ? (
+                  <Loader2 size={16} className="animate-spin" />
+                ) : (
+                  <Play size={16} />
+                )}
+                {isChecking ? "Running Check..." : "Run Quality Check"}
               </button>
             )}
           </div>
