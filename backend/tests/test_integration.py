@@ -1,6 +1,7 @@
 """Integration test — full end-to-end flow:
 Register → Upload CSV → Create rules → Run checks → Get report → View trends.
 """
+
 import json
 
 import pytest

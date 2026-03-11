@@ -51,7 +51,9 @@ export default function AdminDashboardLayout({
     },
   ];
 
-  const [user, setUser] = useState<{ full_name: string; email: string } | null>(null);
+  const [user, setUser] = useState<{ full_name: string; email: string } | null>(
+    null
+  );
 
   useEffect(() => {
     const fetchUser = async () => {

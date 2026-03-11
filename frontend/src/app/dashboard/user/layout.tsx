@@ -44,7 +44,9 @@ export default function UserDashboardLayout({
     { name: "Settings", href: "/dashboard/user/settings", icon: Settings },
   ];
 
-  const [user, setUser] = useState<{ full_name: string; email: string } | null>(null);
+  const [user, setUser] = useState<{ full_name: string; email: string } | null>(
+    null
+  );
 
   useEffect(() => {
     const fetchUser = async () => {
@@ -140,7 +142,9 @@ export default function UserDashboardLayout({
                 <p className="text-sm font-medium text-primary leading-tight">
                   {user?.full_name || "User"}
                 </p>
-                <p className="text-xs text-gray-500">{user?.email || "loading..."}</p>
+                <p className="text-xs text-gray-500">
+                  {user?.email || "loading..."}
+                </p>
               </div>
               <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold overflow-hidden border-2 border-accent">
                 {user?.full_name?.charAt(0) || "U"}
