@@ -1,5 +1,6 @@
 """Quality checks router - IMPLEMENTED."""
 
+import json
 import logging
 
 from checks.models import CheckResult, QualityScore
@@ -85,8 +86,6 @@ class RunChecksView(APIView):
         with transaction.atomic():
             # Map rules for fast O(1) lookup
             rules_map = {r.id: r for r in rules}
-
-            import json
 
             check_results_to_create = []
             for res in results:

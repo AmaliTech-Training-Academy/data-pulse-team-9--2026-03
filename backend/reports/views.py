@@ -1,5 +1,8 @@
 """Reports router - IMPLEMENTED."""
 
+import json
+
+import structlog
 from checks.serializers import CheckResultResponseSerializer, QualityScoreResponseSerializer
 from datapulse.exceptions import DatasetNotFoundException
 from datapulse.pagination import DataPulsePagination
@@ -12,6 +15,8 @@ from reports.serializers import QualityReportSerializer
 from reports.services import report_service
 from rest_framework.response import Response
 from rest_framework.views import APIView
+
+logger = structlog.get_logger(__name__)
 
 
 class DatasetReportView(APIView):
@@ -42,8 +47,6 @@ class DatasetReportView(APIView):
             )
 
         results = qs.results.all()
-
-        import json
 
         columns = []
         if dataset.column_names:
@@ -127,6 +130,63 @@ class QualityTrendsView(APIView):
             return paginator.get_paginated_response(list(serializer.data))
 
         return Response(list(QualityScoreResponseSerializer(queryset, many=True).data))
+
+
+class BulkQualityTrendsView(APIView):
+    """Get quality score trends for multiple datasets over time."""
+
+    @extend_schema(
+        parameters=[
+            OpenApiParameter(
+                "dataset_ids",
+                OpenApiTypes.STR,
+                OpenApiParameter.QUERY,
+                description="Comma-separated list of dataset IDs",
+            ),
+            OpenApiParameter(
+                "start_date",
+                OpenApiTypes.DATE,
+                OpenApiParameter.QUERY,
+                description="Filter from date (YYYY-MM-DD)",
+            ),
+            OpenApiParameter(
+                "end_date",
+                OpenApiTypes.DATE,
+                OpenApiParameter.QUERY,
+                description="Filter to date (YYYY-MM-DD)",
+            ),
+        ],
+        responses={200: QualityScoreResponseSerializer(many=True)},
+        tags=["Reports"],
+        summary="Get bulk quality score trends",
+    )
+    def get(self, request):
+        dataset_ids_str = request.query_params.get("dataset_ids")
+        if not dataset_ids_str:
+            return Response({"detail": "dataset_ids parameter is required"}, status=400)
+
+        try:
+            dataset_ids = [int(id.strip()) for id in dataset_ids_str.split(",") if id.strip()]
+        except ValueError:
+            return Response({"detail": "Invalid dataset_ids format. Should be comma-separated integers."}, status=400)
+
+        if getattr(request.user, "role", "USER") == "ADMIN":
+            datasets = Dataset.objects.filter(id__in=dataset_ids)
+        else:
+            datasets = Dataset.objects.filter(id__in=dataset_ids, uploaded_by=request.user)
+
+        if len(datasets) != len(dataset_ids):
+            # Some datasets were not found or access denied
+            found_ids = set(datasets.values_list("id", flat=True))
+            missing_ids = set(dataset_ids) - found_ids
+            logger.warning("bulk_trends.partial_results", user_id=request.user.id, missing_ids=list(missing_ids))
+
+        start_date = request.query_params.get("start_date")
+        end_date = request.query_params.get("end_date")
+
+        queryset = report_service.get_bulk_dataset_trends(datasets, start_date, end_date)
+        serializer = QualityScoreResponseSerializer(queryset, many=True)
+        return Response(serializer.data)
 
 
 class DashboardView(APIView):

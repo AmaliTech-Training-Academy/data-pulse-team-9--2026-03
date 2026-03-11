@@ -36,6 +36,27 @@ def get_dataset_trends(dataset: Dataset, start_date: Optional[str] = None, end_d
     return queryset.order_by("checked_at")
 
 
+def get_bulk_dataset_trends(
+    datasets: List[Dataset], start_date: Optional[str] = None, end_date: Optional[str] = None
+) -> QuerySet:
+    """Fetch historical quality scores for multiple datasets, optionally filtered by date."""
+
+    def validate_date(date_str: str) -> None:
+        try:
+            datetime.strptime(date_str, "%Y-%m-%d")
+        except ValueError:
+            raise ValidationError({"detail": f"Invalid date format for '{date_str}'. Expected YYYY-MM-DD."})
+
+    queryset = QualityScore.objects.filter(dataset__in=datasets)
+    if start_date:
+        validate_date(start_date)
+        queryset = queryset.filter(checked_at__date__gte=start_date)
+    if end_date:
+        validate_date(end_date)
+        queryset = queryset.filter(checked_at__date__lte=end_date)
+    return queryset.order_by("checked_at")
+
+
 def get_dashboard_summary(user: Any) -> List[QualityScore]:
     """Fetch the latest score for each dataset the user can access."""
     prefetch = Prefetch(

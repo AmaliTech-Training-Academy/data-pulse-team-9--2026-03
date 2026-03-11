@@ -2,6 +2,8 @@
 Register → Upload CSV → Create rules → Run checks → Get report → View trends.
 """
 
+import json
+
 import pytest
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import override_settings
@@ -177,7 +179,6 @@ def test_full_e2e_flow_json(client):
 @override_settings(CELERY_TASK_ALWAYS_EAGER=True)
 def test_regex_escaping_behavior(client):
     """Test how the API handles escaped vs unescaped regex patterns."""
-    import json
 
     reg_resp = client.post(
         "/api/auth/register",
