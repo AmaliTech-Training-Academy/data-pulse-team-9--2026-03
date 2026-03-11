@@ -112,3 +112,36 @@ export const getQualityTrends = async (
 
   return fetchApi(`/reports/${datasetId}/trends${query}`, options);
 };
+
+/**
+ * Gets the quality trends over time for multiple datasets.
+ *
+ * @param datasetIds - Array of dataset IDs.
+ * @param params - Optional filtering parameters.
+ * @returns A promise that resolves to an array of QualityScoreResponse.
+ */
+export const getBulkQualityTrends = async (
+  datasetIds: (number | string)[],
+  params?: {
+    start_date?: string;
+    end_date?: string;
+  }
+): Promise<QualityScoreResponse[]> => {
+  const token = localStorage.getItem("token");
+  if (!token) throw new Error("No authentication token found");
+
+  const urlParams = new URLSearchParams();
+  urlParams.append("dataset_ids", datasetIds.join(","));
+  if (params?.start_date) urlParams.append("start_date", params.start_date);
+  if (params?.end_date) urlParams.append("end_date", params.end_date);
+
+  const options = {
+    method: "GET",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+  };
+
+  return fetchApi(`/reports/bulk-trends?${urlParams.toString()}`, options);
+};
