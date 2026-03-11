@@ -9,8 +9,6 @@ import {
     Settings2,
     Trash2,
     Edit3,
-    CheckCircle2,
-    XCircle,
     Database,
     Activity,
     Save,
@@ -44,7 +42,7 @@ export default function RulesPage() {
 
     // Pagination State
     const [currentPage, setCurrentPage] = useState(1);
-    const [pageSize, setPageSize] = useState(10);
+    const pageSize = 10;
 
     // Modal state
     const [isAddModalOpen, setIsAddModalOpen] = useState(false);
@@ -63,10 +61,8 @@ export default function RulesPage() {
     });
 
     // Dynamic Parameters UI state
-    const [parsedParams, setParsedParams] = useState<any>({});
+    const [parsedParams, setParsedParams] = useState<Record<string, unknown>>({});
 
-    // For dynamic column selection
-    const availableColumns: string[] = [];
 
     const fetchData = useCallback(async () => {
         setLoading(true);
@@ -86,8 +82,8 @@ export default function RulesPage() {
             setRules(rulesData);
             setDatasets(datasetsData);
             setError(null);
-        } catch (err: any) {
-            setError(err.message || "Failed to fetch data");
+        } catch (err: unknown) {
+            setError(err instanceof Error ? err.message : "Failed to fetch data");
         } finally {
             setLoading(false);
         }
@@ -107,14 +103,14 @@ export default function RulesPage() {
             try {
                 const p = formData.parameters ? JSON.parse(formData.parameters) : {};
                 setParsedParams(p);
-            } catch (e) {
+            } catch {
                 setParsedParams({}); // Fallback for invalid JSON
             }
         }
-    }, [isAddModalOpen, isEditModalOpen, formData.rule_type]);
+    }, [isAddModalOpen, isEditModalOpen, formData.rule_type, formData.parameters]);
 
     // Sync parsedParams back to formData.parameters
-    const updateParam = (key: string, value: any) => {
+    const updateParam = (key: string, value: unknown) => {
         const newParams = { ...parsedParams, [key]: value };
         setParsedParams(newParams);
         setFormData(prev => ({ ...prev, parameters: JSON.stringify(newParams) }));
@@ -126,8 +122,8 @@ export default function RulesPage() {
             await createRule(formData);
             setIsAddModalOpen(false);
             fetchData();
-        } catch (err: any) {
-            alert(err.message || "Failed to create rule");
+        } catch (err: unknown) {
+            alert(err instanceof Error ? err.message : "Failed to create rule");
         }
     };
 
@@ -138,8 +134,8 @@ export default function RulesPage() {
             await updateRule(currentRule.id, formData);
             setIsEditModalOpen(false);
             fetchData();
-        } catch (err: any) {
-            alert(err.message || "Failed to edit rule");
+        } catch (err: unknown) {
+            alert(err instanceof Error ? err.message : "Failed to update rule");
         }
     };
 
@@ -149,8 +145,8 @@ export default function RulesPage() {
             await deleteRule(currentRule.id);
             setIsDeleteModalOpen(false);
             fetchData();
-        } catch (err: any) {
-            alert(err.message || "Failed to delete rule");
+        } catch (err: unknown) {
+            alert(err instanceof Error ? err.message : "Failed to delete rule");
         }
     };
 
@@ -491,7 +487,7 @@ export default function RulesPage() {
                                                     type="number"
                                                     placeholder="Min value"
                                                     className="w-full px-3 py-1.5 bg-white border border-gray-200 rounded-lg outline-none text-xs"
-                                                    value={parsedParams.min ?? ""}
+                                                    value={(parsedParams.min as string | number) ?? ""}
                                                     onChange={(e) => updateParam("min", e.target.value === "" ? null : Number(e.target.value))}
                                                 />
                                             </div>
@@ -501,7 +497,7 @@ export default function RulesPage() {
                                                     type="number"
                                                     placeholder="Max value"
                                                     className="w-full px-3 py-1.5 bg-white border border-gray-200 rounded-lg outline-none text-xs"
-                                                    value={parsedParams.max ?? ""}
+                                                    value={(parsedParams.max as string | number) ?? ""}
                                                     onChange={(e) => updateParam("max", e.target.value === "" ? null : Number(e.target.value))}
                                                 />
                                             </div>
@@ -513,7 +509,7 @@ export default function RulesPage() {
                                             <label className="text-[10px] font-bold text-gray-400 uppercase">Required Type</label>
                                             <select
                                                 className="w-full px-3 py-1.5 bg-white border border-gray-200 rounded-lg outline-none text-xs"
-                                                value={parsedParams.type || ""}
+                                                value={(parsedParams.type as string) || ""}
                                                 onChange={(e) => updateParam("type", e.target.value)}
                                             >
                                                 <option value="">Select type...</option>
@@ -533,7 +529,7 @@ export default function RulesPage() {
                                                 type="text"
                                                 placeholder="e.g. ^[A-Z0-9]+$"
                                                 className="w-full px-3 py-1.5 bg-white border border-gray-200 rounded-lg outline-none text-xs font-mono"
-                                                value={parsedParams.pattern || ""}
+                                                value={(parsedParams.pattern as string) || ""}
                                                 onChange={(e) => updateParam("pattern", e.target.value)}
                                             />
                                         </div>
@@ -585,7 +581,7 @@ export default function RulesPage() {
                             </div>
                             <h3 className="text-xl font-bold text-primary mb-2">Delete Validation Rule?</h3>
                             <p className="text-gray-500 mb-6">
-                                You are about to remove <span className="font-semibold text-primary">"{currentRule.name}"</span>.
+                                You are about to remove <span className="font-semibold text-primary">&quot;{currentRule.name}&quot;</span>.
                                 This action cannot be undone and will affect future data quality checks.
                             </p>
                             <div className="flex gap-3">

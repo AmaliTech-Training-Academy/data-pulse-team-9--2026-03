@@ -14,7 +14,6 @@ import {
     Save,
     ChevronLeft,
     ChevronRight,
-    LayoutList,
 } from "lucide-react";
 import {
     getRules,
@@ -38,7 +37,6 @@ const getStatusColor = (isActive: boolean) => {
 export default function AdminRulesPage() {
     const [rules, setRules] = useState<ValidationRule[]>([]);
     const [datasets, setDatasets] = useState<Dataset[]>([]);
-    const [users, setUsers] = useState<User[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
 
@@ -69,7 +67,7 @@ export default function AdminRulesPage() {
     });
 
     // Dynamic Parameters UI state
-    const [parsedParams, setParsedParams] = useState<any>({});
+    const [parsedParams, setParsedParams] = useState<Record<string, any>>({});
 
     // For dynamic column selection
     const availableColumns: string[] = [];
@@ -84,18 +82,16 @@ export default function AdminRulesPage() {
                 severity: selectedSeverity || undefined,
             };
 
-            const [rulesData, datasetsData, usersData] = await Promise.all([
+            const [rulesData, datasetsData] = await Promise.all([
                 getRules(params),
                 getDatasets(),
-                getUsers(),
             ]);
 
             setRules(rulesData);
             setDatasets(datasetsData);
-            setUsers(usersData);
             setError(null);
-        } catch (err: any) {
-            setError(err.message || "Failed to fetch data");
+        } catch (err: unknown) {
+            setError(err instanceof Error ? err.message : "Failed to fetch data");
         } finally {
             setLoading(false);
         }
@@ -115,14 +111,14 @@ export default function AdminRulesPage() {
             try {
                 const p = formData.parameters ? JSON.parse(formData.parameters) : {};
                 setParsedParams(p);
-            } catch (e) {
+            } catch {
                 setParsedParams({}); // Fallback for invalid JSON
             }
         }
-    }, [isAddModalOpen, isEditModalOpen, formData.rule_type]);
+    }, [isAddModalOpen, isEditModalOpen, formData.rule_type, formData.parameters]);
 
     // Sync parsedParams back to formData.parameters
-    const updateParam = (key: string, value: any) => {
+    const updateParam = (key: string, value: unknown) => {
         const newParams = { ...parsedParams, [key]: value };
         setParsedParams(newParams);
         setFormData(prev => ({ ...prev, parameters: JSON.stringify(newParams) }));
@@ -134,8 +130,8 @@ export default function AdminRulesPage() {
             await createRule(formData);
             setIsAddModalOpen(false);
             fetchData();
-        } catch (err: any) {
-            alert(err.message || "Failed to create rule");
+        } catch (err: unknown) {
+            alert(err instanceof Error ? err.message : "Failed to create rule");
         }
     };
 
@@ -146,8 +142,8 @@ export default function AdminRulesPage() {
             await updateRule(currentRule.id, formData);
             setIsEditModalOpen(false);
             fetchData();
-        } catch (err: any) {
-            alert(err.message || "Failed to update rule");
+        } catch (err: unknown) {
+            alert(err instanceof Error ? err.message : "Failed to update rule");
         }
     };
 
@@ -157,8 +153,8 @@ export default function AdminRulesPage() {
             await deleteRule(currentRule.id);
             setIsDeleteModalOpen(false);
             fetchData();
-        } catch (err: any) {
-            alert(err.message || "Failed to delete rule");
+        } catch (err: unknown) {
+            alert(err instanceof Error ? err.message : "Failed to delete rule");
         }
     };
 
@@ -605,7 +601,7 @@ export default function AdminRulesPage() {
                                                         type="number"
                                                         placeholder="Min value"
                                                         className="w-full px-3 py-1.5 bg-white border border-gray-200 rounded-lg outline-none text-sm"
-                                                        value={parsedParams.min ?? ""}
+                                                        value={(parsedParams.min as string | number) ?? ""}
                                                         onChange={(e) => updateParam("min", e.target.value === "" ? null : Number(e.target.value))}
                                                     />
                                                 </div>
@@ -615,7 +611,7 @@ export default function AdminRulesPage() {
                                                         type="number"
                                                         placeholder="Max value"
                                                         className="w-full px-3 py-1.5 bg-white border border-gray-200 rounded-lg outline-none text-sm"
-                                                        value={parsedParams.max ?? ""}
+                                                        value={(parsedParams.max as string | number) ?? ""}
                                                         onChange={(e) => updateParam("max", e.target.value === "" ? null : Number(e.target.value))}
                                                     />
                                                 </div>
@@ -627,7 +623,7 @@ export default function AdminRulesPage() {
                                                 <label className="text-[10px] font-bold text-gray-400 uppercase">Required Type</label>
                                                 <select
                                                     className="w-full px-3 py-1.5 bg-white border border-gray-200 rounded-lg outline-none text-sm"
-                                                    value={parsedParams.type || ""}
+                                                    value={(parsedParams.type as string) || ""}
                                                     onChange={(e) => updateParam("type", e.target.value)}
                                                 >
                                                     <option value="">Select type...</option>
@@ -647,7 +643,7 @@ export default function AdminRulesPage() {
                                                     type="text"
                                                     placeholder="e.g. ^[A-Z0-9]+$"
                                                     className="w-full px-3 py-1.5 bg-white border border-gray-200 rounded-lg outline-none text-sm font-mono"
-                                                    value={parsedParams.pattern || ""}
+                                                    value={(parsedParams.pattern as string) || ""}
                                                     onChange={(e) => updateParam("pattern", e.target.value)}
                                                 />
                                             </div>
@@ -707,7 +703,7 @@ export default function AdminRulesPage() {
                             <p className="text-gray-500 mb-6">
                                 You are about to deactivate the rule{" "}
                                 <span className="font-semibold text-primary">
-                                    "{currentRule.name}"
+                                    &quot;{currentRule.name}&quot;
                                 </span>
                                 . This will stop all quality checks associated with it.
                             </p>
