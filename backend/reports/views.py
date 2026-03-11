@@ -43,11 +43,24 @@ class DatasetReportView(APIView):
 
         results = qs.results.all()
 
+        import json
+
+        columns = []
+        if dataset.column_names:
+            try:
+                columns = json.loads(dataset.column_names)
+            except Exception:
+                columns = [dataset.column_names]
+
         report_data = {
+            "report_id": qs.id,
             "dataset_id": dataset.id,
             "dataset_name": dataset.name,
+            "columns": columns,
             "score": qs.score,
             "total_rules": qs.total_rules,
+            "passed_rules": qs.passed_rules,
+            "failed_rules": qs.failed_rules,
             "results": list(CheckResultResponseSerializer(results, many=True).data),
             "checked_at": qs.checked_at,
         }
