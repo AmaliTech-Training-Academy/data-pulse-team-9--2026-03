@@ -45,7 +45,7 @@ class AlertConfigSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = AlertConfig
-        fields = ["id", "dataset_id", "threshold", "is_alert_active", "created_at", "updated_at"]
+        fields = ["id", "dataset_id", "threshold", "email_notifications", "is_alert_active", "created_at", "updated_at"]
         read_only_fields = ["id", "is_alert_active", "created_at", "updated_at"]
 
     def validate_threshold(self, value):

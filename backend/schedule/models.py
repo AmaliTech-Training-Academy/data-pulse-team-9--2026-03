@@ -24,6 +24,7 @@ class AlertConfig(models.Model):
 
     dataset = models.OneToOneField(Dataset, on_delete=models.CASCADE, related_name="alert_config")
     threshold = models.IntegerField(default=80)  # 0-100
+    email_notifications = models.BooleanField(default=True)
     is_alert_active = models.BooleanField(default=False)  # Tracks if an alert email has been sent and not yet recovered
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
