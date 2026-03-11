@@ -7,7 +7,7 @@ if [ "$1" = 'celery' ]; then
 fi
 
 echo "==> Running migrations..."
-python manage.py makemigrations authentication datasets rules checks reports  --noinput
+python manage.py makemigrations --check --dry-run
 python manage.py migrate --noinput
 
 echo "==> Seeding default users..."

@@ -1,4 +1,5 @@
 import structlog
+from audit.models import AuditLog
 from celery import shared_task
 from checks.models import CheckResult, QualityScore
 from checks.services.scoring_service import calculate_quality_score
@@ -83,7 +84,12 @@ def run_scheduled_checks(dataset_id):
         dataset.status = "VALIDATED" if score_data["failed_rules"] == 0 else "FAILED"
         dataset.save()
 
-        # 10. Check Alert Threshold and Send Email
+        # 10. Link or Update audit log
+        AuditLog.objects.create(
+            dataset=dataset, triggered_by="system", trigger_type="scheduled", score=score_data["score"]
+        )
+
+        # 11. Check Alert Threshold and Send Email
         _handle_alerts(dataset, score_data["score"])
 
         logger.info("scheduled_checks.success", dataset_id=dataset_id, score=score_data["score"])
