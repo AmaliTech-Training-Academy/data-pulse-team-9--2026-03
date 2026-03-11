@@ -96,3 +96,24 @@ class UserMeView(APIView):
     def get(self, request):
         serializer = UserResponseSerializer(request.user)
         return Response(serializer.data)
+
+
+class UserListView(APIView):
+    """List all users - Admin only."""
+
+    permission_classes = [IsAuthenticated]
+
+    @extend_schema(
+        responses={200: UserResponseSerializer(many=True)},
+        tags=["Auth"],
+        summary="List all users (Admin only)",
+    )
+    def get(self, request):
+        if getattr(request.user, "role", "USER") != "ADMIN":
+            return Response({"detail": "Permission denied"}, status=status.HTTP_403_FORBIDDEN)
+
+        from authentication.models import User
+
+        users = User.objects.all().order_by("-created_at")
+        serializer = UserResponseSerializer(users, many=True)
+        return Response(serializer.data)

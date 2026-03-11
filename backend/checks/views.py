@@ -86,11 +86,16 @@ class RunChecksView(APIView):
             # Map rules for fast O(1) lookup
             rules_map = {r.id: r for r in rules}
 
+            import json
+
             check_results_to_create = []
             for res in results:
                 rule = rules_map.get(res["rule_id"])
                 if not rule:
                     continue
+
+                details_json = json.dumps({"message": res.get("details", ""), "samples": res.get("samples", [])})
+
                 check_results_to_create.append(
                     CheckResult(
                         dataset=dataset,
@@ -98,7 +103,7 @@ class RunChecksView(APIView):
                         passed=res["passed"],
                         failed_rows=res["failed_rows"],
                         total_rows=res["total_rows"],
-                        details=res["details"],
+                        details=details_json,
                     )
                 )
 

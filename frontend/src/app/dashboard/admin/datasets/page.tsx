@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import {
   Search,
   Filter,
@@ -11,8 +11,10 @@ import {
   Settings,
   Trash2,
   Loader2,
+  MoreVertical,
 } from "lucide-react";
 import { fetchApi } from "@/services/api";
+import { runCheck } from "@/services/checks";
 import Link from "next/link";
 
 // Helper functions
@@ -47,54 +49,87 @@ export default function AdminDatasetsPage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [datasets, setDatasets] = useState<DatasetRow[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [checkingId, setCheckingId] = useState<number | null>(null);
+  const [openDropdownId, setOpenDropdownId] = useState<number | null>(null);
+
+  const dropdownRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    const loadData = async () => {
-      try {
-        const token = localStorage.getItem("token");
-        const options = {
-          headers: { Authorization: `Bearer ${token}` },
-        };
-
-        // Fetch all datasets
-        const [datasetsData] = await Promise.all([
-          fetchApi("/datasets", options),
-        ]);
-
-        const datasetsArray = Array.isArray(datasetsData)
-          ? datasetsData
-          : datasetsData?.results || datasetsData?.datasets || [];
-
-        const processed = datasetsArray.map(
-          (d: {
-            id: number;
-            name?: string;
-            file_type?: string;
-            uploaded_by?: { email?: string };
-            uploaded_at: string;
-            status: string;
-          }) => {
-            return {
-              id: d.id,
-              name: d.name || `dataset_file_${d.id}.${d.file_type || "csv"}`,
-              user: d.uploaded_by?.email || "System User", // Fallback if uploaded_by not serialized
-              type: (d.file_type || "CSV").toUpperCase(),
-              date: new Date(d.uploaded_at).toLocaleDateString(),
-              status: d.status,
-            };
-          }
-        );
-
-        setDatasets(processed);
-      } catch (err) {
-        console.error("Failed to load datasets:", err);
-      } finally {
-        setIsLoading(false);
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        dropdownRef.current &&
+        !dropdownRef.current.contains(event.target as Node)
+      ) {
+        setOpenDropdownId(null);
       }
     };
-
-    loadData();
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
+
+  const fetchDatasets = async () => {
+    try {
+      const token = localStorage.getItem("token");
+      const options = {
+        headers: { Authorization: `Bearer ${token}` },
+      };
+
+      const [datasetsData] = await Promise.all([
+        fetchApi("/datasets", options),
+      ]);
+
+      const datasetsArray = Array.isArray(datasetsData)
+        ? datasetsData
+        : datasetsData?.results || datasetsData?.datasets || [];
+
+      const processed = datasetsArray.map(
+        (d: {
+          id: number;
+          name?: string;
+          file_type?: string;
+          uploaded_by?: { email?: string };
+          uploaded_at: string;
+          status: string;
+        }) => {
+          return {
+            id: d.id,
+            name: d.name || `dataset_file_${d.id}.${d.file_type || "csv"}`,
+            user: d.uploaded_by?.email || "System User", // Fallback if uploaded_by not serialized
+            type: (d.file_type || "CSV").toUpperCase(),
+            date: new Date(d.uploaded_at).toLocaleDateString(),
+            status: d.status,
+          };
+        }
+      );
+
+      setDatasets(processed);
+    } catch (err) {
+      console.error("Failed to load datasets:", err);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchDatasets();
+  }, []);
+
+  const handleRunCheck = async (id: number) => {
+    try {
+      setCheckingId(id);
+      await runCheck(id);
+      alert("Quality check completed successfully!");
+      // Refresh the list to reflect validated status
+      fetchDatasets();
+    } catch (err: unknown) {
+      alert(
+        "Failed to run quality check: " +
+          (err instanceof Error ? err.message : String(err))
+      );
+    } finally {
+      setCheckingId(null);
+    }
+  };
 
   const filteredDatasets = datasets.filter(
     (d) =>
@@ -262,32 +297,63 @@ export default function AdminDatasetsPage() {
                       </span>
                     </td>
                     <td className="py-4 px-6 text-right">
-                      <div className="flex items-center justify-end gap-2 lg:opacity-0 lg:group-hover:opacity-100 transition-opacity">
+                      <div className="relative flex justify-end">
                         <button
-                          className="p-2 text-gray-400 hover:text-accent bg-white rounded-lg border border-gray-200 shadow-sm transition-colors"
-                          title="Force Run Validation"
+                          onClick={() =>
+                            setOpenDropdownId(
+                              openDropdownId === dataset.id ? null : dataset.id
+                            )
+                          }
+                          className="p-2 text-gray-400 hover:text-primary rounded-lg transition-colors"
                         >
-                          <Play size={16} />
+                          <MoreVertical size={20} />
                         </button>
-                        <Link
-                          href={`/dashboard/admin/datasets/${dataset.id}`}
-                          className="p-2 text-gray-400 hover:text-primary bg-white rounded-lg border border-gray-200 shadow-sm transition-colors"
-                          title="View Details"
-                        >
-                          <Eye size={16} />
-                        </Link>
-                        <button
-                          className="p-2 text-gray-400 hover:text-primary bg-white rounded-lg border border-gray-200 shadow-sm transition-colors"
-                          title="Manage Rules"
-                        >
-                          <Settings size={16} />
-                        </button>
-                        <button
-                          className="p-2 text-gray-400 hover:text-danger bg-white rounded-lg border border-gray-200 shadow-sm transition-colors"
-                          title="Delete Dataset"
-                        >
-                          <Trash2 size={16} />
-                        </button>
+
+                        {openDropdownId === dataset.id && (
+                          <div
+                            ref={dropdownRef}
+                            className="absolute right-0 top-full mt-1 w-48 bg-white rounded-xl shadow-lg border border-gray-100 py-2 z-50 text-left"
+                          >
+                            {!["PROCESSING", "ERROR"].includes(
+                              dataset.status
+                            ) && (
+                              <button
+                                onClick={() => {
+                                  setOpenDropdownId(null);
+                                  handleRunCheck(dataset.id);
+                                }}
+                                disabled={checkingId === dataset.id}
+                                className="w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-3 disabled:opacity-50 disabled:cursor-not-allowed"
+                              >
+                                {checkingId === dataset.id ? (
+                                  <Loader2
+                                    size={16}
+                                    className="animate-spin text-accent"
+                                  />
+                                ) : (
+                                  <Play size={16} className="text-gray-400" />
+                                )}
+                                Run Validation
+                              </button>
+                            )}
+                            <Link
+                              href={`/dashboard/admin/datasets/${dataset.id}`}
+                              className="w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-3"
+                            >
+                              <Eye size={16} className="text-gray-400" />
+                              View Details
+                            </Link>
+                            <button className="w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-3">
+                              <Settings size={16} className="text-gray-400" />
+                              Manage Rules
+                            </button>
+                            <div className="h-px bg-gray-100 my-1"></div>
+                            <button className="w-full px-4 py-2 text-sm text-danger hover:bg-red-50 flex items-center gap-3">
+                              <Trash2 size={16} className="text-danger" />
+                              Delete Dataset
+                            </button>
+                          </div>
+                        )}
                       </div>
                     </td>
                   </tr>
