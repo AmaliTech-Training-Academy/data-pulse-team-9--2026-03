@@ -3,6 +3,7 @@
 import json
 import logging
 
+from audit.models import AuditLog
 from checks.models import CheckResult, QualityScore
 from checks.serializers import CheckResultResponseSerializer, QualityScoreResponseSerializer
 from checks.services.scoring_service import calculate_quality_score
@@ -121,7 +122,14 @@ class RunChecksView(APIView):
                 failed_rules=score_data["failed_rules"],
             )
 
-            # 9. Update dataset status
+            # 9. Link or Update audit log
+            # Since this is the manual run endpoint, we record 'manual' and the user's email if available.
+            triggered_by = getattr(request.user, "email", "unknown_user")
+            AuditLog.objects.create(
+                dataset=dataset, triggered_by=triggered_by, trigger_type="manual", score=score_data["score"]
+            )
+
+            # 10. Update dataset status
             dataset.status = "VALIDATED" if score_data["failed_rules"] == 0 else "FAILED"
             dataset.save()
 
