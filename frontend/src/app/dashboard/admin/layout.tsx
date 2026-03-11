@@ -3,7 +3,8 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import Image from "next/image";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { AuthService } from "@/services/auth";
 import {
   LayoutDashboard,
   Database,
@@ -49,6 +50,25 @@ export default function AdminDashboardLayout({
       icon: Settings,
     },
   ];
+
+  const [user, setUser] = useState<{ full_name: string; email: string } | null>(
+    null
+  );
+
+  useEffect(() => {
+    const fetchUser = async () => {
+      const token = localStorage.getItem("token");
+      if (token) {
+        try {
+          const userData = await AuthService.getMe(token);
+          setUser(userData);
+        } catch (err) {
+          console.error("Failed to fetch user profile:", err);
+        }
+      }
+    };
+    fetchUser();
+  }, []);
 
   const getPageTitle = () => {
     const currentNavItem =
@@ -138,15 +158,15 @@ export default function AdminDashboardLayout({
                     <ShieldCheck size={10} /> Admin
                   </span>
                   <p className="text-sm font-medium text-primary leading-tight">
-                    System Admin
+                    {user?.full_name || "Admin"}
                   </p>
                 </div>
                 <p className="text-xs text-gray-500 mt-0.5">
-                  admin@amalitech.com
+                  {user?.email || "loading..."}
                 </p>
               </div>
               <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold overflow-hidden border-2 border-primary">
-                SA
+                {user?.full_name?.charAt(0) || "A"}
               </div>
             </div>
           </div>

@@ -104,7 +104,7 @@ def _handle_alerts(dataset, current_score):
     threshold = alert_config.threshold
 
     if current_score < threshold:
-        if not alert_config.is_alert_active:
+        if not alert_config.is_alert_active and alert_config.email_notifications:
             # Send alert email
             subject = f"Data Quality Alert: {dataset.name}"
             report_url = f"{settings.FRONTEND_URL}/reports/{dataset.id}"
