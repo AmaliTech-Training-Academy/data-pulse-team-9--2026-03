@@ -172,6 +172,7 @@ services:
       dockerfile: devops/Dockerfile.pipeline
     container_name: datapulse-etl
     environment:
+      DATABASE_URL: ${DATABASE_URL}
       SOURCE_DB_URL: ${DATABASE_URL}
       TARGET_DB_URL: ${TARGET_DB_URL}
     depends_on:
@@ -180,6 +181,28 @@ services:
       db-analytics:
         condition: service_healthy
     restart: on-failure
+    networks:
+      - datapulse-network
+
+  # -----------------------------------------------------------
+  # Profile: db-seed
+  # Initialization service to populate mock data on startup
+  # -----------------------------------------------------------
+  db-seed:
+    profiles: [backend, all]
+    build:
+      context: .
+      dockerfile: devops/Dockerfile.pipeline
+    container_name: datapulse-db-seed
+    environment:
+      DATABASE_URL: ${DATABASE_URL}
+      SOURCE_DB_URL: ${DATABASE_URL}
+      TARGET_DB_URL: ${TARGET_DB_URL}
+      PYTHONPATH: /pipeline
+    command: python seed/seed_analytics.py
+    depends_on:
+      backend:
+        condition: service_started
     networks:
       - datapulse-network
 
