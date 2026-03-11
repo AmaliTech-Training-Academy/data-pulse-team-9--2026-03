@@ -46,37 +46,49 @@ Authentication is required for all endpoints except `register` and `login`.
 
 ### List of Endpoints
 
-| Method     | Endpoint                      | Description & Request Format                                                                            | Status  |
-| ---------- | ----------------------------- | ------------------------------------------------------------------------------------------------------- | ------- |
-| **POST**   | `/api/auth/register`          | Register user. Body: `{"email": "...", "password": "...", "full_name": "..."}`                          | ✅ Done |
-| **POST**   | `/api/auth/login`             | Authenticate user. Body: `{"email": "...", "password": "..."}`. Returns JWT access and refresh token.   | ✅ Done |
-| **GET**    | `/api/auth/me`                | Retrieve current authenticated user profile and roles. Requires Bearer Token.                           | ✅ Done |
-| **POST**   | `/api/auth/token/refresh`     | Refresh the JWT access token using the refresh token. Body: `{"refresh": "..."}`                        | ✅ Done |
-| **POST**   | `/api/datasets/upload`        | Upload CSV/JSON file. Form-data: `file` (File object).                                                  | ✅ Done |
-| **GET**    | `/api/datasets/`              | List all datasets uploaded by the user. Supports `?skip=0&limit=100`.                                   | ✅ Done |
-| **POST**   | `/api/rules/`                 | Create a rule. Body requires rule schema (see Data Schema below).                                       | ✅ Done |
-| **GET**    | `/api/rules/`                 | List all active validation rules.                                                                       | ✅ Done |
-| **PUT**    | `/api/rules/{id}`             | Update an existing rule. Same body format as POST.                                                      | ✅ Done |
-| **DELETE** | `/api/rules/{id}`             | Soft-delete a validation rule.                                                                          | ✅ Done |
-| **POST**   | `/api/checks/run/{id}`        | Run validation checks on a dataset immediately. Returns `QualityScore` summary.                         | ✅ Done |
-| **GET**    | `/api/checks/results/{id}`    | Get detailed row-level check results for a dataset.                                                     | ✅ Done |
-| **POST**   | `/api/scheduling/batch`       | Run checks asynchronously for multiple datasets via Celery. Body: `{"dataset_ids": [1,2,3]}`            | ✅ Done |
-| **GET**    | `/api/reports/{id}`           | Generate a comprehensive quality report for a given dataset.                                            | ✅ Done |
-| **GET**    | `/api/reports/trends?days=30` | Get timeline of quality scores for line charts.                                                         | ✅ Done |
-| **GET**    | `/api/reports/dashboard`      | Get aggregated latest scores for all datasets.                                                          | ✅ Done |
-| **POST**   | `/api/schedule/`              | Create/update a check schedule for a dataset. Body: `{"dataset_id": 1, "cron_expression": "0 0 * * *"}` | ✅ Done |
-| **GET**    | `/api/schedule/`              | List all active schedules.                                                                              | ✅ Done |
-| **PATCH**  | `/api/schedule/{id}/pause/`   | Pause a specific schedule.                                                                              | ✅ Done |
-| **PATCH**  | `/api/schedule/{id}/resume/`  | Resume a specific schedule.                                                                             | ✅ Done |
-| **DELETE** | `/api/schedule/{id}/`         | Delete a schedule.                                                                                      | ✅ Done |
-| **POST**   | `/api/schedule/alerts/{id}/`  | Set quality threshold for alerts. Body: `{"threshold": 80}`                                             | ✅ Done |
-| **GET**    | `/metrics/`                   | Prometheus application metrics exposition.                                                              | ✅ Done |
+| Method | Endpoint | Description & Request Format | Status |
+|--------|----------|------------------------------|--------|
+| **POST** | `/api/auth/register` | Register user. Body: `{"email": "...", "password": "...", "full_name": "..."}` | ✅ Done |
+| **POST** | `/api/auth/login` | Authenticate user. Body: `{"email": "...", "password": "..."}`. Returns JWT access and refresh token. | ✅ Done |
+| **GET**  | `/api/auth/me` | Retrieve current authenticated user profile and roles. Requires Bearer Token. | ✅ Done |
+| **POST** | `/api/auth/token/refresh` | Refresh the JWT access token using the refresh token. | ✅ Done |
+| **POST** | `/api/datasets/upload` | Upload CSV/JSON file. | ✅ Done |
+| **GET**  | `/api/datasets/` | List datasets uploaded by the user. | ✅ Done |
+| **POST** | `/api/rules/` | Create a rule. | ✅ Done |
+| **GET**  | `/api/rules/` | List active validation rules. | ✅ Done |
+| **PUT**  | `/api/rules/{id}` | Update an existing rule. | ✅ Done |
+| **DELETE** | `/api/rules/{id}` | Soft-delete a rule. | ✅ Done |
+| **POST** | `/api/checks/run/{id}` | Run validation checks on a dataset. | ✅ Done |
+| **GET**  | `/api/checks/results/{id}` | Get row-level check results. | ✅ Done |
+| **POST** | `/api/scheduling/batch` | Run checks asynchronously for datasets. | ✅ Done |
+| **GET**  | `/api/reports/{id}` | Generate dataset quality report. | ✅ Done |
+| **GET**  | `/api/reports/{dataset_id}/trends` | Timeline of quality scores. | ✅ Done |
+| **GET**  | `/api/reports/dashboard` | Aggregated dataset scores. | ✅ Done |
+| **POST** | `/api/schedule/` | Create/update a schedule. | ✅ Done |
+| **GET**  | `/api/schedule/` | List schedules. | ✅ Done |
+| **PATCH** | `/api/schedule/{id}/pause/` | Pause schedule. | ✅ Done |
+| **PATCH** | `/api/schedule/{id}/resume/` | Resume schedule. | ✅ Done |
+| **DELETE** | `/api/schedule/{id}/` | Delete schedule. | ✅ Done |
+| **POST** | `/api/schedule/alerts/{id}/` | Set alert threshold. | ✅ Done |
+| **GET** | `/metrics/` | Prometheus metrics endpoint. | ✅ Done |
 
 > **Note:** For exact JSON schemas and models, please view the auto-generated **Swagger Documentation** by starting the server and navigating to `http://localhost:8000/docs/`.
 
 ---
 
-## 3. Test Environment Setup
+## 3. How to Test the Reporting & Trends API
+
+1. Start the server (e.g., `python manage.py runserver` or via Docker).
+2. Go to `http://localhost:8000/docs/` and **Authorize** with a JWT Token (use `/api/auth/login`).
+3. Upload a dataset via `POST /api/datasets/upload`.
+4. Run checks via `POST /api/checks/run/{dataset_id}`. Take note of the dataset ID.
+5. **Get Report**: Use `GET /api/reports/{dataset_id}` to see rules broken down by pass/fail + sample failing rows.
+6. **Get Trends**: Call `GET /api/reports/{dataset_id}/trends` to see historical runs for that dataset. You can also filter by `start_date` and `end_date` (YYYY-MM-DD format) and use `limit`/`page` for pagination.
+7. **Get Dashboard**: Call `GET /api/reports/dashboard` to get an overview of the latest scores for all your datasets.
+
+---
+
+## 4. Test Environment Setup
 
 We use `pytest` along with `pytest-django` for our automated test suite, covering both unit tests and e2e integration tests.
 

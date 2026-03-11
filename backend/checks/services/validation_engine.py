@@ -10,13 +10,21 @@ import pandas as pd
 class ValidationEngine:
     """Runs data quality checks against a DataFrame."""
 
-    def _build_result(self, passed: bool, failed_rows: int, total_rows: int, details: str) -> Dict[str, Any]:
+    def _build_result(
+        self,
+        passed: bool,
+        failed_rows: int,
+        total_rows: int,
+        details: str,
+        samples: Optional[List[Dict[str, Any]]] = None,
+    ) -> Dict[str, Any]:
         """Helper to standardise the validation result dictionary format."""
         return {
             "passed": passed,
             "failed_rows": failed_rows,
             "total_rows": total_rows,
             "details": details,
+            "samples": samples or [],
         }
 
     def _field_not_found(self, df: pd.DataFrame, field: str) -> Dict[str, Any]:
@@ -64,12 +72,16 @@ class ValidationEngine:
         if field not in df.columns:
             return self._field_not_found(df, field)
 
-        null_count = int(df[field].isnull().sum())
+        null_mask = df[field].isnull()
+        null_count = int(null_mask.sum())
+        samples = df[null_mask].head(5).to_dict(orient="records") if null_count > 0 else []
+
         return self._build_result(
             passed=(null_count == 0),
             failed_rows=null_count,
             total_rows=len(df),
             details=f"{null_count} null values found in {field}" if null_count > 0 else f"No null values in {field}",
+            samples=samples,
         )
 
     def type_check(self, df: pd.DataFrame, field: str, expected_type: str) -> Dict[str, Any]:
@@ -84,16 +96,24 @@ class ValidationEngine:
 
         if etype == "numeric":
             passed_mask = pd.to_numeric(df[field], errors="coerce").notnull()
-            failed_count = int((~passed_mask).sum())
+            failed_mask = ~passed_mask
+            failed_count = int(failed_mask.sum())
+            samples = df[failed_mask].head(5).to_dict(orient="records") if failed_count > 0 else []
             return self._build_result(
-                failed_count == 0, failed_count, len(df), f"{failed_count} non-numeric values found"
+                failed_count == 0, failed_count, len(df), f"{failed_count} non-numeric values found", samples=samples
             )
 
         if etype == "datetime":
             passed_mask = pd.to_datetime(df[field], errors="coerce").notnull()
-            failed_count = int((~passed_mask).sum())
+            failed_mask = ~passed_mask
+            failed_count = int(failed_mask.sum())
+            samples = df[failed_mask].head(5).to_dict(orient="records") if failed_count > 0 else []
             return self._build_result(
-                failed_count == 0, failed_count, len(df), f"{failed_count} invalid datetime values found"
+                failed_count == 0,
+                failed_count,
+                len(df),
+                f"{failed_count} invalid datetime values found",
+                samples=samples,
             )
 
         # Handle other types like int, float, bool
@@ -135,11 +155,13 @@ class ValidationEngine:
         invalid_mask |= series.isnull()
 
         failed_count = int(invalid_mask.sum())
+        samples = df[invalid_mask].head(5).to_dict(orient="records") if failed_count > 0 else []
         return self._build_result(
             passed=(failed_count == 0),
             failed_rows=failed_count,
             total_rows=len(df),
             details=f"{failed_count} values outside range [{min_val}, {max_val}] or non-numeric",
+            samples=samples,
         )
 
     def unique_check(self, df: pd.DataFrame, field: str) -> Dict[str, Any]:
@@ -147,12 +169,15 @@ class ValidationEngine:
         if field not in df.columns:
             return self._field_not_found(df, field)
 
-        duplicates = int(df[field].duplicated(keep=False).sum())
+        failed_mask = df[field].duplicated(keep=False)
+        duplicates = int(failed_mask.sum())
+        samples = df[failed_mask].head(5).to_dict(orient="records") if duplicates > 0 else []
         return self._build_result(
             passed=(duplicates == 0),
             failed_rows=duplicates,
             total_rows=len(df),
             details=f"{duplicates} duplicate values found in {field}",
+            samples=samples,
         )
 
     def regex_check(self, df: pd.DataFrame, field: str, pattern: str) -> Dict[str, Any]:
@@ -166,7 +191,9 @@ class ValidationEngine:
         try:
             # Use na=False to ensure nulls fail the regex match
             matches = df[field].astype(str).str.match(pattern, na=False)
-            failed_count = int((~matches).sum())
+            failed_mask = ~matches
+            failed_count = int(failed_mask.sum())
+            samples = df[failed_mask].head(5).to_dict(orient="records") if failed_count > 0 else []
         except re.error as e:
             return self._build_result(False, len(df), len(df), f"Invalid regex pattern: {str(e)}")
 
@@ -175,4 +202,5 @@ class ValidationEngine:
             failed_rows=failed_count,
             total_rows=len(df),
             details=f"{failed_count} values do not match pattern {pattern}",
+            samples=samples,
         )

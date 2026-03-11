@@ -31,3 +31,5 @@ staticfiles/
 #frontend
 frontend/.env.local
 __init__.py
+node_modules/
+dist/
