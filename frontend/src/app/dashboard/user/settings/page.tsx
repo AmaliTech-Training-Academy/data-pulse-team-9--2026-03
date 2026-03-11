@@ -3,12 +3,9 @@
 import { useEffect, useState } from "react";
 import {
     User,
-    Mail,
-    Lock,
     Bell,
     ShieldAlert,
     Save,
-    AlertTriangle,
     Loader2,
     CheckCircle2
 } from "lucide-react";

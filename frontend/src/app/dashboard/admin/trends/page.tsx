@@ -94,7 +94,7 @@ export default function AdminTrendsPage() {
 
     // Process data for Recharts
     const chartData = useMemo(() => {
-        const dataMap: Record<string, any> = {};
+        const dataMap: Record<string, Record<string, string | number>> = {};
 
         trends.forEach(t => {
             const date = t.checked_at ? new Date(t.checked_at).toLocaleDateString() : "N/A";
@@ -103,7 +103,7 @@ export default function AdminTrendsPage() {
             }
             const dataset = datasets.find(d => d.id === t.dataset_id);
             if (dataset) {
-                dataMap[date][dataset.name] = t.score;
+                dataMap[date][dataset.name] = t.score ?? 0;
             }
         });
 

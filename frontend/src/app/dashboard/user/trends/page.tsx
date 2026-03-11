@@ -5,9 +5,7 @@ import {
     Calendar,
     Filter,
     Download,
-    TrendingDown,
     TrendingUp,
-    Minus,
     Loader2
 } from "lucide-react";
 import {
@@ -97,7 +95,7 @@ export default function TrendsPage() {
     // Process data for Recharts
     const chartData = useMemo(() => {
         // Map of date string -> { date, datasetId1: score1, datasetId2: score2, ... }
-        const dataMap: Record<string, any> = {};
+        const dataMap: Record<string, Record<string, string | number>> = {};
 
         trends.forEach(t => {
             const date = t.checked_at ? new Date(t.checked_at).toLocaleDateString() : "N/A";
@@ -106,7 +104,7 @@ export default function TrendsPage() {
             }
             const dataset = datasets.find(d => d.id === t.dataset_id);
             if (dataset) {
-                dataMap[date][dataset.name] = t.score;
+                dataMap[date][dataset.name] = t.score ?? 0;
             }
         });
 

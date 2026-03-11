@@ -10,9 +10,6 @@ import {
     Database,
     Mail,
     UserPlus,
-    Search,
-    Filter,
-    CheckCircle2,
     AlertCircle
 } from "lucide-react";
 
