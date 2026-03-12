@@ -18,7 +18,7 @@ import {
   getDatasetReport,
   QualityReport,
 } from "@/services/reports";
-import { QualityScoreResponse } from "@/services/checks";
+import { QualityScoreResponse, getCheckResults } from "@/services/checks";
 
 const getScoreColor = (score: number) => {
   if (score >= 80) return "text-success";
@@ -102,12 +102,39 @@ export default function ReportsPage() {
     try {
       setSelectedReportId(datasetId);
       setIsDetailLoading(true);
-      const detail = await getDatasetReport(datasetId);
-      setReportDetail(detail);
+
+      // Fetch both the report summary and the detailed check results
+      const [detail, results] = await Promise.all([
+        getDatasetReport(datasetId),
+        getCheckResults(datasetId),
+      ]);
+
+      // If the report detail doesn't have results (backend limitation),
+      // we merge the raw results from the checks endpoint.
+      const mergedDetail = {
+        ...detail,
+        results:
+          detail.results && detail.results.length > 0
+            ? detail.results
+            : results.map((r) => ({
+                ...r,
+                // Ensure field naming matches what the table expects
+                pass_count: r.pass_count,
+                fail_count: r.fail_count,
+              })),
+      };
+
+      setReportDetail(mergedDetail);
     } catch (err) {
       console.error("Failed to fetch report detail:", err);
-      alert("Failed to load report details.");
-      setSelectedReportId(null);
+      // Fallback: If one fails, try to show whatever we can
+      try {
+        const detail = await getDatasetReport(datasetId);
+        setReportDetail(detail);
+      } catch (innerErr) {
+        alert("Failed to load report details.");
+        setSelectedReportId(null);
+      }
     } finally {
       setIsDetailLoading(false);
     }
@@ -290,10 +317,6 @@ export default function ReportsPage() {
               </p>
             </div>
           </div>
-
-          <button className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 text-primary font-medium rounded-lg hover:bg-gray-50 transition-colors shadow-sm">
-            <Download size={18} /> Export JSON
-          </button>
         </div>
 
         {/* Overall Score Card */}
@@ -451,11 +474,6 @@ export default function ReportsPage() {
                     ))}
                   </tbody>
                 </table>
-              </div>
-              <div className="p-4 bg-gray-50 border-t border-gray-100 text-center">
-                <button className="text-sm font-semibold text-accent hover:underline">
-                  Download Full Error Log (CSV)
-                </button>
               </div>
             </div>
           </div>

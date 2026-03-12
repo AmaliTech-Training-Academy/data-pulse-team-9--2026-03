@@ -11,7 +11,6 @@ import {
   User,
   Loader2,
 } from "lucide-react";
-import { fetchApi } from "@/services/api";
 import {
   getDashboardReports,
   getDatasetReport,
@@ -19,12 +18,16 @@ import {
 } from "@/services/reports";
 import { QualityScoreResponse } from "@/services/checks";
 
-const getScoreColor = (score: number) => {
-  if (score >= 80) return "text-success";
-  if (score >= 50) return "text-warning";
-  return "text-danger";
-};
+import { getDatasets, Dataset } from "@/services/datasets";
 
+const REAL_DATA_START_DATE = "2026-03-09";
+
+const getScoreColor = (score: number | null) => {
+  if (score === null) return "text-gray-500 bg-gray-100";
+  if (score >= 80) return "text-success bg-success/10";
+  if (score >= 50) return "text-warning bg-warning/10";
+  return "text-danger bg-danger/10";
+};
 const getScoreBg = (score: number) => {
   if (score >= 80) return "bg-success";
   if (score >= 50) return "bg-warning";
@@ -49,44 +52,39 @@ export default function AdminReportsPage() {
   useEffect(() => {
     const loadDashboard = async () => {
       try {
-        const token = localStorage.getItem("token");
-        const options = { headers: { Authorization: `Bearer ${token}` } };
-
         // Fetch datasets to get names and users
         const [datasetsData, scoresData] = await Promise.all([
-          fetchApi("/datasets", options),
+          getDatasets(),
           getDashboardReports(),
         ]);
 
-        const datasetsArray = Array.isArray(datasetsData)
-          ? datasetsData
-          : datasetsData?.results || datasetsData?.datasets || [];
-
         // Create a lookup map for dataset details
         const datasetMap = new Map();
-        datasetsArray.forEach(
-          (d: {
-            id: number;
-            name?: string;
-            file_type?: string;
-            uploaded_by?: { email?: string };
-          }) => {
+        datasetsData.forEach(
+          (d: Dataset) => {
+            const uploadedBy = d.uploaded_by;
+            let userEmail = "System User";
+            if (uploadedBy && typeof uploadedBy === "object" && "email" in uploadedBy) {
+              userEmail = uploadedBy.email;
+            }
             datasetMap.set(d.id, {
-              name: d.name || `dataset_${d.id}.${d.file_type || "csv"}`,
-              user: d.uploaded_by?.email || "System User",
+              name: d.name || `Dataset #${d.id}`,
+              user: userEmail,
+              uploaded_at: d.uploaded_at
             });
           }
         );
-
-        // Enrich reports with dataset names and users
-        const enriched = scoresData.map((score) => {
-          const ds = datasetMap.get(score.dataset_id);
-          return {
-            ...score,
-            dataset_name: ds?.name || `Dataset #${score.dataset_id}`,
-            user_email: ds?.user || "Unknown",
-          };
-        });
+        // Enrich and filter reports (Real data only)
+        const enriched = (scoresData as QualityScoreResponse[])
+          .filter(score => !score.checked_at || score.checked_at >= REAL_DATA_START_DATE)
+          .map((score) => {
+            const ds = datasetMap.get(score.dataset_id);
+            return {
+              ...score,
+              dataset_name: ds?.name || `Dataset #${score.dataset_id}`,
+              user_email: ds?.user || "Unknown",
+            };
+          });
 
         setReports(enriched);
       } catch (err) {
