@@ -7,7 +7,7 @@
         "samples": [
             {
                 "id": 4,
-                "name": NaN,
+                "name": null,
                 "age": 40,
                 "score": 105.0,
                 "date": "2023-04-01",
@@ -58,7 +58,7 @@
         "samples": [
             {
                 "id": 4,
-                "name": NaN,
+                "name": null,
                 "age": 40,
                 "score": 105.0,
                 "date": "2023-04-01",
@@ -83,7 +83,7 @@
         "samples": [
             {
                 "id": 4,
-                "name": NaN,
+                "name": null,
                 "age": 40,
                 "score": 105.0,
                 "date": "2023-04-01",
