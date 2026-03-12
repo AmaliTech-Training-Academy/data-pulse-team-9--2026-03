@@ -20,8 +20,6 @@ import { QualityScoreResponse, getCheckResults } from "@/services/checks";
 
 import { getDatasets, Dataset } from "@/services/datasets";
 
-const REAL_DATA_START_DATE = "2026-03-09";
-
 const getScoreColor = (score: number | null) => {
   if (score === null) return "text-gray-500 bg-gray-100";
   if (score >= 80) return "text-success bg-success/10";

@@ -84,9 +84,11 @@ export default function UserDashboardLayout({
           className={`flex ${isCollapsed ? "flex-col justify-center py-2 gap-1.5" : "flex-row justify-between px-5"} items-center border-b border-white/5 h-20 min-h-[5rem]`}
         >
           <Link href="/" className="flex items-center justify-center">
-            <img
+            <Image
               src="/images/logo.png"
               alt="DataPulse Logo"
+              width={150}
+              height={30}
               className={`${isCollapsed ? "h-6" : "h-7"} w-auto object-contain flex-shrink-0 transition-all`}
             />
           </Link>

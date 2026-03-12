@@ -89,9 +89,9 @@ export default function AdminDatasetsPage() {
             return {
               userId: u.id,
               userEmail: u.email,
-              datasetIds: datasets.map((d: any) => d.id),
+              datasetIds: datasets.map((d: Dataset) => d.id),
             };
-          } catch (err) {
+          } catch {
             return { userId: u.id, userEmail: u.email, datasetIds: [] };
           }
         })

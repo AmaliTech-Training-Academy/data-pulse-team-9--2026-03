@@ -14,6 +14,14 @@ import {
   Schedule,
 } from "@/services/schedules";
 
+const FREQUENCY_PRESETS: Record<string, string> = {
+  every_minute: "* * * * *",
+  "daily-midnight": "0 0 * * *",
+  "daily-noon": "0 12 * * *",
+  weekly: "0 0 * * 1",
+  monthly: "0 0 1 * *",
+};
+
 export default function SettingsPage() {
   const [datasets, setDatasets] = useState<Dataset[]>([]);
   const [selectedDatasetId, setSelectedDatasetId] = useState<number | null>(
@@ -28,13 +36,6 @@ export default function SettingsPage() {
   const [saving, setSaving] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
 
-  const FREQUENCY_PRESETS: Record<string, string> = {
-    every_minute: "* * * * *",
-    "daily-midnight": "0 0 * * *",
-    "daily-noon": "0 12 * * *",
-    weekly: "0 0 * * 1",
-    monthly: "0 0 1 * *",
-  };
   // Initial load
   useEffect(() => {
     const loadInitialData = async () => {
@@ -110,7 +111,7 @@ export default function SettingsPage() {
     };
 
     loadConfig();
-  }, [selectedDatasetId]);
+  }, [selectedDatasetId, FREQUENCY_PRESETS]);
 
   const handleSaveSettings = async () => {
     if (!selectedDatasetId || !alertConfig || !schedule) return;

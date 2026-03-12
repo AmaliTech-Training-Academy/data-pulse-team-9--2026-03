@@ -4,8 +4,6 @@ import { useEffect, useState } from "react";
 import {
   Settings,
   ShieldCheck,
-  AlertCircle,
-  Database,
   Bell,
   Save,
   Loader2,
@@ -27,6 +25,14 @@ import {
 // Health polling interval removed if it were unused, but it is used.
 // System health monitoring remains.
 
+const FREQUENCY_PRESETS: Record<string, string> = {
+  every_minute: "* * * * *",
+  "daily-midnight": "0 0 * * *",
+  "daily-noon": "0 12 * * *",
+  weekly: "0 0 * * 1",
+  monthly: "0 0 1 * *",
+};
+
 export default function AdminSettingsPage() {
   const [datasets, setDatasets] = useState<Dataset[]>([]);
   const [selectedDatasetId, setSelectedDatasetId] = useState<number | null>(
@@ -37,18 +43,9 @@ export default function AdminSettingsPage() {
   const [frequency, setFrequency] = useState("daily-midnight");
   const [isAdvanced, setIsAdvanced] = useState(false);
 
-  const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
   const [health, setHealth] = useState<SystemHealth | null>(null);
-
-  const FREQUENCY_PRESETS: Record<string, string> = {
-    every_minute: "* * * * *",
-    "daily-midnight": "0 0 * * *",
-    "daily-noon": "0 12 * * *",
-    weekly: "0 0 * * 1",
-    monthly: "0 0 1 * *",
-  };
 
   useEffect(() => {
     const fetchHealth = async () => {
@@ -65,8 +62,6 @@ export default function AdminSettingsPage() {
         }
       } catch (err) {
         console.error("Failed to load settings data:", err);
-      } finally {
-        setLoading(false);
       }
     };
 
@@ -128,7 +123,7 @@ export default function AdminSettingsPage() {
     };
 
     loadConfig();
-  }, [selectedDatasetId]);
+  }, [selectedDatasetId, FREQUENCY_PRESETS]);
 
   const handleSaveSettings = async () => {
     if (!selectedDatasetId || !alertConfig || !schedule) return;

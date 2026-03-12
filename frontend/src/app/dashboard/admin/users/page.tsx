@@ -71,9 +71,9 @@ export default function AdminUsersPage() {
               const datasets = await getDatasets(u.id);
               return {
                 userId: u.id,
-                datasetIds: datasets.map((d: any) => d.id),
+                datasetIds: datasets.map((d: Dataset) => d.id),
               };
-            } catch (err) {
+            } catch {
               return { userId: u.id, datasetIds: [] };
             }
           })
