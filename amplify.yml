@@ -4,14 +4,15 @@ frontend:
     preBuild:
       commands:
         - cd frontend
-        - npm install
+        - npm ci
     build:
       commands:
         - npm run build
   artifacts:
-    baseDirectory: frontend/build
+    baseDirectory: frontend/.next
     files:
       - '**/*'
   cache:
     paths:
       - frontend/node_modules/**/*
+      - frontend/.next/cache/**/*
