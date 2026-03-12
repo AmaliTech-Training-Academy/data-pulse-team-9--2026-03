@@ -1,5 +1,5 @@
 export const API_URL =
-  process.env.NEXT_PUBLIC_API_URL || "http://52.30.221.161:8000";
+  process.env.NEXT_PUBLIC_API_URL || "http://52.30.221.161:8000/api";
 
 export async function fetchApi(endpoint: string, options: RequestInit = {}) {
   const token =

@@ -16,7 +16,7 @@ frontend:
     build:
       commands:
         - echo " Building Next.js application..."
-        - cd frontend
+        - ls -l
         - npm run build
         - echo " Build output:"
         - ls -la .next/
