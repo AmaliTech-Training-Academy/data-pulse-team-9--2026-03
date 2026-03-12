@@ -3,6 +3,7 @@
 import json
 
 import structlog
+from checks.models import CheckResult
 from checks.serializers import CheckResultResponseSerializer, QualityScoreResponseSerializer
 from datapulse.exceptions import DatasetNotFoundException
 from datapulse.pagination import DataPulsePagination
@@ -47,6 +48,18 @@ class DatasetReportView(APIView):
             )
 
         results = qs.results.all()
+
+        # Fallback: If no results are linked (old data or linkage failed),
+        # fetch results for this dataset that were created around the same time.
+        if not results.exists():
+            from datetime import timedelta
+
+            # Fetch results created within 5 seconds of the score
+            results = CheckResult.objects.filter(
+                dataset=dataset,
+                checked_at__gte=qs.checked_at - timedelta(seconds=5),
+                checked_at__lte=qs.checked_at + timedelta(seconds=5),
+            )
 
         columns = []
         if dataset.column_names:

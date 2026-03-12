@@ -88,6 +88,18 @@ class RunChecksView(APIView):
             # Map rules for fast O(1) lookup
             rules_map = {r.id: r for r in rules}
 
+            # 7. Calculate quality score
+            score_data = calculate_quality_score(results, rules)
+
+            # 8. Save QualityScore record
+            qs = QualityScore.objects.create(
+                dataset=dataset,
+                score=score_data["score"],
+                total_rules=score_data["total_rules"],
+                passed_rules=score_data["passed_rules"],
+                failed_rules=score_data["failed_rules"],
+            )
+
             check_results_to_create = []
             for res in results:
                 rule = rules_map.get(res["rule_id"])
@@ -100,6 +112,7 @@ class RunChecksView(APIView):
                     CheckResult(
                         dataset=dataset,
                         rule=rule,
+                        quality_score=qs,
                         passed=res["passed"],
                         failed_rows=res["failed_rows"],
                         total_rows=res["total_rows"],
@@ -109,18 +122,6 @@ class RunChecksView(APIView):
 
             # Bulk create all results at once to save DML queries
             CheckResult.objects.bulk_create(check_results_to_create)
-
-            # 7. Calculate quality score
-            score_data = calculate_quality_score(results, rules)
-
-            # 8. Save QualityScore record
-            qs = QualityScore.objects.create(
-                dataset=dataset,
-                score=score_data["score"],
-                total_rules=score_data["total_rules"],
-                passed_rules=score_data["passed_rules"],
-                failed_rules=score_data["failed_rules"],
-            )
 
             # 9. Link or Update audit log
             # Since this is the manual run endpoint, we record 'manual' and the user's email if available.
