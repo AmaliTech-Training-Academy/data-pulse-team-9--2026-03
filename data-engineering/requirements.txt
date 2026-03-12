@@ -4,3 +4,4 @@ plotly==5.17.0
 psycopg2-binary==2.9.9
 sqlalchemy==2.0.23
 python-dotenv==1.0.0
+PyYAML>=6.0.0

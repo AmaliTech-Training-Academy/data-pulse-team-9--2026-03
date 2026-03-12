@@ -8,7 +8,9 @@ class Schedule(models.Model):
 
     dataset = models.OneToOneField(Dataset, on_delete=models.CASCADE, related_name="schedule")
     cron_expression = models.CharField(max_length=100)
-    periodic_task = models.OneToOneField(PeriodicTask, on_delete=models.CASCADE, null=True, blank=True)
+    periodic_task = models.OneToOneField(
+        PeriodicTask, on_delete=models.CASCADE, null=True, blank=True, related_name="dataset_schedule"
+    )
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
