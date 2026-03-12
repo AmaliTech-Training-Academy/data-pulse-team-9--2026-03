@@ -10,7 +10,6 @@ import io
 import json
 from pathlib import Path
 from datetime import datetime, timezone
-from functools import wraps
 import hashlib
 
 sys.path.insert(0, str(Path(__file__).parent.parent))
@@ -594,12 +593,13 @@ with st.sidebar:
 
     for key, icon, label in NAV_SECTIONS:
         is_active = st.session_state.active_section == key
-        btn_style = (
-            "background:#6c63ff22;border-color:#6c63ff !important;color:#6c63ff;font-weight:700;"
-            if is_active
-            else "background:transparent;color:#1a2035;"
-        )
-        if st.button(label, key=f"nav_{key}", width="stretch", help=f"Go to {label}"):
+        if st.button(
+            label,
+            key=f"nav_{key}",
+            width="stretch",
+            help=f"Go to {label}",
+            type="primary" if is_active else "secondary",
+        ):
             st.session_state.active_section = key
             st.rerun()
 
