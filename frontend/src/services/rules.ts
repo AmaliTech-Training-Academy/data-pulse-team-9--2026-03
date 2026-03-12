@@ -55,14 +55,14 @@ export async function updateRule(
   id: number,
   data: Partial<RuleCreateData>
 ): Promise<ValidationRule> {
-  return fetchApi(`/api/rules/${id}`, {
+  return fetchApi(`/api/rules/${id}/`, {
     method: "PUT",
     body: JSON.stringify(data),
   });
 }
 
 export async function deleteRule(id: number): Promise<void> {
-  await fetchApi(`/api/rules/${id}`, {
+  await fetchApi(`/api/rules/${id}/`, {
     method: "DELETE",
   });
 }

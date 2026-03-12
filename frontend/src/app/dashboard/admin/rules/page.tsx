@@ -43,7 +43,7 @@ export default function AdminRulesPage() {
 
   // Filtering & Searching State
   const [searchTerm, setSearchTerm] = useState("");
-  const [selectedDatasetType, setSelectedDatasetType] = useState("all");
+  const [selectedDatasetType, setSelectedDatasetType] = useState("");
   const [selectedRuleType, setSelectedRuleType] = useState("");
   const [selectedSeverity, setSelectedSeverity] = useState("");
 
@@ -90,8 +90,7 @@ export default function AdminRulesPage() {
     setLoading(true);
     try {
       const params: GetRulesParams = {
-        dataset_type:
-          selectedDatasetType === "all" ? undefined : selectedDatasetType,
+        dataset_type: selectedDatasetType || undefined,
         search: searchTerm || undefined,
         rule_type: selectedRuleType || undefined,
         severity: selectedSeverity || undefined,
@@ -212,10 +211,21 @@ export default function AdminRulesPage() {
     setIsDeleteModalOpen(true);
   }, []);
 
-  // Client-side pagination logic
-  const totalItems = rules.length;
+  // Client-side pagination and filtering logic
+  const filteredRules = rules.filter((rule) => {
+    const matchesSearch =
+      rule.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      rule.field_name.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesRuleType =
+      !selectedRuleType || rule.rule_type === selectedRuleType;
+    const matchesSeverity =
+      !selectedSeverity || rule.severity === selectedSeverity;
+    return matchesSearch && matchesRuleType && matchesSeverity;
+  });
+
+  const totalItems = filteredRules.length;
   const totalPages = Math.ceil(totalItems / pageSize);
-  const paginatedRules = rules.slice(
+  const paginatedRules = filteredRules.slice(
     (currentPage - 1) * pageSize,
     currentPage * pageSize
   );
@@ -276,7 +286,7 @@ export default function AdminRulesPage() {
             onChange={(e) => setSelectedDatasetType(e.target.value)}
             className="bg-transparent outline-none cursor-pointer text-gray-700 w-full"
           >
-            <option value="all">All Types</option>
+            <option value="">Select File Type...</option>
             {Array.from(new Set(datasets.map((ds) => ds.file_type))).map(
               (type) => (
                 <option key={type} value={type}>
