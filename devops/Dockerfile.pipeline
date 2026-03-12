@@ -4,4 +4,4 @@ RUN apt-get update && apt-get install -y --no-install-recommends libpq-dev gcc &
 COPY data-engineering/requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 COPY data-engineering/ .
-CMD ["python", "pipeline/etl_pipeline.py"]
+CMD ["python", "main.py"]
