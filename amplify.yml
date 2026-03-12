@@ -3,32 +3,30 @@ frontend:
   phases:
     preBuild:
       commands:
-        - echo " Repository structure:"
+        - echo "Repository structure:"
         - ls -la
-        - echo " Frontend directory:"
+        - echo "Frontend directory:"
         - ls -la frontend/
-        - echo " Installing dependencies..."
-        - cd frontend
-        - npm ci --prefer-offline
-        - echo " Fixing vulnerabilities..."
-        - npm audit fix --force || echo " Some vulnerabilities couldn't be fixed"
+        - echo "Installing dependencies..."
+        - cd frontend && npm ci --prefer-offline
+        - echo "Fixing vulnerabilities..."
+        - cd frontend && npm audit fix --force || echo "Some vulnerabilities couldn't be fixed"
 
     build:
       commands:
-        - echo " Building Next.js application..."
-        - ls -l
-        - npm run build
-        - echo " Build output:"
-        - ls -la .next/
+        - echo "Building Next.js application..."
+        - cd frontend && npm run build
+        - echo "Build output:"
+        - cd frontend && ls -la .next/
 
     postBuild:
       commands:
-        - echo " Build complete!"
-        - echo " Final artifacts in .next directory:"
+        - echo "Build complete!"
+        - echo "Final artifacts in .next directory:"
         - cd frontend && ls -la .next/
 
   artifacts:
-    baseDirectory: frontend
+    baseDirectory: frontend/.next
     files:
       - "**/*"
 
