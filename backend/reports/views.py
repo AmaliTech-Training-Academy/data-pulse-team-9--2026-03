@@ -3,6 +3,7 @@
 import json
 
 import structlog
+from checks.models import CheckResult
 from checks.serializers import CheckResultResponseSerializer, QualityScoreResponseSerializer
 from datapulse.exceptions import DatasetNotFoundException
 from datapulse.pagination import DataPulsePagination
@@ -34,6 +35,7 @@ class DatasetReportView(APIView):
         try:
             dataset = Dataset.objects.get(id=dataset_id)
         except Dataset.DoesNotExist:
+            logger.warning("reports.dataset_not_found", dataset_id=dataset_id)
             raise DatasetNotFoundException(f"Dataset {dataset_id} not found")
 
         self.check_object_permissions(request, dataset)
@@ -41,12 +43,25 @@ class DatasetReportView(APIView):
         qs = report_service.get_latest_report(dataset)
 
         if not qs:
+            logger.warning("reports.not_found", dataset_id=dataset_id)
             return Response(
                 {"detail": f"Quality report for dataset {dataset_id} not found"},
                 status=404,
             )
 
         results = qs.results.all()
+
+        # Fallback: If no results are linked (old data or linkage failed),
+        # fetch results for this dataset that were created around the same time.
+        if not results.exists():
+            from datetime import timedelta
+
+            # Fetch results created within 5 seconds of the score
+            results = CheckResult.objects.filter(
+                dataset=dataset,
+                checked_at__gte=qs.checked_at - timedelta(seconds=5),
+                checked_at__lte=qs.checked_at + timedelta(seconds=5),
+            )
 
         columns = []
         if dataset.column_names:
@@ -68,6 +83,12 @@ class DatasetReportView(APIView):
             "checked_at": qs.checked_at,
         }
 
+        logger.info(
+            "reports.accessed",
+            dataset_id=dataset.id,
+            report_id=qs.id,
+            user_id=request.user.id if request.user.is_authenticated else None,
+        )
         return Response(report_data)
 
 
@@ -114,6 +135,7 @@ class QualityTrendsView(APIView):
         try:
             dataset = Dataset.objects.get(id=dataset_id)
         except Dataset.DoesNotExist:
+            logger.warning("reports.trends.dataset_not_found", dataset_id=dataset_id)
             raise DatasetNotFoundException(f"Dataset {dataset_id} not found")
 
         self.check_object_permissions(request, dataset)
@@ -128,6 +150,14 @@ class QualityTrendsView(APIView):
         if page is not None:
             serializer = QualityScoreResponseSerializer(page, many=True)
             return paginator.get_paginated_response(list(serializer.data))
+
+        logger.info(
+            "reports.trends_accessed",
+            dataset_id=dataset.id,
+            start_date=start_date,
+            end_date=end_date,
+            user_id=request.user.id if request.user.is_authenticated else None,
+        )
 
         return Response(list(QualityScoreResponseSerializer(queryset, many=True).data))
 
@@ -186,6 +216,14 @@ class BulkQualityTrendsView(APIView):
 
         queryset = report_service.get_bulk_dataset_trends(datasets, start_date, end_date)
         serializer = QualityScoreResponseSerializer(queryset, many=True)
+
+        logger.info(
+            "reports.bulk_trends_accessed",
+            dataset_ids=dataset_ids,
+            start_date=start_date,
+            end_date=end_date,
+            user_id=request.user.id if request.user.is_authenticated else None,
+        )
         return Response(serializer.data)
 
 
@@ -209,5 +247,7 @@ class DashboardView(APIView):
 
         # Cache for 5 minutes
         cache.set(cache_key, data, timeout=60 * 5)
+
+        logger.info("reports.dashboard_accessed", user_id=request.user.id if request.user.is_authenticated else None)
 
         return Response(data)

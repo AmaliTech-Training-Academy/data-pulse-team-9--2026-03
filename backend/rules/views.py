@@ -1,5 +1,6 @@
 """Validation rules router - PARTIAL implementation."""
 
+import structlog
 from datapulse.exceptions import InvalidRuleException
 from drf_spectacular.types import OpenApiTypes
 from drf_spectacular.utils import OpenApiParameter, extend_schema
@@ -8,6 +9,8 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from rules.models import ValidationRule
 from rules.serializers import RuleCreateSerializer, RuleResponseSerializer, RuleUpdateSerializer
+
+logger = structlog.get_logger(__name__)
 
 VALID_TYPES = {"NOT_NULL", "DATA_TYPE", "RANGE", "UNIQUE", "REGEX"}
 VALID_SEVERITIES = {"HIGH", "MEDIUM", "LOW"}
@@ -35,6 +38,13 @@ class RuleListCreateView(APIView):
             raise InvalidRuleException(f"Invalid severity: {VALID_SEVERITIES}")
 
         rule = ValidationRule.objects.create(**data)
+        logger.info(
+            "rule.created",
+            rule_id=rule.id,
+            rule_type=rule.rule_type,
+            dataset_type=rule.dataset_type,
+            user_id=request.user.id if request.user.is_authenticated else None,
+        )
         return Response(RuleResponseSerializer(rule).data, status=status.HTTP_201_CREATED)
 
     @extend_schema(
@@ -51,6 +61,11 @@ class RuleListCreateView(APIView):
         queryset = ValidationRule.objects.filter(is_active=True)
         if dataset_type:
             queryset = queryset.filter(dataset_type=dataset_type)
+        logger.info(
+            "rule.list_accessed",
+            dataset_type=dataset_type,
+            user_id=request.user.id if request.user.is_authenticated else None,
+        )
         return Response(list(RuleResponseSerializer(queryset, many=True).data), status=status.HTTP_200_OK)
 
 
@@ -70,6 +85,7 @@ class RuleDetailView(APIView):
         except ValidationRule.DoesNotExist:
             from datapulse.exceptions import RuleNotFoundException
 
+            logger.warning("rule.update.not_found", rule_id=rule_id)
             raise RuleNotFoundException(f"Rule with id {rule_id} not found")
 
         serializer = RuleUpdateSerializer(rule, data=request.data, partial=True)
@@ -87,6 +103,7 @@ class RuleDetailView(APIView):
             raise InvalidRuleException(f"Invalid severity: {VALID_SEVERITIES}")
 
         rule.save()
+        logger.info("rule.updated", rule_id=rule.id, user_id=request.user.id if request.user.is_authenticated else None)
         return Response(RuleResponseSerializer(rule).data, status=status.HTTP_200_OK)
 
     @extend_schema(
@@ -101,8 +118,10 @@ class RuleDetailView(APIView):
         except ValidationRule.DoesNotExist:
             from datapulse.exceptions import RuleNotFoundException
 
+            logger.warning("rule.delete.not_found", rule_id=rule_id)
             raise RuleNotFoundException(f"Rule with id {rule_id} not found")
 
         rule.is_active = False
         rule.save()
+        logger.info("rule.deleted", rule_id=rule.id, user_id=request.user.id if request.user.is_authenticated else None)
         return Response(status=status.HTTP_204_NO_CONTENT)

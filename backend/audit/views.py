@@ -1,6 +1,9 @@
+import structlog
 from audit.models import AuditLog
 from audit.serializers import AuditLogSerializer
 from rest_framework import generics
+
+logger = structlog.get_logger(__name__)
 
 
 class AuditLogListView(generics.ListAPIView):
@@ -28,5 +31,13 @@ class AuditLogListView(generics.ListAPIView):
             queryset = queryset.filter(timestamp__gte=start_date)
         if end_date:
             queryset = queryset.filter(timestamp__lte=end_date)
+
+        logger.info(
+            "audit.list_accessed",
+            dataset_id=dataset_id,
+            start_date=start_date,
+            end_date=end_date,
+            user_id=self.request.user.id if self.request.user.is_authenticated else None,
+        )
 
         return queryset
