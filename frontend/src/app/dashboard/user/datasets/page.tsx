@@ -48,9 +48,9 @@ export default function MyDatasetsPage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [datasets, setDatasets] = useState<DatasetRow[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [statusFilter, setStatusFilter] = useState("all");
   const [checkingId, setCheckingId] = useState<number | null>(null);
   const [openDropdownId, setOpenDropdownId] = useState<number | null>(null);
-
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -129,18 +129,44 @@ export default function MyDatasetsPage() {
     }
   };
 
-  const filteredDatasets = datasets.filter((d) =>
-    d.name.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filteredDatasets = datasets.filter((d) => {
+    // 1. Search filter
+    const matchesSearch = d.name
+      .toLowerCase()
+      .includes(searchTerm.toLowerCase());
 
+    // 2. Status filter
+    let matchesStatus = true;
+    if (statusFilter === "checked") {
+      matchesStatus =
+        d.status !== "PENDING" &&
+        d.status !== "PROCESSING" &&
+        d.status !== "ERROR";
+    } else if (statusFilter === "unchecked") {
+      matchesStatus = d.status === "PENDING";
+    }
+
+    // 3. Real Data filter (Safety double-check)
+    // const matchesDate = d.date >= REAL_DATA_START_DATE;
+
+    return matchesSearch && matchesStatus; // User only asked to filter by checked/not checked
+  });
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div>
-        <h2 className="text-xl font-black text-[#08293c]">MY DATASETS</h2>
-        <p className="text-[12px] font-medium text-gray-400 mt-1">
-          Manage and validate your uploaded data files.
-        </p>
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+          <h2 className="text-xl font-black text-[#08293c]">MY DATASETS</h2>
+          <p className="text-[12px] font-medium text-gray-400 mt-1">
+            Manage and validate your uploaded data files.
+          </p>
+        </div>
+        <Link
+          href="/dashboard/user/upload"
+          className="px-5 py-2 bg-[#ff5a00] text-white text-[12px] font-bold rounded-xl hover:shadow-lg hover:shadow-[#ff5a00]/20 transition-all text-center"
+        >
+          + Add New Dataset
+        </Link>
       </div>
 
       {/* Filters & Actions Bar */}
@@ -163,19 +189,14 @@ export default function MyDatasetsPage() {
         <div className="flex items-center gap-3 w-full sm:w-auto">
           <div className="flex items-center gap-2 px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm text-gray-600">
             <Filter size={16} />
-            <select className="bg-transparent outline-none cursor-pointer">
-              <option value="all">All Types</option>
-              <option value="csv">CSV</option>
-              <option value="json">JSON</option>
-            </select>
-          </div>
-
-          <div className="flex items-center gap-2 px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm text-gray-600">
-            <select className="bg-transparent outline-none cursor-pointer">
-              <option value="all">Any Score</option>
-              <option value="high">High (80-100)</option>
-              <option value="medium">Medium (50-79)</option>
-              <option value="low">Low (0-49)</option>
+            <select
+              className="bg-transparent outline-none cursor-pointer"
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value)}
+            >
+              <option value="all">All Status</option>
+              <option value="checked">Checked</option>
+              <option value="unchecked">Not Checked</option>
             </select>
           </div>
         </div>

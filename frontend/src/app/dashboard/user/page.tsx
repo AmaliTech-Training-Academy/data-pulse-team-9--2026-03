@@ -10,11 +10,11 @@ import { useRouter } from "next/navigation";
 import {
   Database,
   Activity,
-  ClipboardCheck,
-  Clock,
   Play,
   Eye,
   FileText,
+  ClipboardCheck,
+  Clock,
   Loader2,
 } from "lucide-react";
 import {
@@ -62,11 +62,24 @@ export default function DashboardOverview() {
   const [selectedTrendDataset, setSelectedTrendDataset] = useState<
     number | null
   >(null);
+  const [mounted, setMounted] = useState(false);
+  const REAL_DATA_START_DATE = "2026-03-09";
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const loadDashboard = useCallback(async () => {
     try {
       const data = await fetchApi("/reports/dashboard");
-      setDatasets(data);
+      const datasetsArray = (
+        Array.isArray(data) ? data : data?.results || []
+      ) as Dataset[];
+      // Filter for real data (March 9th+) or pending datasets
+      const filtered = datasetsArray.filter(
+        (d) => !d.checked_at || d.checked_at >= REAL_DATA_START_DATE
+      );
+      setDatasets(filtered);
 
       // If we have datasets and haven't selected one for trends yet, pick the first one with a score
       if (data.length > 0 && !selectedTrendDataset) {
@@ -94,12 +107,27 @@ export default function DashboardOverview() {
         setTrendLoading(true);
         try {
           const data = await getQualityTrends(selectedTrendDataset, {
+            start_date: REAL_DATA_START_DATE,
             limit: 10,
           });
           const results = (
-            Array.isArray(data) ? data : data.results
+            Array.isArray(data)
+              ? data
+              : (
+                  data as {
+                    results?: QualityScoreResponse[];
+                    trends?: QualityScoreResponse[];
+                  }
+                )?.results ||
+                (
+                  data as {
+                    results?: QualityScoreResponse[];
+                    trends?: QualityScoreResponse[];
+                  }
+                )?.trends ||
+                []
           ) as QualityScoreResponse[];
-          const formatted = results
+          const formatted = (Array.isArray(results) ? results : [])
             .filter(
               (r): r is QualityScoreResponse & { checked_at: string } =>
                 r.checked_at !== undefined
@@ -151,15 +179,20 @@ export default function DashboardOverview() {
   );
 
   const latestCheck = datasets
-    .filter((d) => d.checked_at !== null)
+    .filter(
+      (d) => d.checked_at !== null && d.checked_at >= REAL_DATA_START_DATE
+    )
     .sort(
       (a, b) =>
         new Date(b.checked_at!).getTime() - new Date(a.checked_at!).getTime()
     )[0]?.checked_at;
 
-  const formattedLastCheck = latestCheck
-    ? new Date(latestCheck).toLocaleDateString()
-    : "No checks run";
+  const formattedLastCheck =
+    mounted && latestCheck
+      ? new Date(latestCheck).toLocaleDateString()
+      : mounted
+        ? "No checks run"
+        : "---";
 
   return (
     <div className="space-y-6 animate-in fade-in duration-500">
@@ -376,7 +409,7 @@ export default function DashboardOverview() {
                         </div>
                       </td>
                       <td className="py-4 px-6 text-sm text-gray-500">
-                        {dataset.checked_at
+                        {mounted && dataset.checked_at
                           ? new Date(dataset.checked_at).toLocaleDateString()
                           : "Pending"}
                       </td>
