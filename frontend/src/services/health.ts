@@ -8,7 +8,7 @@ export interface SystemHealth {
 
 export async function getSystemHealth(): Promise<SystemHealth> {
   try {
-    const response = await fetchApi("/health/");
+    const response = await fetchApi("/health/", { skipAuth: true });
     return {
       status: response.status || "unhealthy",
       database: response.database || "down",

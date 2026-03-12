@@ -5,6 +5,7 @@ export const AuthService = {
     return fetchApi("/api/auth/login", {
       method: "POST",
       body: JSON.stringify({ email, password }),
+      skipAuth: true,
     });
   },
 
@@ -12,6 +13,7 @@ export const AuthService = {
     return fetchApi("/api/auth/register", {
       method: "POST",
       body: JSON.stringify({ full_name, email, password }),
+      skipAuth: true,
     });
   },
 
