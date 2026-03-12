@@ -149,6 +149,7 @@ def _build_dim_datasets(df: pd.DataFrame) -> pd.DataFrame:
         if dim["uploaded_at"].dt.tz is None:
             dim["uploaded_at"] = dim["uploaded_at"].dt.tz_localize(timezone.utc)
 
+    _validate_schema(dim, DIM_DATASET.columns, "dim_datasets")
     return dim.reset_index(drop=True)
 
 
@@ -161,6 +162,7 @@ def _build_dim_rules(df: pd.DataFrame) -> pd.DataFrame:
     # Convert SQLite integer (0/1) to Python boolean for Postgres compatibility
     if "is_active" in dim.columns:
         dim["is_active"] = dim["is_active"].astype(bool)
+    _validate_schema(dim, DIM_RULE.columns, "dim_rules")
     return dim.reset_index(drop=True)
 
 
@@ -193,6 +195,7 @@ def _build_dim_date(checked_at: pd.Series) -> pd.DataFrame:
             }
         )
 
+        _validate_schema(dim, DIM_DATE.columns, "dim_date")
         return dim
 
     except Exception as e:
@@ -236,6 +239,7 @@ def _build_facts(df: pd.DataFrame, checked_at: pd.Series) -> pd.DataFrame:
     if dedup_count > 0:
         logger.info("Removed %d duplicate facts during transformation", dedup_count)
 
+    _validate_schema(facts, FACT_QUALITY_CHECK.columns, "fact_quality_checks")
     return facts.reset_index(drop=True)
 
 
