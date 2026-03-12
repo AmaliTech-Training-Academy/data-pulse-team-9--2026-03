@@ -34,7 +34,22 @@ The `_handle_alerts` helper is called at the end of `run_scheduled_checks`.
 ### 4. Configuration
 
 - **Settings**: Email backend and `FRONTEND_URL` are defined in `base.py`.
-- **Environment**: Development uses the `Console` backend to output emails to logs.
+- **Environment**: Development uses the `Console` backend to output emails to logs by default, but this can be overridden to test real emails by configuring SMTP settings.
+
+#### Testing real emails in development
+
+1. Open `.env`
+2. Configure your SMTP settings. For Gmail:
+```env
+EMAIL_BACKEND=django.core.mail.backends.smtp.EmailBackend
+EMAIL_HOST=smtp.gmail.com
+EMAIL_PORT=587
+EMAIL_USE_TLS=True
+EMAIL_HOST_USER=your-email@gmail.com
+EMAIL_HOST_PASSWORD=your-app-password
+DEFAULT_FROM_EMAIL=your-email@gmail.com
+```
+3. Restart the containers.
 
 ## Testing
 
