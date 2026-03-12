@@ -2,12 +2,14 @@ import json
 
 from datasets.models import Dataset
 from django_celery_beat.models import CrontabSchedule, PeriodicTask
+from drf_spectacular.utils import extend_schema
 from rest_framework import generics, status
 from rest_framework.response import Response
 from schedule.models import AlertConfig, Schedule
 from schedule.serializers import AlertConfigSerializer, ScheduleSerializer
 
 
+@extend_schema(tags=["Scheduling"])
 class ScheduleCreateView(generics.ListCreateAPIView):
     """
     API View to create or list schedules for datasets.
@@ -74,6 +76,7 @@ class ScheduleCreateView(generics.ListCreateAPIView):
         return schedule_obj
 
 
+@extend_schema(tags=["Scheduling"])
 class ScheduleDetailView(generics.RetrieveDestroyAPIView):
     """
     API View to retrieve or delete a schedule.
@@ -89,6 +92,7 @@ class ScheduleDetailView(generics.RetrieveDestroyAPIView):
         instance.delete()
 
 
+@extend_schema(tags=["Scheduling"])
 class ScheduleToggleView(generics.UpdateAPIView):
     """
     API View to pause or resume a schedule by toggling the enabled state
@@ -119,6 +123,7 @@ class ScheduleToggleView(generics.UpdateAPIView):
         return Response({"detail": "Invalid action"}, status=status.HTTP_400_BAD_REQUEST)
 
 
+@extend_schema(tags=["Scheduling Alerts"])
 class AlertConfigView(generics.CreateAPIView):
     """
     API View to set or update an alert threshold for a dataset.
