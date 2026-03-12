@@ -19,14 +19,3 @@ app.config_from_object("django.conf:settings", namespace="CELERY")
 
 # Auto-discover tasks in all installed apps
 app.autodiscover_tasks()
-
-# Default beat schedule — runs the scheduled checks every hour.
-# The actual per-dataset frequency is controlled by ScheduleConfig model.
-# NOTE: Disabled temporarily because the `scheduling` app does not exist yet
-app.conf.beat_schedule = {
-    # "run-scheduled-quality-checks": {
-    #     "task": "scheduling.tasks.run_scheduled_checks",
-    #     "schedule": crontab(minute=0),  # Every hour at :00
-    # },
-}
-# fix lint issues
