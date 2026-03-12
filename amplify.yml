@@ -19,18 +19,16 @@ frontend:
         - cd frontend
         - npm run build
         - echo " Build output:"
-        - ls -la out/
-        - echo " Sample files:"
-        - find out -name "*.html" | head -5
+        - ls -la .next/
 
     postBuild:
       commands:
         - echo " Build complete!"
-        - echo " Final artifacts in out directory:"
-        - cd frontend && ls -la out/
+        - echo " Final artifacts in .next directory:"
+        - cd frontend && ls -la .next/
 
   artifacts:
-    baseDirectory: frontend/out
+    baseDirectory: frontend
     files:
       - "**/*"
 
