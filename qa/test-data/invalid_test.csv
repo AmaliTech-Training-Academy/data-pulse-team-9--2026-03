@@ -1,0 +1,6 @@
+id,name,email,age,department
+1,,alice@test.com,30,Engineering
+2,Bob,not-email,-5,
+3,Carol,carol@test.com,abc,Sales
+4,,david@test.com,42,HR
+5,Eve,,26,Finance

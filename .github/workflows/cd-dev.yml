@@ -1,0 +1,99 @@
+name: CD - Deploy to Dev
+
+on:
+  push:
+    branches:
+      - staging
+
+jobs:
+  deploy-dev:
+    name: Deploy to Dev EC2
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Configure SSH
+        env:
+          SSH_PRIVATE_KEY: ${{ secrets.DEV_SSH_PRIVATE_KEY }}
+          SSH_HOST: ${{ secrets.DEV_HOST }}
+        run: |
+          mkdir -p ~/.ssh
+          echo "$SSH_PRIVATE_KEY" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          ssh-keyscan -H $SSH_HOST >> ~/.ssh/known_hosts
+
+      - name: Deploy to Dev Server
+        env:
+          SSH_HOST: ${{ secrets.DEV_HOST }}
+          SSH_USER: ${{ secrets.DEV_USER }}
+        run: |
+          ssh -o StrictHostKeyChecking=no $SSH_USER@$SSH_HOST << 'ENDSSH'
+            set -e
+
+            echo "🚀 Starting deployment to dev environment..."
+
+            # Navigate to project directory
+            cd /opt/datapulse
+
+            # Pull latest changes
+            echo "📥 Pulling latest code from staging branch..."
+            git fetch origin
+            git checkout staging
+            git pull origin staging
+
+            # Stop running containers
+            echo "🛑 Stopping existing containers..."
+            docker compose --profile all down
+
+            # Pull latest images (if using registry)
+            echo "📦 Pulling Docker images..."
+            docker compose --profile all pull || true
+
+            # Rebuild images
+            docker compose --profile all up -d --build --force-recreate
+
+            # Wait for services to be healthy
+            echo "⏳ Waiting for services to be healthy..."
+            sleep 10
+
+            # Check container status
+            echo "✅ Container status:"
+            docker compose ps
+
+            # Clean up old images
+            echo "🧹 Cleaning up old Docker images..."
+            docker image prune -f
+
+            echo "✨ Deployment completed successfully!"
+          ENDSSH
+
+      - name: Verify Deployment
+        env:
+          SSH_HOST: ${{ secrets.DEV_HOST }}
+          SSH_USER: ${{ secrets.DEV_USER }}
+        run: |
+          ssh -o StrictHostKeyChecking=no $SSH_USER@$SSH_HOST << 'ENDSSH'
+            echo "🔍 Verifying deployment..."
+
+            # Check if backend is responding
+            curl -f http://localhost:8000/health || echo "⚠️  Backend health check failed"
+
+            # Check if frontend is accessible (if running locally)
+            # curl -f http://localhost:3000 || echo "⚠️  Frontend check failed"
+
+            # Show running containers
+            docker compose ps
+
+            echo "✅ Verification complete"
+          ENDSSH
+
+      - name: Notify Deployment Status
+        if: always()
+        run: |
+          if [ ${{ job.status }} == 'success' ]; then
+            echo "✅ Deployment to dev environment succeeded"
+          else
+            echo "❌ Deployment to dev environment failed"
+          fi

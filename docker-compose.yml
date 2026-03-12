@@ -1,0 +1,358 @@
+# =============================================================
+# DataPulse — Docker Compose with profiles
+#
+# Usage:
+#   All services:    docker compose --profile all up -d
+#   Backend only:    docker compose --profile backend up -d
+#   Streamlit only:  docker compose --profile streamlit up -d
+#   Monitoring only: docker compose --profile monitoring up -d
+#   ETL run:         docker compose --profile etl run --rm etl
+#
+# Core services (db, db-analytics, redis) have no profile tag
+# so they always start regardless of which profile is used.
+# =============================================================
+
+services:
+
+  # -----------------------------------------------------------
+  # Core — no profile, always starts
+  # -----------------------------------------------------------
+  db:
+    image: postgres:15-alpine
+    container_name: datapulse-db
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    restart: unless-stopped
+    networks:
+      - datapulse-network
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U ${POSTGRES_USER}" ]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  db-analytics:
+    image: postgres:15-alpine
+    container_name: datapulse-db-analytics
+    environment:
+      POSTGRES_USER: ${ANALYTICS_USER}
+      POSTGRES_PASSWORD: ${ANALYTICS_PASSWORD}
+      POSTGRES_DB: ${ANALYTICS_DB}
+    ports:
+      - "5433:5432"
+    volumes:
+      - pgdata_analytics:/var/lib/postgresql/data
+    restart: unless-stopped
+    networks:
+      - datapulse-network
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U ${ANALYTICS_USER} -d ${ANALYTICS_DB}" ]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    container_name: datapulse-redis
+    ports:
+      - "6379:6379"
+    restart: unless-stopped
+    networks:
+      - datapulse-network
+    healthcheck:
+      test: [ "CMD", "redis-cli", "ping" ]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  # -----------------------------------------------------------
+  # Profile: backend
+  # Django + Gunicorn, Celery worker, Celery beat
+  # -----------------------------------------------------------
+  backend:
+    profiles: [ backend, all ]
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: datapulse-backend
+    environment:
+      DATABASE_URL: ${DATABASE_URL}
+      SECRET_KEY: ${SECRET_KEY}
+      DJANGO_SETTINGS_MODULE: ${DJANGO_SETTINGS_MODULE}
+      DEBUG: ${DEBUG}
+      GUNICORN_WORKERS: ${GUNICORN_WORKERS}
+      GUNICORN_THREADS: ${GUNICORN_THREADS}
+      GUNICORN_LOG_LEVEL: ${GUNICORN_LOG_LEVEL}
+      CELERY_BROKER_URL: redis://redis:6379/0
+      CELERY_RESULT_BACKEND: redis://redis:6379/0
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://tempo:4318
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./backend:/app
+      - upload_data:/app/uploads
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+    networks:
+      - datapulse-network
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:8000/health/" ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  celery-worker:
+    profiles: [ backend, all ]
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: datapulse-celery-worker
+    command: celery -A datapulse worker --loglevel=info
+    environment:
+      DATABASE_URL: ${DATABASE_URL}
+      SECRET_KEY: ${SECRET_KEY}
+      DJANGO_SETTINGS_MODULE: ${DJANGO_SETTINGS_MODULE}
+      CELERY_BROKER_URL: redis://redis:6379/0
+      CELERY_RESULT_BACKEND: redis://redis:6379/0
+    volumes:
+      - ./backend:/app
+      - upload_data:/app/uploads
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+    networks:
+      - datapulse-network
+
+  celery-beat:
+    profiles: [ backend, all ]
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: datapulse-celery-beat
+    command: celery -A datapulse beat -l info --scheduler django_celery_beat.schedulers:DatabaseScheduler
+    environment:
+      DATABASE_URL: ${DATABASE_URL}
+      SECRET_KEY: ${SECRET_KEY}
+      DJANGO_SETTINGS_MODULE: ${DJANGO_SETTINGS_MODULE}
+      CELERY_BROKER_URL: redis://redis:6379/0
+      CELERY_RESULT_BACKEND: redis://redis:6379/0
+    volumes:
+      - ./backend:/app
+      - upload_data:/app/uploads
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+    networks:
+      - datapulse-network
+
+  # -----------------------------------------------------------
+  # Profile: etl
+  # Run manually or on cron — exits when done
+  # docker compose --profile etl run --rm etl
+  # -----------------------------------------------------------
+  etl:
+    profiles: [ etl, all ]
+    build:
+      context: .
+      dockerfile: devops/Dockerfile.pipeline
+    container_name: datapulse-etl
+    environment:
+      SOURCE_DB_URL: ${DATABASE_URL}
+      TARGET_DB_URL: ${TARGET_DB_URL}
+    depends_on:
+      db:
+        condition: service_healthy
+      db-analytics:
+        condition: service_healthy
+    restart: on-failure
+    networks:
+      - datapulse-network
+
+  # -----------------------------------------------------------
+  # Profile: db-seed
+  # Initialization service to populate mock data on startup
+  # -----------------------------------------------------------
+  db-seed:
+    profiles: [ backend, all ]
+    build:
+      context: .
+      dockerfile: devops/Dockerfile.pipeline
+    container_name: datapulse-db-seed
+    environment:
+      SOURCE_DB_URL: ${DATABASE_URL}
+      TARGET_DB_URL: ${TARGET_DB_URL}
+      PYTHONPATH: /pipeline
+    command: python seed/seed_analytics.py
+    depends_on:
+      backend:
+        condition: service_healthy
+    networks:
+      - datapulse-network
+
+  # -----------------------------------------------------------
+  # Profile: streamer
+  # Continuous mock data generation
+  # -----------------------------------------------------------
+  streamer:
+    profiles: [ backend, all ]
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: datapulse-streamer
+    command: python manage.py stream_check_results --interval 10 --rows 5
+    environment:
+      DATABASE_URL: ${DATABASE_URL}
+      SECRET_KEY: ${SECRET_KEY}
+      DJANGO_SETTINGS_MODULE: ${DJANGO_SETTINGS_MODULE}
+    volumes:
+      - ./backend:/app
+    depends_on:
+      backend:
+        condition: service_healthy
+      db-seed:
+        condition: service_completed_successfully
+    restart: unless-stopped
+    networks:
+      - datapulse-network
+
+  # -----------------------------------------------------------
+  # Profile: streamlit
+  # -----------------------------------------------------------
+  streamlit:
+    profiles: [ streamlit, all ]
+    build:
+      context: ./data-engineering
+      dockerfile: Dockerfile
+    container_name: datapulse-streamlit
+    environment:
+      TARGET_DB_URL: ${TARGET_DB_URL}
+    ports:
+      - "8501:8501"
+    depends_on:
+      db-analytics:
+        condition: service_healthy
+    restart: unless-stopped
+    networks:
+      - datapulse-network
+
+  # -----------------------------------------------------------
+  # Profile: monitoring
+  # Prometheus, Grafana, Loki, Promtail, Tempo
+  # -----------------------------------------------------------
+  prometheus:
+    profiles: [ monitoring, all ]
+    image: prom/prometheus:latest
+    container_name: datapulse-prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./devops/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+      - prometheus_data:/prometheus
+    command:
+      - "--config.file=/etc/prometheus/prometheus.yml"
+      - "--storage.tsdb.path=/prometheus"
+      - "--web.enable-lifecycle"
+    restart: unless-stopped
+    networks:
+      - datapulse-network
+
+  loki:
+    profiles: [ monitoring, all ]
+    image: grafana/loki:latest
+    container_name: datapulse-loki
+    ports:
+      - "3100:3100"
+    volumes:
+      - ./devops/loki/loki-config.yml:/etc/loki/local-config.yaml
+      - loki_data:/loki
+    command: -config.file=/etc/loki/local-config.yaml
+    restart: unless-stopped
+    networks:
+      - datapulse-network
+
+  promtail:
+    profiles: [ monitoring, all ]
+    image: grafana/promtail:latest
+    container_name: datapulse-promtail
+    volumes:
+      - ./devops/promtail/promtail-config.yml:/etc/promtail/config.yml
+      - /var/run/docker.sock:/var/run/docker.sock
+      - /var/lib/docker/containers:/var/lib/docker/containers:ro
+    command: -config.file=/etc/promtail/config.yml
+    depends_on:
+      - loki
+    restart: unless-stopped
+    networks:
+      - datapulse-network
+
+  tempo:
+    profiles: [ monitoring, all ]
+    image: grafana/tempo:latest
+    container_name: datapulse-tempo
+    ports:
+      - "3200:3200"
+      - "4317:4317"
+      - "4318:4318"
+    volumes:
+      - ./devops/tempo/tempo-config.yml:/etc/tempo.yaml
+      - tempo_data:/loki
+    command: -config.file=/etc/tempo.yaml
+    restart: unless-stopped
+    networks:
+      - datapulse-network
+
+  grafana:
+    profiles: [ monitoring, all ]
+    image: grafana/grafana:latest
+    container_name: datapulse-grafana
+    environment:
+      GF_SECURITY_ADMIN_USER: ${GRAFANA_USER}
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_PASSWORD}
+      GF_USERS_ALLOW_SIGN_UP: "false"
+      GF_INSTALL_PLUGINS: grafana-piechart-panel
+    ports:
+      - "3000:3000"
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./devops/grafana/provisioning:/etc/grafana/provisioning
+      - ./devops/grafana/dashboards:/var/lib/grafana/dashboards
+    depends_on:
+      - prometheus
+    restart: unless-stopped
+    networks:
+      - datapulse-network
+
+# =============================================================
+# Volumes
+# =============================================================
+volumes:
+  pgdata:
+  pgdata_analytics:
+  upload_data:
+  prometheus_data:
+  grafana_data:
+  loki_data:
+  tempo_data:
+
+    # =============================================================
+    # Networks
+    # =============================================================
+networks:
+  datapulse-network:
+    driver: bridge

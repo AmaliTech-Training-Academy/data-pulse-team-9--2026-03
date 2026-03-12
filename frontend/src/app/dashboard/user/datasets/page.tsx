@@ -1,0 +1,359 @@
+"use client";
+
+import { useState, useEffect, useRef } from "react";
+import {
+  Search,
+  Filter,
+  FileText,
+  FileJson,
+  Play,
+  Eye,
+  Settings,
+  Trash2,
+  Loader2,
+  MoreVertical,
+} from "lucide-react";
+import { fetchApi } from "@/services/api";
+import { runCheck } from "@/services/checks";
+import Link from "next/link";
+
+// Helper functions
+
+const getStatusColor = (status: string) => {
+  switch (status) {
+    case "Clean":
+      return "text-success";
+    case "Good":
+      return "text-success";
+    case "Review Needed":
+      return "text-warning";
+    case "Critical Issues":
+      return "text-danger";
+    case "PROCESSING":
+      return "text-gray-500 animate-pulse";
+    default:
+      return "text-gray-500";
+  }
+};
+
+interface DatasetRow {
+  id: number;
+  name: string;
+  type: string;
+  date: string;
+  status: string;
+}
+
+export default function MyDatasetsPage() {
+  const [searchTerm, setSearchTerm] = useState("");
+  const [datasets, setDatasets] = useState<DatasetRow[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [statusFilter, setStatusFilter] = useState("all");
+  const [checkingId, setCheckingId] = useState<number | null>(null);
+  const [openDropdownId, setOpenDropdownId] = useState<number | null>(null);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        dropdownRef.current &&
+        !dropdownRef.current.contains(event.target as Node)
+      ) {
+        setOpenDropdownId(null);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  const fetchDatasets = async () => {
+    try {
+      const token = localStorage.getItem("token");
+      const options = {
+        headers: { Authorization: `Bearer ${token}` },
+      };
+
+      // Fetch only datasets, no scores
+      const [datasetsData] = await Promise.all([
+        fetchApi("/api/datasets", options),
+      ]);
+
+      const datasetsArray = Array.isArray(datasetsData)
+        ? datasetsData
+        : datasetsData?.results || datasetsData?.datasets || [];
+
+      const processed = datasetsArray.map(
+        (d: {
+          id: number;
+          name?: string;
+          file_type?: string;
+          uploaded_at: string;
+          status: string;
+        }) => {
+          return {
+            id: d.id,
+            name: d.name || `dataset_file_${d.id}.${d.file_type || "csv"}`,
+            type: (d.file_type || "CSV").toUpperCase(),
+            date: new Date(d.uploaded_at).toLocaleDateString(),
+            status: d.status,
+          };
+        }
+      );
+
+      setDatasets(processed);
+    } catch (err) {
+      console.error("Failed to load datasets:", err);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchDatasets();
+  }, []);
+
+  const handleRunCheck = async (id: number) => {
+    try {
+      setCheckingId(id);
+      await runCheck(id);
+      alert("Quality check completed successfully!");
+      // Refresh the list to reflect validated status
+      fetchDatasets();
+    } catch (err: unknown) {
+      alert(
+        "Failed to run quality check: " +
+          (err instanceof Error ? err.message : String(err))
+      );
+    } finally {
+      setCheckingId(null);
+    }
+  };
+
+  const filteredDatasets = datasets.filter((d) => {
+    // 1. Search filter
+    const matchesSearch = d.name
+      .toLowerCase()
+      .includes(searchTerm.toLowerCase());
+
+    // 2. Status filter
+    let matchesStatus = true;
+    if (statusFilter === "checked") {
+      matchesStatus = !["PENDING", "PROCESSING", "ERROR"].includes(d.status);
+    } else if (statusFilter === "unchecked") {
+      matchesStatus = d.status === "PENDING";
+    }
+
+    // 3. Real Data filter (Safety double-check)
+    // const matchesDate = d.date >= REAL_DATA_START_DATE;
+
+    return matchesSearch && matchesStatus; // User only asked to filter by checked/not checked
+  });
+  return (
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+          <h2 className="text-xl font-black text-[#08293c]">MY DATASETS</h2>
+          <p className="text-[12px] font-medium text-gray-400 mt-1">
+            Manage and validate your uploaded data files.
+          </p>
+        </div>
+        <Link
+          href="/dashboard/user/upload"
+          className="px-5 py-2 bg-[#ff5a00] text-white text-[12px] font-bold rounded-xl hover:shadow-lg hover:shadow-[#ff5a00]/20 transition-all text-center"
+        >
+          + Add New Dataset
+        </Link>
+      </div>
+
+      {/* Filters & Actions Bar */}
+      <div className="flex flex-col sm:flex-row gap-4 justify-between items-center bg-white p-4 rounded-xl shadow-sm border border-gray-100">
+        {/* Search */}
+        <div className="relative w-full sm:w-96 group">
+          <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400 group-focus-within:text-accent transition-colors">
+            <Search size={18} />
+          </div>
+          <input
+            type="text"
+            placeholder="Search datasets..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="block w-full pl-10 pr-4 py-2 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-accent/20 focus:border-accent outline-none transition-all text-sm"
+          />
+        </div>
+
+        {/* Filters */}
+        <div className="flex items-center gap-3 w-full sm:w-auto">
+          <div className="flex items-center gap-2 px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm text-gray-600">
+            <Filter size={16} />
+            <select
+              className="bg-transparent outline-none cursor-pointer"
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value)}
+            >
+              <option value="all">All Status</option>
+              <option value="checked">Checked</option>
+              <option value="unchecked">Not Checked</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      {/* Datasets Table */}
+      <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+        <div className="overflow-x-auto">
+          <table className="w-full text-left border-collapse min-w-[800px]">
+            <thead>
+              <tr className="bg-gray-50 border-b border-gray-200">
+                <th className="py-4 px-6 text-[10px] font-black text-[#08293c] uppercase tracking-widest">
+                  File Name
+                </th>
+                <th className="py-4 px-6 text-[10px] font-black text-[#08293c] uppercase tracking-widest">
+                  Type
+                </th>
+                <th className="py-4 px-6 text-[10px] font-black text-[#08293c] uppercase tracking-widest">
+                  Upload Date
+                </th>
+                <th className="py-4 px-6 text-[10px] font-black text-[#08293c] uppercase tracking-widest">
+                  Status
+                </th>
+                <th className="py-4 px-6 text-[10px] font-black text-[#08293c] uppercase tracking-widest text-right">
+                  Actions
+                </th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-gray-100">
+              {isLoading ? (
+                <tr>
+                  <td colSpan={7} className="py-12 text-center">
+                    <Loader2
+                      className="animate-spin text-accent mx-auto mb-4"
+                      size={32}
+                    />
+                    <p className="text-gray-500 font-medium">
+                      Loading datasets...
+                    </p>
+                  </td>
+                </tr>
+              ) : filteredDatasets.length === 0 ? (
+                <tr>
+                  <td colSpan={7} className="py-12 text-center">
+                    <div className="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-4">
+                      <Search className="text-gray-400" size={24} />
+                    </div>
+                    <h3 className="text-lg font-bold text-primary mb-1">
+                      No datasets found
+                    </h3>
+                    <p className="text-gray-500">
+                      Try adjusting your filters or upload a new dataset.
+                    </p>
+                  </td>
+                </tr>
+              ) : (
+                filteredDatasets.map((dataset) => (
+                  <tr
+                    key={dataset.id}
+                    className="hover:bg-[#F4F6F8]/50 transition-colors group"
+                  >
+                    <td className="py-4 px-6">
+                      <div className="flex items-center gap-3">
+                        <div
+                          className={`p-2 rounded-lg ${dataset.type === "CSV" ? "bg-blue-50 text-blue-600" : "bg-yellow-50 text-yellow-600"}`}
+                        >
+                          {dataset.type === "CSV" ? (
+                            <FileText size={18} />
+                          ) : (
+                            <FileJson size={18} />
+                          )}
+                        </div>
+                        <span className="text-sm font-bold text-[#08293c]">
+                          {dataset.name}
+                        </span>
+                      </div>
+                    </td>
+                    <td className="py-4 px-6">
+                      <span className="text-sm font-medium text-gray-600 border border-gray-200 bg-gray-50 px-2 py-1 rounded-md">
+                        {dataset.type}
+                      </span>
+                    </td>
+                    <td className="py-4 px-6 text-sm text-gray-500">
+                      {dataset.date}
+                    </td>
+                    <td className="py-4 px-6 text-sm font-medium">
+                      <span
+                        className={`flex items-center gap-1.5 ${getStatusColor(dataset.status)}`}
+                      >
+                        <span className="w-1.5 h-1.5 rounded-full bg-current"></span>
+                        {dataset.status}
+                      </span>
+                    </td>
+                    <td className="py-4 px-6 text-right">
+                      <div className="relative flex justify-end">
+                        <button
+                          onClick={() =>
+                            setOpenDropdownId(
+                              openDropdownId === dataset.id ? null : dataset.id
+                            )
+                          }
+                          className="p-2 text-gray-400 hover:text-primary rounded-lg transition-colors"
+                        >
+                          <MoreVertical size={20} />
+                        </button>
+
+                        {openDropdownId === dataset.id && (
+                          <div
+                            ref={dropdownRef}
+                            className="absolute right-0 top-full mt-1 w-48 bg-white rounded-xl shadow-lg border border-gray-100 py-2 z-50 text-left"
+                          >
+                            {!["PROCESSING", "ERROR"].includes(
+                              dataset.status
+                            ) && (
+                              <button
+                                onClick={() => {
+                                  setOpenDropdownId(null);
+                                  handleRunCheck(dataset.id);
+                                }}
+                                disabled={checkingId === dataset.id}
+                                className="w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-3 disabled:opacity-50 disabled:cursor-not-allowed"
+                              >
+                                {checkingId === dataset.id ? (
+                                  <Loader2
+                                    size={16}
+                                    className="animate-spin text-accent"
+                                  />
+                                ) : (
+                                  <Play size={16} className="text-gray-400" />
+                                )}
+                                Run Validation
+                              </button>
+                            )}
+                            <Link
+                              href={`/dashboard/user/datasets/${dataset.id}`}
+                              className="w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-3"
+                            >
+                              <Eye size={16} className="text-gray-400" />
+                              View Details
+                            </Link>
+                            <button className="w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-3">
+                              <Settings size={16} className="text-gray-400" />
+                              Manage Rules
+                            </button>
+                            <div className="h-px bg-gray-100 my-1"></div>
+                            <button className="w-full px-4 py-2 text-sm text-danger hover:bg-red-50 flex items-center gap-3 cursor-pointer">
+                              <Trash2 size={16} className="text-danger" />
+                              Delete Dataset
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  );
+}

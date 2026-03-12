@@ -1,0 +1,29 @@
+database:
+  source_url: ${SOURCE_DB_URL}
+  target_url: ${TARGET_DB_URL}
+
+etl:
+  batch_size: 1000
+  parallel_workers: 4
+  retry_attempts: 3
+  retry_delay_seconds: 5
+  retry_max_delay_seconds: 60
+  retry_multiplier: 2.0
+  query_timeout_seconds: 300
+  random_seed: null  # Set to integer for reproducibility in tests
+
+logging:
+  level: INFO
+  directory: logs
+  format: "%(asctime)s | %(levelname)-7s | %(name)s | %(message)s"
+  date_format: "%Y-%m-%d %H:%M:%S"
+
+validation:
+  min_score: 0.0
+  max_score: 100.0
+  required_columns:
+    - dataset_id
+    - rule_id
+    - total_rows
+    - checked_at
+  strict_mode: false  # Fail pipeline on any validation warnings
