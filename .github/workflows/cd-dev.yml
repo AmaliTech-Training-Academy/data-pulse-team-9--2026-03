@@ -52,12 +52,7 @@ jobs:
             docker compose --profile all pull || true
 
             # Rebuild images
-            echo "🔨 Building Docker images..."
-            docker compose --profile all build
-
-            # Start containers
-            echo "▶️  Starting containers..."
-            docker compose --profile all up -d
+            docker compose --profile all up -d --build --force-recreate
 
             # Wait for services to be healthy
             echo "⏳ Waiting for services to be healthy..."
