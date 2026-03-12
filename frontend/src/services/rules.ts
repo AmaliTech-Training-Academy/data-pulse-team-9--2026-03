@@ -39,13 +39,13 @@ export async function getRules(
     });
   }
   const query = queryParams.toString() ? `?${queryParams.toString()}` : "";
-  return fetchApi(`/rules/${query}`);
+  return fetchApi(`/api/rules/${query}`);
 }
 
 export async function createRule(
   data: RuleCreateData
 ): Promise<ValidationRule> {
-  return fetchApi("/rules/", {
+  return fetchApi("/api/rules/", {
     method: "POST",
     body: JSON.stringify(data),
   });
@@ -55,14 +55,14 @@ export async function updateRule(
   id: number,
   data: Partial<RuleCreateData>
 ): Promise<ValidationRule> {
-  return fetchApi(`/rules/${id}`, {
+  return fetchApi(`/api/rules/${id}`, {
     method: "PUT",
     body: JSON.stringify(data),
   });
 }
 
 export async function deleteRule(id: number): Promise<void> {
-  await fetchApi(`/rules/${id}`, {
+  await fetchApi(`/api/rules/${id}`, {
     method: "DELETE",
   });
 }

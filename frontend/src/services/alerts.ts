@@ -21,7 +21,7 @@ export async function getAlertConfig(
           : {}),
       },
     };
-    return await fetchApi(`/schedules/alerts/${datasetId}/`, options);
+    return await fetchApi(`/api/schedules/alerts/${datasetId}/`, options);
   } catch (err) {
     const error = err as Error;
     // If method is not allowed, it means backend hasn't implemented GET yet.
@@ -65,5 +65,5 @@ export async function updateAlertConfig(
       dataset_id: datasetId,
     }),
   };
-  return await fetchApi(`/schedules/alerts/${datasetId}/`, options);
+  return await fetchApi(`/api/schedules/alerts/${datasetId}/`, options);
 }

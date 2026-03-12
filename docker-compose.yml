@@ -151,6 +151,7 @@ services:
       CELERY_RESULT_BACKEND: redis://redis:6379/0
     volumes:
       - ./backend:/app
+      - upload_data:/app/uploads
     depends_on:
       db:
         condition: service_healthy

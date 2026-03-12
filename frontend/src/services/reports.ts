@@ -33,7 +33,7 @@ export const getDashboardReports = async (): Promise<
     },
   };
 
-  return fetchApi("/reports/dashboard", options);
+  return fetchApi("/api/reports/dashboard", options);
 };
 
 /**
@@ -56,7 +56,7 @@ export const getDatasetReport = async (
     },
   };
 
-  return fetchApi(`/reports/${datasetId}`, options);
+  return fetchApi(`/api/reports/${datasetId}`, options);
 };
 
 /**
@@ -110,7 +110,7 @@ export const getQualityTrends = async (
     },
   };
 
-  return fetchApi(`/reports/${datasetId}/trends${query}`, options);
+  return fetchApi(`/api/reports/${datasetId}/trends${query}`, options);
 };
 
 /**
@@ -143,5 +143,5 @@ export const getBulkQualityTrends = async (
     },
   };
 
-  return fetchApi(`/reports/bulk-trends?${urlParams.toString()}`, options);
+  return fetchApi(`/api/reports/bulk-trends?${urlParams.toString()}`, options);
 };

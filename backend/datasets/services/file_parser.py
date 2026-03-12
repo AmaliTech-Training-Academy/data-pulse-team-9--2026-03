@@ -4,7 +4,10 @@ import csv
 import json
 
 import pandas as pd
+import structlog
 from datapulse.exceptions import InvalidFileException
+
+logger = structlog.get_logger(__name__)
 
 
 def parse_csv(file_path: str) -> dict:
@@ -54,9 +57,11 @@ def parse_csv(file_path: str) -> dict:
         # Sanitize columns
         df.columns = df.columns.astype(str).str.strip()
 
-    except InvalidFileException:
+    except InvalidFileException as e:
+        logger.warning("file_parser.csv.invalid_file", file_path=file_path, reason=str(e))
         raise
     except Exception as e:
+        logger.error("file_parser.csv.failed", file_path=file_path, error=str(e))
         raise InvalidFileException(f"Failed to parse CSV: {str(e)}")
 
     return {
@@ -100,11 +105,14 @@ def parse_json(file_path: str) -> dict:
 
         df.columns = df.columns.astype(str).str.strip()
 
-    except InvalidFileException:
+    except InvalidFileException as e:
+        logger.warning("file_parser.json.invalid_file", file_path=file_path, reason=str(e))
         raise
     except json.JSONDecodeError as e:
+        logger.warning("file_parser.json.invalid_format", file_path=file_path, error=str(e))
         raise InvalidFileException(f"Invalid JSON format: {str(e)}")
     except Exception as e:
+        logger.error("file_parser.json.failed", file_path=file_path, error=str(e))
         raise InvalidFileException(f"Failed to parse JSON: {str(e)}")
 
     return {
