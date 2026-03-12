@@ -337,34 +337,23 @@ def log_query(query_name: str, params: dict = None):
 def get_engine():
     try:
         url = settings["database"]["target_url"]
-        engine = create_engine(
-            url,
-            pool_pre_ping=True,
-            pool_recycle=3600,
-            pool_size=5,
-            max_overflow=10,
-        )
+        engine = create_engine(url, pool_pre_ping=True)
         return engine
     except Exception as e:
-        st.error(f"Database connection failed: {type(e).__name__}")
+        st.error(f"Database connection failed: {type(e).__name__} - {e}")
         return None
 
 
-@st.cache_data(ttl=60)
 def run_query_safe(query: str, params: dict = None, query_name: str = "unnamed") -> pd.DataFrame:
+    """Run a SQL query and return a DataFrame."""
     engine = get_engine()
     if engine is None:
         return pd.DataFrame()
-    log_query(query_name, params)
     try:
         with engine.connect() as conn:
-            try:
-                conn.execute(text("SET statement_timeout = '30s'"))
-            except SQLAlchemyError:
-                pass
             return pd.read_sql(text(query), conn, params=params)
-    except SQLAlchemyError as e:
-        st.error(f"Query error: {type(e).__name__}")
+    except Exception as e:
+        st.error(f"Query error ({query_name}): {type(e).__name__} - {str(e)[:300]}")
         return pd.DataFrame()
 
 
@@ -598,7 +587,6 @@ with st.sidebar:
         if st.button(
             label,
             key=f"nav_{key}",
-            width="stretch",
             help=f"Go to {label}",
             type="primary" if is_active else "secondary",
         ):
@@ -614,7 +602,7 @@ with st.sidebar:
     )
 
     # Refresh
-    if st.button("Refresh Data", width="stretch"):
+    if st.button("Refresh Data", use_container_width=True):
         st.session_state["force_filter_reset"] = True
         st.rerun()
 
@@ -861,20 +849,20 @@ if active == "overview":
                 )
                 fig = add_thresholds(fig)
                 fig.update_layout(**base_layout("", "Date", "Quality Score (%)", yaxis_extra={"range": [0, 105]}))
-                st.plotly_chart(fig, width="stretch")
+                st.plotly_chart(fig, use_container_width=True)
 
         with col_action:
             st.markdown("#### Quick Actions")
-            if st.button("View Detailed Trends", width="stretch"):
+            if st.button("View Detailed Trends", use_container_width=True):
                 st.session_state.active_section = "trends"
                 st.rerun()
-            if st.button("Analyse Failures", width="stretch"):
+            if st.button("Analyse Failures", use_container_width=True):
                 st.session_state.active_section = "failures"
                 st.rerun()
-            if st.button("Compare Datasets", width="stretch"):
+            if st.button("Compare Datasets", use_container_width=True):
                 st.session_state.active_section = "comparison"
                 st.rerun()
-            if st.button("Field Issues", width="stretch"):
+            if st.button("Field Issues", use_container_width=True):
                 st.session_state.active_section = "fields"
                 st.rerun()
             st.markdown('<div style="height:0.5rem;"></div>', unsafe_allow_html=True)
@@ -926,7 +914,7 @@ elif active == "trends":
                 **base_layout("Quality Score Over Time", "Date", "Avg Score (%)", yaxis_extra={"range": [0, 105]})
             )
             fig.update_traces(hovertemplate="<b>%{y:.1f}%</b><br>Checks: %{customdata[0]}<extra></extra>")
-            st.plotly_chart(fig, width="stretch")
+            st.plotly_chart(fig, use_container_width=True)
             download_chart_data(trend_df, "quality_trends")
 
         with col_ins:
@@ -1007,7 +995,7 @@ elif active == "failures":
                 ),
                 showlegend=False,
             )
-            st.plotly_chart(fig, width="stretch")
+            st.plotly_chart(fig, use_container_width=True)
             create_download_button(failure_df, "failure_by_ruletype", "Download", export_format.lower())
 
             max_rate = failure_df["failure_rate"].max()
@@ -1070,7 +1058,7 @@ elif active == "failures":
                 **base_layout("", "Severity Level", "Check Count"),
                 barmode="stack",
             )
-            st.plotly_chart(fig, width="stretch")
+            st.plotly_chart(fig, use_container_width=True)
             create_download_button(severity_df, "failure_by_severity", "Download", export_format.lower())
 
             hi_fail = (
@@ -1190,7 +1178,7 @@ elif active == "comparison":
                 annotation_font_size=10,
             )
             fig.update_layout(**base_layout("", "Dataset", "Avg Score (%)", yaxis_extra={"range": [0, 108]}))
-            st.plotly_chart(fig, width="stretch")
+            st.plotly_chart(fig, use_container_width=True)
 
         with col_list:
             st.markdown(f'#### {_I["clipboard"]} Quality Assessment', unsafe_allow_html=True)
@@ -1214,7 +1202,7 @@ elif active == "comparison":
         st.markdown(f'##### {_I["clipboard"]} Full Comparison Table', unsafe_allow_html=True)
         disp = comparison_df[["dataset", "avg_score", "pass_rate", "total_checks", "failed", "quality_status"]].copy()
         disp.columns = ["Dataset", "Avg Score (%)", "Pass Rate (%)", "Total Checks", "Failed", "Status"]
-        st.dataframe(disp, width="stretch", hide_index=True)
+        st.dataframe(disp, use_container_width=True, hide_index=True)
         download_chart_data(comparison_df, "dataset_comparison")
     else:
         st.info("No comparison data for selected filters.")
@@ -1256,7 +1244,7 @@ elif active == "fields":
                 hovertemplate="<b>%{label}</b><br>Failures: %{value:,}<br>"
                 "Failure Rate: %{customdata[0]:.1f}%<extra></extra>"
             )
-            st.plotly_chart(fig, width="stretch")
+            st.plotly_chart(fig, use_container_width=True)
             create_download_button(field_df, "field_quality_issues", "Download", export_format.lower())
 
         with col_list:
@@ -1336,7 +1324,7 @@ elif active == "dow":
                 **base_layout("Average Quality Score by Day", "Day", "Avg Score (%)", yaxis_extra={"range": [0, 108]}),
                 showlegend=False,
             )
-            st.plotly_chart(fig, width="stretch")
+            st.plotly_chart(fig, use_container_width=True)
             download_chart_data(dow_df, "quality_by_dow")
 
         with col_ins:
