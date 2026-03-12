@@ -16,7 +16,8 @@ CORS_ALLOW_ALL_ORIGINS = True
 CORS_ALLOW_CREDENTIALS = True
 
 # Use console email backend for development to see emails in logs
-EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
+# Allow overriding email backend in dev (e.g., to use SMTP instead of console)
+EMAIL_BACKEND = env("EMAIL_BACKEND", default="django.core.mail.backends.console.EmailBackend")
 # Disable static file compression in development
 STORAGES = {
     "default": {
