@@ -23,9 +23,26 @@ export async function getAlertConfig(
     };
     return await fetchApi(`/schedules/alerts/${datasetId}/`, options);
   } catch (err) {
+    const error = err as Error;
+    // If method is not allowed, it means backend hasn't implemented GET yet.
+    // We return a default instead of null to allow the frontend to function.
+    if (
+      error.message?.includes("Method") ||
+      error.message?.includes("Allowed")
+    ) {
+      return {
+        id: 0,
+        dataset_id: datasetId,
+        threshold: 80,
+        email_notifications: true,
+        is_alert_active: false,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      };
+    }
     console.error(
       `Failed to fetch alert config for dataset ${datasetId}:`,
-      err
+      error
     );
     return null;
   }
@@ -43,7 +60,10 @@ export async function updateAlertConfig(
         ? { Authorization: `Bearer ${localStorage.getItem("token")}` }
         : {}),
     },
-    body: JSON.stringify(data),
+    body: JSON.stringify({
+      ...data,
+      dataset_id: datasetId,
+    }),
   };
   return await fetchApi(`/schedules/alerts/${datasetId}/`, options);
 }

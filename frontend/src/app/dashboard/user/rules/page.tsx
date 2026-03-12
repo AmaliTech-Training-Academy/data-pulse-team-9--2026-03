@@ -7,7 +7,6 @@ import {
   Settings,
   Trash2,
   Activity,
-  Database,
   Plus,
   X,
   AlertCircle,
@@ -23,7 +22,6 @@ import {
   deleteRule,
   ValidationRule,
   RuleCreateData,
-  GetRulesParams,
 } from "@/services/rules";
 import { getDatasets, Dataset } from "@/services/datasets";
 
@@ -36,15 +34,15 @@ const getStatusColor = (isActive: boolean) => {
 
 export default function UserRulesPage() {
   const [rules, setRules] = useState<ValidationRule[]>([]);
-  const [datasets, setDatasets] = useState<Dataset[]>([]);
+  const [, setDatasets] = useState<Dataset[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   // Filtering & Searching State
   const [searchTerm, setSearchTerm] = useState("");
-  const [selectedDatasetType, setSelectedDatasetType] = useState("all");
   const [selectedRuleType, setSelectedRuleType] = useState("");
   const [selectedSeverity, setSelectedSeverity] = useState("");
+  const REAL_DATA_START_DATE = "2026-03-09";
 
   // Pagination State
   const [currentPage, setCurrentPage] = useState(1);
@@ -88,16 +86,8 @@ export default function UserRulesPage() {
   const fetchData = useCallback(async () => {
     setLoading(true);
     try {
-      const params: GetRulesParams = {
-        dataset_type:
-          selectedDatasetType === "all" ? undefined : selectedDatasetType,
-        search: searchTerm || undefined,
-        rule_type: selectedRuleType || undefined,
-        severity: selectedSeverity || undefined,
-      };
-
       const [rulesData, datasetsData] = await Promise.all([
-        getRules(params),
+        getRules(),
         getDatasets(),
       ]);
 
@@ -109,14 +99,10 @@ export default function UserRulesPage() {
     } finally {
       setLoading(false);
     }
-  }, [selectedDatasetType, searchTerm, selectedRuleType, selectedSeverity]);
+  }, []);
 
-  // Debounced search
   useEffect(() => {
-    const handler = setTimeout(() => {
-      fetchData();
-    }, 500);
-    return () => clearTimeout(handler);
+    fetchData();
   }, [fetchData]);
 
   // Parse parameters when modal opens or rule_type changes
@@ -207,10 +193,31 @@ export default function UserRulesPage() {
     setIsDeleteModalOpen(true);
   }, []);
 
-  // Client-side pagination logic
-  const totalItems = rules.length;
+  // 1. Client-side filtering logic
+  const filteredRules = rules.filter((rule) => {
+    // Search filter
+    const matchesSearch =
+      rule.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      rule.field_name.toLowerCase().includes(searchTerm.toLowerCase());
+
+    // Severity filter
+    const matchesSeverity =
+      !selectedSeverity || rule.severity === selectedSeverity;
+
+    // Type filter
+    const matchesType =
+      !selectedRuleType || rule.rule_type === selectedRuleType;
+
+    // Real Data filter (March 9th, 2026+)
+    const matchesDate = rule.created_at >= REAL_DATA_START_DATE;
+
+    return matchesSearch && matchesSeverity && matchesType && matchesDate;
+  });
+
+  // 2. Client-side pagination logic
+  const totalItems = filteredRules.length;
   const totalPages = Math.ceil(totalItems / pageSize);
-  const paginatedRules = rules.slice(
+  const paginatedRules = filteredRules.slice(
     (currentPage - 1) * pageSize,
     currentPage * pageSize
   );
@@ -247,9 +254,9 @@ export default function UserRulesPage() {
       </div>
 
       {/* Filters Bar */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 bg-white p-4 rounded-xl shadow-sm border border-gray-100">
+      <div className="flex flex-col sm:flex-row gap-4 bg-white p-4 rounded-xl shadow-sm border border-gray-100">
         {/* Search */}
-        <div className="relative group col-span-1 md:col-span-1">
+        <div className="relative group flex-1">
           <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400 group-focus-within:text-accent transition-colors">
             <Search size={16} />
           </div>
@@ -262,34 +269,15 @@ export default function UserRulesPage() {
           />
         </div>
 
-        {/* Dataset Type Filter */}
-        <div className="flex items-center gap-2 px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm text-gray-600">
-          <Database size={14} />
-          <select
-            value={selectedDatasetType}
-            onChange={(e) => setSelectedDatasetType(e.target.value)}
-            className="bg-transparent outline-none cursor-pointer text-gray-700 w-full"
-          >
-            <option value="all">All Files</option>
-            {Array.from(new Set(datasets.map((ds) => ds.file_type))).map(
-              (type) => (
-                <option key={type} value={type}>
-                  {type.toUpperCase()} Files
-                </option>
-              )
-            )}
-          </select>
-        </div>
-
         {/* Rule Type Filter */}
-        <div className="flex items-center gap-2 px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm text-gray-600">
+        <div className="flex items-center gap-2 px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm text-gray-600 min-w-[180px]">
           <Activity size={14} />
           <select
             value={selectedRuleType}
             onChange={(e) => setSelectedRuleType(e.target.value)}
             className="bg-transparent outline-none cursor-pointer text-gray-700 w-full"
           >
-            <option value="">All Rules</option>
+            <option value="">All Types</option>
             <option value="NOT_NULL">Not Null</option>
             <option value="DATA_TYPE">Data Type</option>
             <option value="RANGE">Range</option>
@@ -299,7 +287,7 @@ export default function UserRulesPage() {
         </div>
 
         {/* Severity Filter */}
-        <div className="flex items-center gap-2 px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm text-gray-600">
+        <div className="flex items-center gap-2 px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm text-gray-600 min-w-[200px]">
           <Filter size={14} />
           <select
             value={selectedSeverity}
