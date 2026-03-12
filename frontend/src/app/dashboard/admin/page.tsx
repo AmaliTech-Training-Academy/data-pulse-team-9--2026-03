@@ -478,54 +478,6 @@ export default function AdminOverview() {
               </div>
             </div>
           </div>
-
-          {/* User Summary Table */}
-          <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-            <div className="p-5 border-b border-gray-100">
-              <h3 className="text-lg font-bold text-primary">
-                Top Active Users
-              </h3>
-              <p className="text-xs text-gray-500 mt-0.5">
-                Ranked by dataset uploads
-              </p>
-            </div>
-            <table className="w-full text-left">
-              <tbody className="divide-y divide-gray-100">
-                {stats.activeUsers.map((user, idx) => (
-                  <tr
-                    key={user.id}
-                    className="hover:bg-gray-50 transition-colors"
-                  >
-                    <td className="py-3 px-5">
-                      <div className="flex items-center gap-3">
-                        <span className="text-xs font-bold text-gray-400 w-4">
-                          {idx + 1}.
-                        </span>
-                        <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center font-bold text-primary flex-shrink-0">
-                          {user.full_name?.charAt(0) || "U"}
-                        </div>
-                        <div>
-                          <p className="text-sm font-semibold text-primary line-clamp-1">
-                            {user.full_name || user.email}
-                          </p>
-                          <p className="text-xs text-gray-500">
-                            {user.uploads} uploads
-                          </p>
-                        </div>
-                      </div>
-                    </td>
-                    <td className="py-3 px-5 text-right w-24">
-                      <span
-                        className={`inline-flex items-center justify-center px-2 py-1 rounded text-xs font-bold ${getScoreColor(user.avgScore)}`}
-                      >
-                        Avg: {user.avgScore}%
-                      </span>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
         </div>
       </div>
     </div>
