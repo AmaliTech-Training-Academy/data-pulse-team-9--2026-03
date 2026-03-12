@@ -52,8 +52,7 @@ resource "aws_amplify_branch" "dev" {
   stage       = "DEVELOPMENT"
 
   enable_auto_build             = true
-  enable_pull_request_preview   = false  # Disable PR previews for develop branch
-  pull_request_environment_name = "pr-preview"
+  enable_pull_request_preview   = false  # Completely disable PR previews
 
   environment_variables = {
     NEXT_PUBLIC_API_URL     = var.dev_api_url
@@ -70,7 +69,7 @@ resource "aws_amplify_branch" "prod" {
   stage       = "PRODUCTION"
 
   enable_auto_build           = true
-  enable_pull_request_preview = false
+  enable_pull_request_preview = false  # Disable PR previews for main too
 
   environment_variables = {
     NEXT_PUBLIC_API_URL     = var.prod_api_url
