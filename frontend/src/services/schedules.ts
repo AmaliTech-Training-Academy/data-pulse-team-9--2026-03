@@ -16,7 +16,7 @@ export async function getSchedules(): Promise<Schedule[]> {
         : {}),
     },
   };
-  const response = await fetchApi("/schedules/", options);
+  const response = await fetchApi("/api/schedules/", options);
   if (response && response.results && Array.isArray(response.results)) {
     return response.results;
   }
@@ -40,7 +40,7 @@ export async function createOrUpdateSchedule(data: {
     },
     body: JSON.stringify(data),
   };
-  return await fetchApi("/schedules/", options);
+  return await fetchApi("/api/schedules/", options);
 }
 
 export async function deleteSchedule(id: number): Promise<void> {
@@ -52,7 +52,7 @@ export async function deleteSchedule(id: number): Promise<void> {
         : {}),
     },
   };
-  await fetchApi(`/schedules/${id}/`, options);
+  await fetchApi(`/api/schedules/${id}/`, options);
 }
 
 export async function toggleSchedule(
@@ -67,5 +67,5 @@ export async function toggleSchedule(
         : {}),
     },
   };
-  return await fetchApi(`/schedules/${id}/${action}/`, options);
+  return await fetchApi(`/api/schedules/${id}/${action}/`, options);
 }
