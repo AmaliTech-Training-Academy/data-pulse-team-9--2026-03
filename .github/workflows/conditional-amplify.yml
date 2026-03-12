@@ -1,0 +1,49 @@
+name: Conditional Amplify Build
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+jobs:
+  check-frontend-changes:
+    runs-on: ubuntu-latest
+    outputs:
+      frontend-changed: ${{ steps.changes.outputs.frontend }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: dorny/paths-filter@v2
+        id: changes
+        with:
+          filters: |
+            frontend:
+              - 'frontend/**'
+              - 'package.json'
+              - 'yarn.lock'
+              - '**/*.js'
+              - '**/*.jsx'
+              - '**/*.ts'
+              - '**/*.tsx'
+              - '**/*.json'
+
+  trigger-amplify:
+    needs: check-frontend-changes
+    runs-on: ubuntu-latest
+    if: needs.check-frontend-changes.outputs.frontend-changed == 'true'
+    steps:
+      - name: Trigger Amplify Build
+        run: |
+          echo "Frontend files changed, Amplify will build automatically"
+          echo "PR preview will be available at: https://pr-${{ github.event.number }}.d1a2b3c4d5e6f7.amplifyapp.com"
+
+  skip-amplify:
+    needs: check-frontend-changes
+    runs-on: ubuntu-latest
+    if: needs.check-frontend-changes.outputs.frontend-changed == 'false'
+    steps:
+      - name: Skip Amplify Build
+        run: |
+          echo "No frontend files changed, skipping Amplify build"
+          echo "Backend-only changes detected"

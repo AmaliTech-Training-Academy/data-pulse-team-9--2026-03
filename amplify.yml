@@ -3,30 +3,34 @@ frontend:
   phases:
     preBuild:
       commands:
-        - echo " Checking repository structure..."
+        - echo " Repository structure:"
         - ls -la
-        - echo " Checking frontend directory..."
+        - echo " Frontend directory:"
         - ls -la frontend/
-        - cd frontend
         - echo " Installing dependencies..."
+        - cd frontend
         - npm ci --prefer-offline
         - echo " Fixing vulnerabilities..."
-        - npm audit fix --force || echo " Some vulnerabilities couldn't be fixed automatically"
+        - npm audit fix --force || echo " Some vulnerabilities couldn't be fixed"
 
     build:
       commands:
         - echo " Building Next.js application..."
         - cd frontend
         - npm run build
+        - echo " Build output:"
+        - ls -la out/
+        - echo " Sample files:"
+        - find out -name "*.html" | head -5
 
     postBuild:
       commands:
-        - echo " Build complete for $NEXT_PUBLIC_ENVIRONMENT"
-        - echo " Build statistics:"
-        - cd frontend && ls -la .next/
+        - echo " Build complete!"
+        - echo " Final artifacts in out directory:"
+        - cd frontend && ls -la out/
 
   artifacts:
-    baseDirectory: frontend/.next
+    baseDirectory: frontend/out
     files:
       - "**/*"
 
@@ -34,8 +38,3 @@ frontend:
     paths:
       - frontend/node_modules/**/*
       - frontend/.next/cache/**/*
-
-  environment:
-    variables:
-      NODE_OPTIONS: "--max_old_space_size=4096"
-      NODE_ENV: "production"
