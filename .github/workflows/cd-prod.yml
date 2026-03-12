@@ -42,7 +42,7 @@ jobs:
           ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
           IMAGE_TAG: ${{ github.sha }}
         run: |
-          docker build -t $ECR_REGISTRY/datapulse-etl:$IMAGE_TAG -f etl/Dockerfile etl/
+          docker build -t $ECR_REGISTRY/datapulse-etl:$IMAGE_TAG -f data-engineering/Dockerfile data-engineering/
           docker push $ECR_REGISTRY/datapulse-etl:$IMAGE_TAG
           docker tag $ECR_REGISTRY/datapulse-etl:$IMAGE_TAG $ECR_REGISTRY/datapulse-etl:latest
           docker push $ECR_REGISTRY/datapulse-etl:latest
@@ -52,7 +52,7 @@ jobs:
           ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
           IMAGE_TAG: ${{ github.sha }}
         run: |
-          docker build -t $ECR_REGISTRY/datapulse-streamlit:$IMAGE_TAG -f streamlit/Dockerfile streamlit/
+          docker build -t $ECR_REGISTRY/datapulse-streamlit:$IMAGE_TAG -f data-engineering/Dockerfile data-engineering/
           docker push $ECR_REGISTRY/datapulse-streamlit:$IMAGE_TAG
           docker tag $ECR_REGISTRY/datapulse-streamlit:$IMAGE_TAG $ECR_REGISTRY/datapulse-streamlit:latest
           docker push $ECR_REGISTRY/datapulse-streamlit:latest
