@@ -206,7 +206,17 @@ LOGGING = {
         "rules": {"handlers": ["console"], "level": "INFO", "propagate": False},
         "checks": {"handlers": ["console"], "level": "INFO", "propagate": False},
         "reports": {"handlers": ["console"], "level": "INFO", "propagate": False},
-        # You can optionally route django or other loggers here as well
+        "core": {"handlers": ["console"], "level": "INFO", "propagate": False},
+        "schedule": {"handlers": ["console"], "level": "INFO", "propagate": False},
+        "audit": {
+            "handlers": ["console"],
+            "level": "INFO",
+            "propagate": False,
+        },  # You can optionally route django or other loggers here as well
+    },
+    "root": {
+        "handlers": ["console"],
+        "level": "INFO",
     },
 }
 

@@ -1,8 +1,8 @@
 """Quality checks router - IMPLEMENTED."""
 
 import json
-import logging
 
+import structlog
 from audit.models import AuditLog
 from checks.models import CheckResult, QualityScore
 from checks.serializers import CheckResultResponseSerializer, QualityScoreResponseSerializer
@@ -18,10 +18,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from rules.models import ValidationRule
 
-logger = logging.getLogger(__name__)
-
-
-logger = logging.getLogger(__name__)
+logger = structlog.get_logger(__name__)
 
 
 class RunChecksView(APIView):
@@ -42,18 +39,22 @@ class RunChecksView(APIView):
             else:
                 dataset = Dataset.objects.get(id=dataset_id, uploaded_by=request.user)
         except Dataset.DoesNotExist:
+            logger.warning("checks.run.dataset_not_found", dataset_id=dataset_id)
             raise DatasetNotFoundException(f"Dataset {dataset_id} not found or access denied")
 
         if dataset.status == "PROCESSING":
+            logger.warning("checks.run.processing", dataset_id=dataset_id)
             return Response(
                 {"detail": "Dataset is currently processing. Please wait for processing to finish."}, status=400
             )
         if dataset.status == "ERROR":
+            logger.warning("checks.run.error_status", dataset_id=dataset_id)
             return Response({"detail": "Dataset parsing failed, cannot run checks."}, status=400)
 
         # 2. Get DatasetFile
         file_obj = dataset.files.first()
         if not file_obj:
+            logger.warning("checks.run.no_file", dataset_id=dataset_id)
             return Response({"detail": "No file associated with this dataset"}, status=400)
 
         # 3. Load file
@@ -78,7 +79,7 @@ class RunChecksView(APIView):
             engine = ValidationEngine()
             results = engine.run_all_checks(df, rules)
         except Exception:
-            logger.exception("Validation engine execution failed for dataset %s", dataset.id)
+            logger.exception("checks.run.failed", dataset_id=dataset.id)
             dataset.status = "FAILED"
             dataset.save()
             return Response({"detail": "Validation engine execution failed."}, status=500)
@@ -133,6 +134,14 @@ class RunChecksView(APIView):
             dataset.status = "VALIDATED" if score_data["failed_rules"] == 0 else "FAILED"
             dataset.save()
 
+            logger.info(
+                "checks.run.success",
+                dataset_id=dataset.id,
+                score=score_data["score"],
+                failed_rules=score_data["failed_rules"],
+                user_id=request.user.id if request.user.is_authenticated else None,
+            )
+
         return Response(QualityScoreResponseSerializer(qs).data)
 
 
@@ -154,7 +163,16 @@ class CheckResultsView(APIView):
             else:
                 dataset = Dataset.objects.get(id=dataset_id, uploaded_by=request.user)
         except Dataset.DoesNotExist:
+            logger.warning("checks.results.dataset_not_found", dataset_id=dataset_id)
             raise DatasetNotFoundException(f"Dataset {dataset_id} not found or access denied")
 
         results = CheckResult.objects.filter(dataset=dataset).order_by("-checked_at")
+        if not results.exists():
+            logger.warning("checks.no_results", dataset_id=dataset.id)
+
+        logger.info(
+            "checks.results_accessed",
+            dataset_id=dataset.id,
+            user_id=request.user.id if request.user.is_authenticated else None,
+        )
         return Response(list(CheckResultResponseSerializer(results, many=True).data))

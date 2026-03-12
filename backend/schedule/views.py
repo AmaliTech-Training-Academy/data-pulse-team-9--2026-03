@@ -1,11 +1,14 @@
 import json
 
+import structlog
 from datasets.models import Dataset
 from django_celery_beat.models import CrontabSchedule, PeriodicTask
 from rest_framework import generics, status
 from rest_framework.response import Response
 from schedule.models import AlertConfig, Schedule
 from schedule.serializers import AlertConfigSerializer, ScheduleSerializer
+
+logger = structlog.get_logger(__name__)
 
 
 class ScheduleCreateView(generics.ListCreateAPIView):
@@ -34,6 +37,12 @@ class ScheduleCreateView(generics.ListCreateAPIView):
         # We manually perform create to handle the PeriodicTask logic
         self.perform_create(serializer)
         headers = self.get_success_headers(serializer.data)
+        logger.info(
+            "schedule.created",
+            dataset_id=serializer.data.get("dataset"),
+            cron_expression=serializer.data.get("cron_expression"),
+            user_id=request.user.id if request.user.is_authenticated else None,
+        )
         return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
 
     def perform_create(self, serializer):
@@ -86,7 +95,9 @@ class ScheduleDetailView(generics.RetrieveDestroyAPIView):
     def perform_destroy(self, instance):
         if instance.periodic_task:
             instance.periodic_task.delete()
+        dataset_id = instance.dataset.id if instance.dataset else None
         instance.delete()
+        logger.info("schedule.deleted", dataset_id=dataset_id, schedule_id=instance.id)
 
 
 class ScheduleToggleView(generics.UpdateAPIView):
@@ -109,13 +120,16 @@ class ScheduleToggleView(generics.UpdateAPIView):
         if action == "pause":
             periodic_task.enabled = False
             periodic_task.save()
+            logger.info("schedule.toggled", action="pause", schedule_id=schedule.id, dataset_id=schedule.dataset.id)
             return Response({"status": "paused", "schedule_id": schedule.id})
 
         if action == "resume":
             periodic_task.enabled = True
             periodic_task.save()
+            logger.info("schedule.toggled", action="resume", schedule_id=schedule.id, dataset_id=schedule.dataset.id)
             return Response({"status": "resumed", "schedule_id": schedule.id})
 
+        logger.warning("schedule.toggle.invalid_action", action=action, schedule_id=schedule.id)
         return Response({"detail": "Invalid action"}, status=status.HTTP_400_BAD_REQUEST)
 
 
@@ -157,5 +171,11 @@ class AlertConfigView(generics.CreateAPIView):
         alert_config.is_alert_active = False
         alert_config.save()
 
+        logger.info(
+            "schedule.alert_config.saved",
+            dataset_id=dataset.id,
+            threshold=threshold,
+            user_id=request.user.id if request.user.is_authenticated else None,
+        )
         response_serializer = self.get_serializer(alert_config)
         return Response(response_serializer.data, status=status.HTTP_201_CREATED if created else status.HTTP_200_OK)

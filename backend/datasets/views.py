@@ -3,6 +3,7 @@
 import os
 import uuid
 
+import structlog
 from datapulse.exceptions import InvalidFileException
 from datasets.models import Dataset, DatasetFile
 from datasets.serializers import DatasetListSerializer, DatasetResponseSerializer
@@ -12,6 +13,8 @@ from rest_framework import status
 from rest_framework.parsers import FormParser, MultiPartParser
 from rest_framework.response import Response
 from rest_framework.views import APIView
+
+logger = structlog.get_logger(__name__)
 
 
 class DatasetUploadView(APIView):
@@ -33,11 +36,15 @@ class DatasetUploadView(APIView):
     def post(self, request):
         file = request.FILES.get("file")
         if not file:
+            logger.warning("dataset.upload.invalid_file", reason="No file provided")
             raise InvalidFileException("No file provided.")
 
         filename = file.name or ""
         ext = filename.rsplit(".", 1)[-1].lower() if "." in filename else ""
         if ext not in ("csv", "json"):
+            logger.warning(
+                "dataset.upload.invalid_file", filename=filename, extension=ext, reason="Unsupported file type"
+            )
             raise InvalidFileException(f"Unsupported file type: {ext}")
 
         upload_dir = settings.UPLOAD_DIR
@@ -47,6 +54,7 @@ class DatasetUploadView(APIView):
 
         content = file.read()
         if len(content) == 0:
+            logger.warning("dataset.upload.invalid_file", filename=filename, reason="Uploaded file is empty.")
             raise InvalidFileException("Uploaded file is empty.")
         with open(file_path, "wb") as fh:
             fh.write(content)
@@ -66,6 +74,12 @@ class DatasetUploadView(APIView):
         # Trigger Celery Task asynchronously
         from datasets.tasks import parse_dataset_file_task
 
+        logger.info(
+            "dataset.uploaded",
+            dataset_id=dataset.id,
+            filename=filename,
+            user_id=request.user.id if request.user and request.user.is_authenticated else None,
+        )
         parse_dataset_file_task.delay(dataset.id)
 
         return Response(DatasetResponseSerializer(dataset).data, status=status.HTTP_201_CREATED)
@@ -85,6 +99,7 @@ class DatasetListView(generics.ListAPIView):
         summary="List previously uploaded datasets",
     )
     def get(self, request, *args, **kwargs):
+        logger.info("dataset.list_accessed", user_id=request.user.id if request.user.is_authenticated else None)
         return super().get(request, *args, **kwargs)
 
     def get_queryset(self):
@@ -112,6 +127,11 @@ class DatasetDetailView(generics.RetrieveAPIView):
         summary="Get dataset details by ID",
     )
     def get(self, request, *args, **kwargs):
+        logger.info(
+            "dataset.detail_accessed",
+            dataset_id=kwargs.get("pk"),
+            user_id=request.user.id if request.user.is_authenticated else None,
+        )
         return super().get(request, *args, **kwargs)
 
     def get_queryset(self):

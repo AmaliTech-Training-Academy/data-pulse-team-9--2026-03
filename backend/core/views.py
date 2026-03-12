@@ -35,6 +35,7 @@ class MetricsProxyView(APIView):
         description="Returns application performance and health metrics in Prometheus exposition format for scraping by Grafana.",
     )
     def get(self, request):
+        logger.info("metrics.accessed")
         return HttpResponse(generate_latest(), content_type=CONTENT_TYPE_LATEST)
 
 
@@ -75,7 +76,9 @@ class HealthCheckView(APIView):
             is_healthy = False
 
         if is_healthy:
+            logger.info("healthcheck.status", result="healthy")
             return Response(health_status, status=status.HTTP_200_OK)
         else:
+            logger.warning("healthcheck.status", result="unhealthy", details=health_status)
             health_status["status"] = "unhealthy"
             return Response(health_status, status=status.HTTP_503_SERVICE_UNAVAILABLE)
