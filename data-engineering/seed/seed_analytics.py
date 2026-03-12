@@ -21,25 +21,45 @@ DATASETS = [
     ("customer_feedback.json", "json", 300, 5, "VALIDATED"),
     ("inventory_report.csv", "csv", 800, 8, "VALIDATED"),
     ("marketing_leads.csv", "csv", 250, 6, "PENDING"),
+    ("product_catalog.json", "json", 1500, 12, "VALIDATED"),
+    ("user_activity.csv", "csv", 10000, 4, "VALIDATED"),
+    ("system_logs.json", "json", 5000, 6, "VALIDATED"),
+    ("order_history.csv", "csv", 3500, 9, "VALIDATED"),
+    ("shipping_manifest.csv", "csv", 450, 7, "VALIDATED"),
+    ("supplier_list.json", "json", 150, 5, "VALIDATED"),
+    ("financial_report_2024.csv", "csv", 2000, 15, "VALIDATED"),
+    ("customer_segments.json", "json", 100, 3, "VALIDATED"),
+    ("campaign_metrics.csv", "csv", 600, 8, "VALIDATED"),
+    ("store_locations.json", "json", 50, 4, "PENDING"),
 ]
 
 # Sample validation rules
 RULES = [
-    ("Name not null", "employee", "name", "NOT_NULL", None, "HIGH"),
-    ("Email format", "employee", "email", "REGEX", '{"pattern": "^[\\\\w.+-]+@[\\\\w-]+\\\\.\\\\w+$"}', "MEDIUM"),
-    ("Age range", "employee", "age", "RANGE", '{"min": 18, "max": 100}', "HIGH"),
-    ("Unique ID", "employee", "id", "UNIQUE", None, "HIGH"),
-    ("Salary type", "employee", "salary", "DATA_TYPE", '{"expected_type": "int"}', "MEDIUM"),
-    ("Department not null", "employee", "department", "NOT_NULL", None, "LOW"),
-    ("Date format", "employee", "hire_date", "REGEX", '{"pattern": "^\\\\d{4}-\\\\d{2}-\\\\d{2}$"}', "MEDIUM"),
-    ("Sales amount range", "sales", "amount", "RANGE", '{"min": 0, "max": 999999}', "HIGH"),
-    ("Customer ID not null", "sales", "customer_id", "NOT_NULL", None, "HIGH"),
-    ("Product code format", "sales", "product_code", "REGEX", '{"pattern": "^PRD-\\\\d{4}$"}', "LOW"),
-    ("Feedback not null", "feedback", "comment", "NOT_NULL", None, "MEDIUM"),
-    ("Rating range", "feedback", "rating", "RANGE", '{"min": 1, "max": 5}', "MEDIUM"),
-    ("SKU unique", "inventory", "sku", "UNIQUE", None, "HIGH"),
-    ("Quantity type", "inventory", "quantity", "DATA_TYPE", '{"expected_type": "int"}', "LOW"),
-    ("Lead email format", "marketing", "email", "REGEX", '{"pattern": "^[\\\\w.+-]+@[\\\\w-]+\\\\.\\\\w+$"}', "MEDIUM"),
+    ("Name not null", "csv", "name", "NOT_NULL", None, "HIGH"),
+    ("Email format", "json", "email", "REGEX", '{"pattern": "^[\\\\w.+-]+@[\\\\w-]+\\\\.\\\\w+$"}', "MEDIUM"),
+    ("Age range", "csv", "age", "RANGE", '{"min": 18, "max": 100}', "HIGH"),
+    ("Unique ID", "csv", "id", "UNIQUE", None, "HIGH"),
+    ("Salary type", "csv", "salary", "DATA_TYPE", '{"expected_type": "int"}', "MEDIUM"),
+    ("Department not null", "csv", "department", "NOT_NULL", None, "LOW"),
+    ("Date format", "csv", "hire_date", "REGEX", '{"pattern": "^\\\\d{4}-\\\\d{2}-\\\\d{2}$"}', "MEDIUM"),
+    ("Sales amount range", "csv", "amount", "RANGE", '{"min": 0, "max": 999999}', "HIGH"),
+    ("Customer ID not null", "csv", "customer_id", "NOT_NULL", None, "HIGH"),
+    ("Product code format", "csv", "product_code", "REGEX", '{"pattern": "^PRD-\\\\d{4}$"}', "LOW"),
+    ("Feedback not null", "json", "comment", "NOT_NULL", None, "MEDIUM"),
+    ("Rating range", "json", "rating", "RANGE", '{"min": 1, "max": 5}', "MEDIUM"),
+    ("SKU unique", "csv", "sku", "UNIQUE", None, "HIGH"),
+    ("Quantity type", "csv", "quantity", "DATA_TYPE", '{"expected_type": "int"}', "LOW"),
+    ("Lead email format", "csv", "email", "REGEX", '{"pattern": "^[\\\\w.+-]+@[\\\\w-]+\\\\.\\\\w+$"}', "MEDIUM"),
+    (
+        "Coordinates format",
+        "json",
+        "coordinates",
+        "REGEX",
+        '{"pattern": "^-?\\\\d+(\\\\.\\\\d+)?, -?\\\\d+(\\\\.\\\\d+)?$"}',
+        "LOW",
+    ),
+    ("Price positive", "json", "price", "RANGE", '{"min": 0.01, "max": 1000000}', "MEDIUM"),
+    ("Status not null", "csv", "status", "NOT_NULL", None, "MEDIUM"),
 ]
 
 # Path to the uploads directory (relative to backend root)
@@ -184,9 +204,9 @@ def seed():
         dataset_ids = [r[0] for r in conn.execute(text("SELECT id FROM datasets")).fetchall()]
         rule_ids = [r[0] for r in conn.execute(text("SELECT id FROM validation_rules")).fetchall()]
 
-        # Seed check results (~100 records spread over 30 days)
+        # Seed check results (~200 records spread over 30 days)
         check_count = 0
-        for _ in range(100):
+        for _ in range(200):
             ds_id = random.choice(dataset_ids)
             rule_id = random.choice(rule_ids)
             total_rows = random.choice([250, 300, 500, 800, 1200])
