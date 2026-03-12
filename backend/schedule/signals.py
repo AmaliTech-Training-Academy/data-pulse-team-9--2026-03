@@ -4,7 +4,7 @@ from datasets.models import Dataset
 from django.db.models.signals import post_save
 from django.dispatch import receiver
 from django_celery_beat.models import CrontabSchedule, PeriodicTask
-from schedule.models import Schedule
+from schedule.models import AlertConfig, Schedule  # noqa: F401
 
 
 @receiver(post_save, sender=Dataset)

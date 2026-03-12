@@ -201,7 +201,33 @@ services:
     command: python seed/seed_analytics.py
     depends_on:
       backend:
-        condition: service_started
+        condition: service_healthy
+    networks:
+      - datapulse-network
+
+  # -----------------------------------------------------------
+  # Profile: streamer
+  # Continuous mock data generation
+  # -----------------------------------------------------------
+  streamer:
+    profiles: [ backend, all ]
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: datapulse-streamer
+    command: python manage.py stream_check_results --interval 10 --rows 5
+    environment:
+      DATABASE_URL: ${DATABASE_URL}
+      SECRET_KEY: ${SECRET_KEY}
+      DJANGO_SETTINGS_MODULE: ${DJANGO_SETTINGS_MODULE}
+    volumes:
+      - ./backend:/app
+    depends_on:
+      backend:
+        condition: service_healthy
+      db-seed:
+        condition: service_completed_successfully
+    restart: unless-stopped
     networks:
       - datapulse-network
 

@@ -17,6 +17,7 @@ from drf_spectacular.utils import extend_schema
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rules.models import ValidationRule
+from schedule.tasks import _handle_alerts
 
 logger = structlog.get_logger(__name__)
 
@@ -131,7 +132,10 @@ class RunChecksView(APIView):
                 dataset=dataset, triggered_by=triggered_by, trigger_type="manual", score=score_data["score"]
             )
 
-            # 10. Update dataset status
+            # 10. Trigger Alerts
+            _handle_alerts(dataset, score_data["score"])
+
+            # 11. Update dataset status
             dataset.status = "VALIDATED" if score_data["failed_rules"] == 0 else "FAILED"
             dataset.save()
 

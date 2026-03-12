@@ -1,9 +1,12 @@
 # Seed the app database with mock data for ETL development.
 
 import argparse
+import json
+import os
 import random
 import time
 from datetime import datetime, timedelta
+from pathlib import Path
 from sqlalchemy import text
 
 from infrastructure.db import get_source_engine
@@ -18,26 +21,95 @@ DATASETS = [
     ("customer_feedback.json", "json", 300, 5, "VALIDATED"),
     ("inventory_report.csv", "csv", 800, 8, "VALIDATED"),
     ("marketing_leads.csv", "csv", 250, 6, "PENDING"),
+    ("product_catalog.json", "json", 1500, 12, "VALIDATED"),
+    ("user_activity.csv", "csv", 10000, 4, "VALIDATED"),
+    ("system_logs.json", "json", 5000, 6, "VALIDATED"),
+    ("order_history.csv", "csv", 3500, 9, "VALIDATED"),
+    ("shipping_manifest.csv", "csv", 450, 7, "VALIDATED"),
+    ("supplier_list.json", "json", 150, 5, "VALIDATED"),
+    ("financial_report_2024.csv", "csv", 2000, 15, "VALIDATED"),
+    ("customer_segments.json", "json", 100, 3, "VALIDATED"),
+    ("campaign_metrics.csv", "csv", 600, 8, "VALIDATED"),
+    ("store_locations.json", "json", 50, 4, "PENDING"),
 ]
 
 # Sample validation rules
 RULES = [
-    ("Name not null", "employee", "name", "NOT_NULL", None, "HIGH"),
-    ("Email format", "employee", "email", "REGEX", '{"pattern": "^[\\\\w.+-]+@[\\\\w-]+\\\\.\\\\w+$"}', "MEDIUM"),
-    ("Age range", "employee", "age", "RANGE", '{"min": 18, "max": 100}', "HIGH"),
-    ("Unique ID", "employee", "id", "UNIQUE", None, "HIGH"),
-    ("Salary type", "employee", "salary", "DATA_TYPE", '{"expected_type": "int"}', "MEDIUM"),
-    ("Department not null", "employee", "department", "NOT_NULL", None, "LOW"),
-    ("Date format", "employee", "hire_date", "REGEX", '{"pattern": "^\\\\d{4}-\\\\d{2}-\\\\d{2}$"}', "MEDIUM"),
-    ("Sales amount range", "sales", "amount", "RANGE", '{"min": 0, "max": 999999}', "HIGH"),
-    ("Customer ID not null", "sales", "customer_id", "NOT_NULL", None, "HIGH"),
-    ("Product code format", "sales", "product_code", "REGEX", '{"pattern": "^PRD-\\\\d{4}$"}', "LOW"),
-    ("Feedback not null", "feedback", "comment", "NOT_NULL", None, "MEDIUM"),
-    ("Rating range", "feedback", "rating", "RANGE", '{"min": 1, "max": 5}', "MEDIUM"),
-    ("SKU unique", "inventory", "sku", "UNIQUE", None, "HIGH"),
-    ("Quantity type", "inventory", "quantity", "DATA_TYPE", '{"expected_type": "int"}', "LOW"),
-    ("Lead email format", "marketing", "email", "REGEX", '{"pattern": "^[\\\\w.+-]+@[\\\\w-]+\\\\.\\\\w+$"}', "MEDIUM"),
+    ("Name not null", "csv", "name", "NOT_NULL", None, "HIGH"),
+    ("Email format", "json", "email", "REGEX", '{"pattern": "^[\\\\w.+-]+@[\\\\w-]+\\\\.\\\\w+$"}', "MEDIUM"),
+    ("Age range", "csv", "age", "RANGE", '{"min": 18, "max": 100}', "HIGH"),
+    ("Unique ID", "csv", "id", "UNIQUE", None, "HIGH"),
+    ("Salary type", "csv", "salary", "DATA_TYPE", '{"expected_type": "int"}', "MEDIUM"),
+    ("Department not null", "csv", "department", "NOT_NULL", None, "LOW"),
+    ("Date format", "csv", "hire_date", "REGEX", '{"pattern": "^\\\\d{4}-\\\\d{2}-\\\\d{2}$"}', "MEDIUM"),
+    ("Sales amount range", "csv", "amount", "RANGE", '{"min": 0, "max": 999999}', "HIGH"),
+    ("Customer ID not null", "csv", "customer_id", "NOT_NULL", None, "HIGH"),
+    ("Product code format", "csv", "product_code", "REGEX", '{"pattern": "^PRD-\\\\d{4}$"}', "LOW"),
+    ("Feedback not null", "json", "comment", "NOT_NULL", None, "MEDIUM"),
+    ("Rating range", "json", "rating", "RANGE", '{"min": 1, "max": 5}', "MEDIUM"),
+    ("SKU unique", "csv", "sku", "UNIQUE", None, "HIGH"),
+    ("Quantity type", "csv", "quantity", "DATA_TYPE", '{"expected_type": "int"}', "LOW"),
+    ("Lead email format", "csv", "email", "REGEX", '{"pattern": "^[\\\\w.+-]+@[\\\\w-]+\\\\.\\\\w+$"}', "MEDIUM"),
+    (
+        "Coordinates format",
+        "json",
+        "coordinates",
+        "REGEX",
+        '{"pattern": "^-?\\\\d+(\\\\.\\\\d+)?, -?\\\\d+(\\\\.\\\\d+)?$"}',
+        "LOW",
+    ),
+    ("Price positive", "json", "price", "RANGE", '{"min": 0.01, "max": 1000000}', "MEDIUM"),
+    ("Status not null", "csv", "status", "NOT_NULL", None, "MEDIUM"),
 ]
+
+# Path to the uploads directory (relative to backend root)
+# In Docker, it's /app/uploads. Locally, it's <project_root>/backend/uploads
+BACKEND_DIR = Path(__file__).parent.parent.parent / "backend"
+UPLOAD_DIR = BACKEND_DIR / "uploads"
+
+
+def generate_mock_file(name, file_type, row_count):
+    """Generate a physical mock file for the dataset."""
+    UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
+    file_path = UPLOAD_DIR / name
+
+    if file_type == "csv":
+        with open(file_path, "w", encoding="utf-8") as f:
+            f.write("id,name,email,age,department,salary,hire_date\n")
+            for i in range(1, row_count + 1):
+                f.write(f"{i},User {i},user{i}@example.com,30,Engineering,100000,2023-01-01\n")
+    else:  # json
+        data = []
+        for i in range(1, row_count + 1):
+            data.append(
+                {
+                    "id": i,
+                    "name": f"User {i}",
+                    "email": f"user{i}@example.com",
+                    "age": 30,
+                    "department": "Engineering",
+                    "salary": 100000,
+                    "hire_date": "2023-01-01",
+                }
+            )
+        with open(file_path, "w", encoding="utf-8") as f:
+            json.dump(data, f)
+
+    return str(file_path)
+
+
+def wait_for_tables(engine, tables, timeout=60):
+    """Wait for specific tables to exist in the database."""
+    start_time = time.time()
+    while time.time() - start_time < timeout:
+        try:
+            with engine.connect() as conn:
+                for table in tables:
+                    conn.execute(text(f"SELECT 1 FROM {table} LIMIT 1"))
+                return True
+        except Exception:
+            time.sleep(2)
+    return False
 
 
 def seed():
@@ -47,6 +119,11 @@ def seed():
     Creates: 5 datasets, 15 rules, 100 check results.
     """
     engine = get_source_engine()
+
+    # Wait for required tables (migrations might still be running)
+    if not wait_for_tables(engine, ["datasets", "validation_rules"]):
+        logger.error("Timed out waiting for tables to be created")
+        return {"status": "error", "reason": "Required tables not found"}
 
     with engine.begin() as conn:
         # Check if mock data already exists by looking for our specific mock datasets
@@ -61,11 +138,12 @@ def seed():
         for name, file_type, row_count, col_count, status in DATASETS:
             days_ago = random.randint(5, 30)
             uploaded_at = datetime.now() - timedelta(days=days_ago)
-            conn.execute(
+            dataset_id = conn.execute(
                 text(
                     """
                 INSERT INTO datasets (name, file_type, row_count, column_count, uploaded_at, status)
                 VALUES (:name, :file_type, :row_count, :column_count, :uploaded_at, :status)
+                RETURNING id
             """
                 ),
                 {
@@ -76,8 +154,24 @@ def seed():
                     "uploaded_at": uploaded_at,
                     "status": status,
                 },
+            ).scalar()
+
+            # Generate physical file and link it
+            full_path = generate_mock_file(name, file_type, row_count)
+            conn.execute(
+                text(
+                    """
+                INSERT INTO dataset_files (dataset_id, file_path, original_filename)
+                VALUES (:dataset_id, :file_path, :original_filename)
+            """
+                ),
+                {
+                    "dataset_id": dataset_id,
+                    "file_path": full_path,
+                    "original_filename": name,
+                },
             )
-        logger.info("Seeded %d datasets", len(DATASETS))
+        logger.info("Seeded %d datasets and created mock files", len(DATASETS))
 
         # Seed validation rules
         for name, ds_type, field, rule_type, params, severity in RULES:
@@ -110,9 +204,9 @@ def seed():
         dataset_ids = [r[0] for r in conn.execute(text("SELECT id FROM datasets")).fetchall()]
         rule_ids = [r[0] for r in conn.execute(text("SELECT id FROM validation_rules")).fetchall()]
 
-        # Seed check results (~100 records spread over 30 days)
+        # Seed check results (~200 records spread over 30 days)
         check_count = 0
-        for _ in range(100):
+        for _ in range(200):
             ds_id = random.choice(dataset_ids)
             rule_id = random.choice(rule_ids)
             total_rows = random.choice([250, 300, 500, 800, 1200])

@@ -1,8 +1,8 @@
 #!/bin/sh
 set -e
 
-if [ "$1" = 'celery' ]; then
-    echo "==> Starting Celery worker..."
+if [ "$1" = 'celery' ] || [ "$1" = 'python' ]; then
+    echo "==> Starting $1 command..."
     exec "$@"
 fi
 
