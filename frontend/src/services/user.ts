@@ -9,7 +9,7 @@ export interface User {
 }
 
 export async function getUsers(): Promise<User[]> {
-  const response = await fetchApi("/auth/users");
+  const response = await fetchApi("/api/auth/users");
   if (Array.isArray(response)) {
     return response;
   }

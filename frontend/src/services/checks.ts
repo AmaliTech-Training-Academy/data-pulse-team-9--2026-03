@@ -43,7 +43,7 @@ export const runCheck = async (
     },
   };
 
-  return fetchApi(`/checks/run/${datasetId}`, options);
+  return fetchApi(`/api/checks/run/${datasetId}`, options);
 };
 
 /**
@@ -65,5 +65,5 @@ export const getCheckResults = async (
     },
   };
 
-  return fetchApi(`/checks/results/${datasetId}`, options);
+  return fetchApi(`/api/checks/results/${datasetId}`, options);
 };

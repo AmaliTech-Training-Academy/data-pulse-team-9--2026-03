@@ -1,20 +1,18 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import {
-  User,
-  Bell,
-  ShieldAlert,
-  Save,
-  Loader2,
-  CheckCircle2,
-} from "lucide-react";
+import { Bell, ShieldAlert, Save, Loader2, CheckCircle2 } from "lucide-react";
 import { getDatasets, Dataset } from "@/services/datasets";
 import {
   getAlertConfig,
   updateAlertConfig,
   AlertConfig,
 } from "@/services/alerts";
+import {
+  getSchedules,
+  createOrUpdateSchedule,
+  Schedule,
+} from "@/services/schedules";
 
 export default function SettingsPage() {
   const [datasets, setDatasets] = useState<Dataset[]>([]);
@@ -22,18 +20,30 @@ export default function SettingsPage() {
     null
   );
   const [alertConfig, setAlertConfig] = useState<AlertConfig | null>(null);
+  const [schedule, setSchedule] = useState<Schedule | null>(null);
+  const [frequency, setFrequency] = useState("daily-midnight");
+  const [isAdvanced, setIsAdvanced] = useState(false);
+
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
 
+  const FREQUENCY_PRESETS: Record<string, string> = {
+    "daily-midnight": "0 0 * * *",
+    "daily-noon": "0 12 * * *",
+    weekly: "0 0 * * 1",
+    monthly: "0 0 1 * *",
+  };
   // Initial load
   useEffect(() => {
     const loadInitialData = async () => {
       try {
-        const data = await getDatasets();
-        setDatasets(data);
-        if (data.length > 0) {
-          setSelectedDatasetId(data[0].id);
+        const rawDatasets = await getDatasets();
+
+        setDatasets(rawDatasets);
+
+        if (rawDatasets.length > 0) {
+          setSelectedDatasetId(rawDatasets[0].id);
         }
       } catch (err) {
         console.error("Failed to load settings data:", err);
@@ -44,31 +54,92 @@ export default function SettingsPage() {
     loadInitialData();
   }, []);
 
-  // Load alert config when selected dataset changes
+  // Load alert config and schedule when selected dataset changes
   useEffect(() => {
     if (!selectedDatasetId) return;
 
-    const loadAlertConfig = async () => {
-      const config = await getAlertConfig(selectedDatasetId);
-      setAlertConfig(config);
+    const loadConfig = async () => {
+      try {
+        const [alertData, schedulesData] = await Promise.all([
+          getAlertConfig(selectedDatasetId),
+          getSchedules(),
+        ]);
+
+        // Ensure alertConfig is initialized even if null
+        setAlertConfig(
+          alertData || {
+            id: 0,
+            dataset_id: selectedDatasetId,
+            threshold: 80,
+            email_notifications: true,
+            is_alert_active: false,
+            created_at: "",
+            updated_at: "",
+          }
+        );
+
+        // Find existing schedule or set default
+        const existing = schedulesData.find(
+          (s) => s.dataset === selectedDatasetId
+        );
+        if (existing) {
+          setSchedule(existing);
+          // Try to match with preset
+          const presetValue = Object.keys(FREQUENCY_PRESETS).find(
+            (key) => FREQUENCY_PRESETS[key] === existing.cron_expression
+          );
+          if (presetValue) {
+            setFrequency(presetValue);
+            setIsAdvanced(false);
+          } else {
+            setFrequency("custom");
+            setIsAdvanced(true);
+          }
+        } else {
+          setSchedule({
+            dataset: selectedDatasetId,
+            cron_expression: "0 0 * * *",
+          });
+          setFrequency("daily-midnight");
+          setIsAdvanced(false);
+        }
+      } catch (err) {
+        console.error("Failed to load dataset config:", err);
+      }
     };
-    loadAlertConfig();
+    const FREQUENCY_PRESETS: Record<string, string> = {
+      "daily-midnight": "0 0 * * *",
+      "daily-noon": "0 12 * * *",
+      weekly: "0 0 * * 1",
+      monthly: "0 0 1 * *",
+    };
+
+    loadConfig();
   }, [selectedDatasetId]);
 
-  const handleSaveAlerts = async () => {
-    if (!selectedDatasetId || !alertConfig) return;
+  const handleSaveSettings = async () => {
+    if (!selectedDatasetId || !alertConfig || !schedule) return;
 
     setSaving(true);
     try {
-      const updated = await updateAlertConfig(selectedDatasetId, {
+      // Save Alert Config
+      const updatedAlert = await updateAlertConfig(selectedDatasetId, {
         threshold: alertConfig.threshold,
         email_notifications: alertConfig.email_notifications,
       });
-      setAlertConfig(updated);
+      setAlertConfig(updatedAlert);
+
+      // Save Schedule
+      const updatedSchedule = await createOrUpdateSchedule({
+        dataset_id: selectedDatasetId,
+        cron_expression: schedule.cron_expression,
+      });
+      setSchedule(updatedSchedule);
+
       setSaveSuccess(true);
       setTimeout(() => setSaveSuccess(false), 3000);
     } catch (err) {
-      console.error("Failed to update alert config:", err);
+      console.error("Failed to save settings:", err);
     } finally {
       setSaving(false);
     }
@@ -86,9 +157,11 @@ export default function SettingsPage() {
     <div className="max-w-4xl mx-auto space-y-8 pb-12">
       {/* Header */}
       <div>
-        <h2 className="text-2xl font-bold text-primary">Account Settings</h2>
-        <p className="text-gray-500">
-          Manage your profile, preferences, and quality alerts.
+        <h2 className="text-xl font-black text-[#08293c]">
+          DATA QUALITY SETTINGS
+        </h2>
+        <p className="text-[12px] font-medium text-gray-400 mt-1">
+          Manage thresholds, schedules, and alerts for your datasets.
         </p>
       </div>
 
@@ -100,10 +173,10 @@ export default function SettingsPage() {
               <Bell size={20} />
             </div>
             <div>
-              <h3 className="text-lg font-bold text-primary">
+              <h3 className="text-sm font-black text-[#08293c] uppercase tracking-widest leading-none">
                 Data Quality Alerts
               </h3>
-              <p className="text-sm text-gray-500">
+              <p className="text-[12px] font-medium text-gray-400 mt-1">
                 Configure score thresholds and email notifications.
               </p>
             </div>
@@ -140,11 +213,9 @@ export default function SettingsPage() {
           <div className="h-px bg-gray-100" />
 
           {/* Email Alerts Toggle */}
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between group p-4 rounded-xl hover:bg-gray-50 transition-colors">
             <div>
-              <h4 className="font-semibold text-gray-800">
-                Email Notifications
-              </h4>
+              <h4 className="font-bold text-[#08293c]">Email Notifications</h4>
               <p className="text-sm text-gray-500">
                 Receive an email when quality score drops below threshold.
               </p>
@@ -162,14 +233,14 @@ export default function SettingsPage() {
                   )
                 }
               />
-              <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-accent/20 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-accent"></div>
+              <div className="w-14 h-7 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-accent/20 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[4px] after:left-[4px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-accent shadow-inner"></div>
             </label>
           </div>
 
           {/* Quality Threshold Range */}
-          <div className="space-y-4 pt-4 border-t border-gray-100">
+          <div className="space-y-6 pt-6 border-t border-gray-100 px-4">
             <div>
-              <h4 className="font-semibold text-gray-800 flex items-center gap-2">
+              <h4 className="font-bold text-[#08293c] flex items-center gap-2">
                 Alert Threshold
               </h4>
               <p className="text-sm text-gray-500 mt-1">
@@ -178,7 +249,7 @@ export default function SettingsPage() {
               </p>
             </div>
 
-            <div className="flex items-center gap-6 max-w-xl">
+            <div className="flex items-center gap-8">
               <input
                 type="range"
                 min="0"
@@ -189,80 +260,113 @@ export default function SettingsPage() {
                     prev ? { ...prev, threshold: Number(e.target.value) } : null
                   )
                 }
-                className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-accent"
+                className="flex-1 h-3 bg-gray-100 rounded-full appearance-none cursor-pointer accent-[#ff5a00] outline-none"
               />
-              <span className="font-extrabold text-primary w-12 text-right">
+              <div className="min-w-[80px] h-12 flex items-center justify-center bg-primary text-white font-black text-lg rounded-xl shadow-lg shadow-primary/20">
                 {alertConfig?.threshold ?? 80}%
-              </span>
+              </div>
             </div>
-            <p className="text-xs font-medium text-gray-400">
-              Currently set to alert you if score drops below{" "}
-              {alertConfig?.threshold ?? 80}%.
-            </p>
-          </div>
-
-          <div className="pt-6 border-t border-gray-100 flex justify-end">
-            <button
-              onClick={handleSaveAlerts}
-              disabled={saving || !alertConfig}
-              className="flex items-center gap-2 px-8 py-3 bg-primary text-white font-bold rounded-lg hover:bg-primary/90 transition-all shadow-md active:scale-95 disabled:opacity-50 disabled:pointer-events-none"
-            >
-              {saving ? (
-                <Loader2 className="animate-spin" size={18} />
-              ) : (
-                <Save size={18} />
-              )}
-              {saving ? "Saving Preferences..." : "Save Preferences"}
-            </button>
+            <div className="flex justify-between text-[10px] font-black text-gray-400 uppercase tracking-widest px-1">
+              <span>Critical (0%)</span>
+              <span>Perfect (100%)</span>
+            </div>
           </div>
         </div>
       </section>
 
-      {/* Profile Settings (Secondary) */}
-      <section className="bg-white rounded-xl shadow-sm border border-gray-100 opacity-80">
-        <div className="p-6 border-b border-gray-100 bg-gray-50/50 flex items-center gap-3">
-          <div className="p-2 bg-gray-200 text-gray-500 rounded-lg">
-            <User size={20} />
-          </div>
-          <div>
-            <h3 className="text-lg font-bold text-gray-700">
-              Profile Information
-            </h3>
-          </div>
-        </div>
-        <div className="p-6">
-          <p className="text-sm text-gray-500 italic">
-            Profile management is currently read-only.
-          </p>
-        </div>
-      </section>
-
-      {/* Danger Zone */}
-      <section className="bg-white rounded-xl shadow-sm border border-danger/20 overflow-hidden">
-        <div className="p-6 border-b border-danger/10 bg-danger/5 flex items-center gap-3">
-          <div className="p-2 bg-danger/10 text-danger rounded-lg">
-            <ShieldAlert size={20} />
-          </div>
-          <div>
-            <h3 className="text-lg font-bold text-danger">Danger Zone</h3>
-            <p className="text-sm text-danger/70">Irreversible actions.</p>
+      {/* Scheduling Section */}
+      <section className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden ring-2 ring-accent/5 focus-within:ring-accent/20 transition-all">
+        <div className="p-6 border-b border-gray-100 bg-gray-50/50 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="p-2 bg-blue-50 text-blue-600 rounded-lg">
+              <ShieldAlert size={20} />
+            </div>
+            <div>
+              <h3 className="text-sm font-black text-[#08293c] uppercase tracking-widest leading-none">
+                Automated Checks
+              </h3>
+              <p className="text-[12px] font-medium text-gray-400 mt-1">
+                Schedule recurring quality validations.
+              </p>
+            </div>
           </div>
         </div>
 
-        <div className="p-6 flex flex-col sm:flex-row items-center justify-between gap-6">
-          <div>
-            <h4 className="font-bold text-gray-800">
-              Clear All Alert Histories
-            </h4>
-            <p className="text-sm text-gray-500 mt-1">
-              Resets the alert status for all datasets.
-            </p>
+        <div className="p-6 space-y-8">
+          <div className="space-y-4 px-4">
+            <div className="flex items-center justify-between">
+              <label className="text-sm font-bold text-gray-700 block uppercase tracking-wider">
+                Check Frequency
+              </label>
+              <button
+                onClick={() => setIsAdvanced(!isAdvanced)}
+                className="text-[10px] font-black text-accent uppercase tracking-widest hover:underline"
+              >
+                {isAdvanced ? "Use Simple Form" : "Show Advanced (Cron)"}
+              </button>
+            </div>
+
+            {!isAdvanced ? (
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                {Object.keys(FREQUENCY_PRESETS).map((key) => (
+                  <button
+                    key={key}
+                    onClick={() => {
+                      setFrequency(key);
+                      setSchedule((prev) =>
+                        prev
+                          ? { ...prev, cron_expression: FREQUENCY_PRESETS[key] }
+                          : null
+                      );
+                    }}
+                    className={`py-3 px-2 rounded-xl border-2 transition-all font-bold text-[11px] uppercase tracking-wider ${
+                      frequency === key
+                        ? "border-[#ff5a00] bg-[#ff5a00]/5 text-[#ff5a00]"
+                        : "border-gray-100 bg-gray-50 text-gray-400 hover:border-gray-200"
+                    }`}
+                  >
+                    {key.replace("-", " ")}
+                  </button>
+                ))}
+              </div>
+            ) : (
+              <div className="space-y-3">
+                <input
+                  type="text"
+                  placeholder="0 0 * * *"
+                  value={schedule?.cron_expression || ""}
+                  onChange={(e) =>
+                    setSchedule((prev) =>
+                      prev ? { ...prev, cron_expression: e.target.value } : null
+                    )
+                  }
+                  className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-accent outline-none transition-all font-mono text-primary text-center"
+                />
+                <p className="text-[10px] text-gray-400 font-medium text-center italic">
+                  Format: minute hour day month weekday (e.g., 0 0 * * * for
+                  daily).
+                </p>
+              </div>
+            )}
           </div>
-          <button className="flex-shrink-0 px-6 py-2.5 bg-white border-2 border-danger text-danger font-bold rounded-lg hover:bg-danger hover:text-white transition-colors">
-            Reset Status
-          </button>
         </div>
       </section>
+
+      {/* Save Button Bar */}
+      <div className="sticky bottom-6 flex justify-end">
+        <button
+          onClick={handleSaveSettings}
+          disabled={saving || !selectedDatasetId}
+          className="flex items-center gap-2 px-10 py-4 bg-[#ff5a00] text-white font-black rounded-2xl hover:shadow-xl hover:shadow-[#ff5a00]/30 transition-all active:scale-[0.98] disabled:opacity-50 disabled:pointer-events-none uppercase tracking-widest text-sm"
+        >
+          {saving ? (
+            <Loader2 className="animate-spin" size={20} />
+          ) : (
+            <Save size={20} />
+          )}
+          {saving ? "Updating..." : "Save All Settings"}
+        </button>
+      </div>
     </div>
   );
 }
