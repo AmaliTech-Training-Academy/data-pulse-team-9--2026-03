@@ -1,9 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import {
   Search,
-  MailPlus,
   Database,
   Activity,
   MoreVertical,
@@ -11,7 +10,12 @@ import {
   UserCheck,
   ChevronRight,
   ArrowLeft,
+  Users,
 } from "lucide-react";
+import { getUsers, User } from "@/services/user";
+import { getDatasets, Dataset } from "@/services/datasets";
+import { getBulkQualityTrends } from "@/services/reports";
+import { Loader2 } from "lucide-react";
 import {
   LineChart,
   Line,
@@ -22,112 +26,193 @@ import {
   ResponsiveContainer,
 } from "recharts";
 
-// Mock Data
-const users = [
-  {
-    id: 1,
-    name: "Sarah Designer",
-    email: "sarah@amalitech.com",
-    registered: "2023-01-15",
-    datasetsCount: 45,
-    avgScore: 92,
-    lastActive: "10 mins ago",
-    status: "Active",
-  },
-  {
-    id: 2,
-    name: "John Doe",
-    email: "john@example.com",
-    registered: "2023-02-28",
-    datasetsCount: 24,
-    avgScore: 68,
-    lastActive: "1 hour ago",
-    status: "Active",
-  },
-  {
-    id: 3,
-    name: "Marketing Team",
-    email: "marketing@corp.com",
-    registered: "2023-05-10",
-    datasetsCount: 38,
-    avgScore: 85,
-    lastActive: "2 hours ago",
-    status: "Active",
-  },
-  {
-    id: 4,
-    name: "Smith Corp",
-    email: "data@smith.com",
-    registered: "2023-06-22",
-    datasetsCount: 18,
-    avgScore: 88,
-    lastActive: "1 day ago",
-    status: "Active",
-  },
-  {
-    id: 5,
-    name: "Legacy System",
-    email: "api@legacy.internal",
-    registered: "2023-08-01",
-    datasetsCount: 154,
-    avgScore: 42,
-    lastActive: "5 days ago",
-    status: "Inactive",
-  },
-  {
-    id: 6,
-    name: "Test User",
-    email: "test@amalitech.com",
-    registered: "2023-10-01",
-    datasetsCount: 3,
-    avgScore: 95,
-    lastActive: "2 weeks ago",
-    status: "Deactivated",
-  },
-];
+const REAL_DATA_START_DATE = "2026-03-09";
 
-const mockUserDatasets = [
-  { id: 1, name: "customers_q1.csv", uploadDate: "2023-10-24", score: 98 },
-  { id: 2, name: "inventory_log.json", uploadDate: "2023-10-22", score: 85 },
-  { id: 3, name: "sales_raw.csv", uploadDate: "2023-10-15", score: 92 },
-];
-
-const mockUserTrendData = [
-  { date: "Oct 18", score: 85 },
-  { date: "Oct 19", score: 88 },
-  { date: "Oct 20", score: 90 },
-  { date: "Oct 21", score: 85 },
-  { date: "Oct 22", score: 92 },
-  { date: "Oct 23", score: 96 },
-  { date: "Oct 24", score: 98 },
-];
-
-const getScoreColor = (score: number) => {
+const getScoreColor = (score: number | null) => {
+  if (score === null || score === undefined) return "text-gray-500 bg-gray-100";
   if (score >= 80) return "text-success bg-success/10 border-success/20";
   if (score >= 50) return "text-warning bg-warning/10 border-warning/20";
   return "text-danger bg-danger/10 border-danger/20";
 };
 
+interface EnrichedUser extends User {
+  name: string;
+  datasetsCount: number;
+  avgScore: number;
+  lastActive: string;
+  status: string;
+  recentUploads: Dataset[];
+}
+
 export default function AdminUsersPage() {
+  const [loading, setLoading] = useState(true);
+  const [users, setUsers] = useState<User[]>([]);
+  const [datasets, setDatasets] = useState<Dataset[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
-  const [selectedUser, setSelectedUser] = useState<(typeof users)[0] | null>(
-    null
-  );
+  const [selectedUser, setSelectedUser] = useState<EnrichedUser | null>(null);
+  const [userTrendData, setUserTrendData] = useState<
+    { date: string; score: number }[]
+  >([]);
+  const [trendLoading, setTrendLoading] = useState(false);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        setLoading(true);
+        const [usersData, datasetsData] = await Promise.all([
+          getUsers(),
+          getDatasets(),
+        ]);
+
+        const filteredDatasets = datasetsData.filter(
+          (d: Dataset) =>
+            !d.uploaded_at ||
+            new Date(d.uploaded_at) >= new Date(REAL_DATA_START_DATE)
+        );
+
+        setUsers(usersData);
+        setDatasets(filteredDatasets);
+      } catch (err) {
+        console.error("Failed to load user management data:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchData();
+  }, []);
+
+  const usersWithStats = useMemo(() => {
+    return users
+      .map((u: User) => {
+        const userDatasets = datasets.filter((d: Dataset) => {
+          const uploadedBy = d.uploaded_by;
+          if (
+            uploadedBy &&
+            typeof uploadedBy === "object" &&
+            "id" in uploadedBy
+          ) {
+            return uploadedBy.id === u.id;
+          }
+          return false;
+        });
+        const datasetsWithScores = userDatasets.filter(
+          (d: Dataset) => d.score !== null && d.score !== undefined
+        );
+        const avgScore =
+          datasetsWithScores.length > 0
+            ? Math.round(
+                datasetsWithScores.reduce(
+                  (acc: number, d: Dataset) => acc + (d.score || 0),
+                  0
+                ) / datasetsWithScores.length
+              )
+            : 0;
+
+        return {
+          ...u,
+          name: u.full_name || u.email.split("@")[0],
+          datasetsCount: userDatasets.length,
+          avgScore,
+          lastActive: userDatasets.length > 0 ? "Recently" : "Never",
+          status: "Active", // Logic for active/inactive could be added based on last uploaded_at
+          recentUploads: userDatasets
+            .sort(
+              (a: Dataset, b: Dataset) =>
+                new Date(b.uploaded_at).getTime() -
+                new Date(a.uploaded_at).getTime()
+            )
+            .slice(0, 5),
+        };
+      })
+      .filter(
+        (u: EnrichedUser) =>
+          u.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          u.email.toLowerCase().includes(searchTerm.toLowerCase())
+      );
+  }, [users, datasets, searchTerm]);
+
+  // Load trends for selected user
+  useEffect(() => {
+    if (selectedUser) {
+      const loadUserTrends = async () => {
+        setTrendLoading(true);
+        try {
+          const userDatasets = datasets.filter((d: Dataset) => {
+            const uploadedBy = d.uploaded_by;
+            if (
+              uploadedBy &&
+              typeof uploadedBy === "object" &&
+              "id" in uploadedBy
+            ) {
+              return uploadedBy.id === selectedUser.id;
+            }
+            return false;
+          });
+          if (userDatasets.length > 0) {
+            const ids = userDatasets.map((d: Dataset) => d.id);
+            const trends = await getBulkQualityTrends(ids, {
+              start_date: REAL_DATA_START_DATE,
+            });
+
+            if (Array.isArray(trends)) {
+              const initialAcc: Record<
+                string,
+                { date: string; score: number; count: number }
+              > = {};
+              const grouped = trends.reduce((acc, t) => {
+                if (!t.checked_at) return acc;
+                const date = new Date(t.checked_at).toLocaleDateString(
+                  undefined,
+                  {
+                    month: "short",
+                    day: "numeric",
+                  }
+                );
+                if (!acc[date]) acc[date] = { date, score: 0, count: 0 };
+                acc[date].score += t.score || 0;
+                acc[date].count += 1;
+                return acc;
+              }, initialAcc);
+
+              setUserTrendData(
+                Object.values(grouped)
+                  .map((g: { date: string; score: number; count: number }) => ({
+                    date: g.date,
+                    score: Math.round(g.score / g.count),
+                  }))
+                  .slice(-7)
+              );
+            }
+          } else {
+            setUserTrendData([]);
+          }
+        } catch (err) {
+          console.error("Failed to fetch user trends:", err);
+        } finally {
+          setTrendLoading(false);
+        }
+      };
+      loadUserTrends();
+    }
+  }, [selectedUser, datasets]);
+
+  if (loading) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[60vh] gap-4">
+        <Loader2 className="animate-spin text-accent" size={48} />
+        <p className="text-gray-500 font-medium">Loading user profiles...</p>
+      </div>
+    );
+  }
 
   const renderListView = () => (
     <div className="space-y-6 animate-in fade-in zoom-in-95 duration-200">
       {/* Header & Actions */}
-      <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <h2 className="text-2xl font-bold text-primary">User Management</h2>
-          <p className="text-gray-500">
-            View, invite, and moderate platform users.
-          </p>
+          <p className="text-gray-500">View and moderate platform users.</p>
         </div>
-
-        <button className="flex items-center justify-center gap-2 px-6 py-2.5 bg-accent text-white font-medium rounded-lg hover:bg-accent/90 transition-colors shadow-sm shadow-accent/20">
-          <MailPlus size={18} /> Invite New User
-        </button>
       </div>
 
       {/* Search Bar */}
@@ -161,12 +246,6 @@ export default function AdminUsersPage() {
                 <th className="py-4 px-6 text-xs font-bold text-primary uppercase tracking-wider text-center">
                   Datasets
                 </th>
-                <th className="py-4 px-6 text-xs font-bold text-primary uppercase tracking-wider text-center">
-                  Avg. Score
-                </th>
-                <th className="py-4 px-6 text-xs font-bold text-primary uppercase tracking-wider">
-                  Last Active
-                </th>
                 <th className="py-4 px-6 text-xs font-bold text-primary uppercase tracking-wider">
                   Status
                 </th>
@@ -176,65 +255,72 @@ export default function AdminUsersPage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
-              {users.map((user) => (
-                <tr
-                  key={user.id}
-                  className="hover:bg-gray-50 transition-colors cursor-pointer group"
-                  onClick={() => setSelectedUser(user)}
-                >
-                  <td className="py-4 px-6">
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-full bg-primary/10 flex flex-shrink-0 items-center justify-center font-bold text-primary text-sm">
-                        {user.name.charAt(0)}
+              {usersWithStats.length > 0 ? (
+                usersWithStats.map((user) => (
+                  <tr
+                    key={user.id}
+                    className="hover:bg-gray-50 transition-colors cursor-pointer group"
+                    onClick={() => setSelectedUser(user)}
+                  >
+                    <td className="py-4 px-6">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-full bg-primary/10 flex flex-shrink-0 items-center justify-center font-bold text-primary text-sm">
+                          {user.name.charAt(0)}
+                        </div>
+                        <div>
+                          <p className="font-semibold text-primary">
+                            {user.name}
+                          </p>
+                          <p className="text-sm text-gray-500">{user.email}</p>
+                        </div>
                       </div>
-                      <div>
-                        <p className="font-semibold text-primary">
-                          {user.name}
-                        </p>
-                        <p className="text-sm text-gray-500">{user.email}</p>
-                      </div>
-                    </div>
-                  </td>
-                  <td className="py-4 px-6 text-sm text-gray-600 font-medium">
-                    {user.registered}
-                  </td>
-                  <td className="py-4 px-6 text-center">
-                    <span className="inline-flex items-center gap-1.5 px-3 py-1 font-semibold text-primary bg-primary/5 rounded-full">
-                      <Database size={14} className="text-gray-400" />{" "}
-                      {user.datasetsCount}
-                    </span>
-                  </td>
-                  <td className="py-4 px-6 text-center">
-                    <span
-                      className={`inline-flex items-center justify-center px-3 py-1 rounded-full text-xs font-bold border ${getScoreColor(user.avgScore)}`}
-                    >
-                      {user.avgScore}%
-                    </span>
-                  </td>
-                  <td className="py-4 px-6 text-sm text-gray-500">
-                    {user.lastActive}
-                  </td>
-                  <td className="py-4 px-6">
-                    <span
-                      className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-bold border ${
-                        user.status === "Active"
-                          ? "text-success bg-success/10 border-success/20"
-                          : user.status === "Deactivated"
-                            ? "text-danger bg-danger/10 border-danger/20"
+                    </td>
+                    <td className="py-4 px-6 text-sm text-gray-600 font-medium">
+                      {user.created_at
+                        ? new Date(user.created_at).toLocaleDateString()
+                        : "N/A"}
+                    </td>
+                    <td className="py-4 px-6 text-center">
+                      <span className="inline-flex items-center gap-1.5 px-3 py-1 font-semibold text-primary bg-primary/5 rounded-full">
+                        <Database size={14} className="text-gray-400" />{" "}
+                        {user.datasetsCount}
+                      </span>
+                    </td>
+                    <td className="py-4 px-6">
+                      <span
+                        className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-bold border ${
+                          user.status === "Active"
+                            ? "text-success bg-success/10 border-success/20"
                             : "text-gray-500 bg-gray-100 border-gray-200"
-                      }`}
-                    >
-                      <span className="w-1.5 h-1.5 rounded-full bg-current"></span>
-                      {user.status}
-                    </span>
-                  </td>
-                  <td className="py-4 px-6 text-right">
-                    <div className="flex items-center justify-end gap-3 text-sm font-semibold text-accent opacity-0 group-hover:opacity-100 transition-opacity translate-x-4 group-hover:translate-x-0">
-                      View Profile <ChevronRight size={18} />
+                        }`}
+                      >
+                        <span className="w-1.5 h-1.5 rounded-full bg-current"></span>
+                        {user.status}
+                      </span>
+                    </td>
+                    <td className="py-4 px-6 text-right">
+                      <div className="flex items-center justify-end gap-3 text-sm font-semibold text-accent opacity-0 group-hover:opacity-100 transition-opacity translate-x-4 group-hover:translate-x-0">
+                        View Profile <ChevronRight size={18} />
+                      </div>
+                    </td>
+                  </tr>
+                ))
+              ) : (
+                <tr>
+                  <td colSpan={5} className="py-20 text-center">
+                    <div className="flex flex-col items-center gap-2">
+                      <Users size={48} className="text-gray-200" />
+                      <p className="text-gray-500 font-medium">
+                        No active researchers found since Mar 9th.
+                      </p>
+                      <p className="text-xs text-gray-400">
+                        Try inviting a new user or adjusting your search
+                        filters.
+                      </p>
                     </div>
                   </td>
                 </tr>
-              ))}
+              )}
             </tbody>
           </table>
         </div>
@@ -285,7 +371,7 @@ export default function AdminUsersPage() {
               <p className="text-gray-500 text-sm mb-4">{selectedUser.email}</p>
 
               <div
-                className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold border mb-6 ${
+                className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold border ${
                   selectedUser.status === "Active"
                     ? "text-success bg-success/10 border-success/20"
                     : selectedUser.status === "Deactivated"
@@ -297,21 +383,15 @@ export default function AdminUsersPage() {
                 {selectedUser.status}
               </div>
 
-              <div className="grid grid-cols-2 gap-4 border-t border-gray-100 pt-6">
+              <div className="grid grid-cols-1 gap-4 border-t border-gray-100 pt-6">
                 <div>
                   <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">
                     Registered
                   </p>
                   <p className="text-sm font-semibold text-primary">
-                    {selectedUser.registered}
-                  </p>
-                </div>
-                <div>
-                  <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">
-                    Last Active
-                  </p>
-                  <p className="text-sm font-semibold text-primary">
-                    {selectedUser.lastActive}
+                    {selectedUser.created_at
+                      ? new Date(selectedUser.created_at).toLocaleDateString()
+                      : "N/A"}
                   </p>
                 </div>
               </div>
@@ -329,7 +409,7 @@ export default function AdminUsersPage() {
                     {selectedUser.datasetsCount}
                   </span>
                 </div>
-                <div className="flex items-center justify-between pb-4 border-b border-gray-100">
+                <div className="flex items-center justify-between">
                   <span className="text-sm font-medium text-gray-500 flex items-center gap-2">
                     <Activity size={16} /> Avg. Quality
                   </span>
@@ -338,19 +418,6 @@ export default function AdminUsersPage() {
                   >
                     {selectedUser.avgScore}%
                   </span>
-                </div>
-                <div>
-                  <div className="flex justify-between items-center mb-1">
-                    <span className="text-xs font-bold text-gray-500 uppercase tracking-wider">
-                      Overall Health
-                    </span>
-                    <span className="text-xs font-bold text-success">
-                      Excellent
-                    </span>
-                  </div>
-                  <div className="w-full h-2 bg-gray-100 rounded-full overflow-hidden">
-                    <div className="h-full bg-success w-[92%]"></div>
-                  </div>
                 </div>
               </div>
             </div>
@@ -372,50 +439,60 @@ export default function AdminUsersPage() {
               </div>
               <div className="h-64 w-full">
                 <ResponsiveContainer width="100%" height="100%">
-                  <LineChart
-                    data={mockUserTrendData}
-                    margin={{ top: 5, right: 10, left: -20, bottom: 0 }}
-                  >
-                    <CartesianGrid
-                      strokeDasharray="3 3"
-                      vertical={false}
-                      stroke="#E5E7EB"
-                    />
-                    <XAxis
-                      dataKey="date"
-                      axisLine={false}
-                      tickLine={false}
-                      tick={{ fill: "#6B7280", fontSize: 12 }}
-                      dy={10}
-                    />
-                    <YAxis
-                      axisLine={false}
-                      tickLine={false}
-                      tick={{ fill: "#6B7280", fontSize: 12 }}
-                      domain={[0, 100]}
-                    />
-                    <Tooltip
-                      contentStyle={{
-                        borderRadius: "8px",
-                        border: "none",
-                        boxShadow: "0 4px 6px -1px rgb(0 0 0 / 0.1)",
-                      }}
-                      itemStyle={{ color: "#08293C", fontWeight: "bold" }}
-                    />
-                    <Line
-                      type="monotone"
-                      dataKey="score"
-                      stroke="#FF5A00"
-                      strokeWidth={3}
-                      dot={{
-                        fill: "#FF5A00",
-                        strokeWidth: 2,
-                        r: 4,
-                        stroke: "#FFFFFF",
-                      }}
-                      activeDot={{ r: 6, strokeWidth: 0, fill: "#08293C" }}
-                    />
-                  </LineChart>
+                  {trendLoading ? (
+                    <div className="flex items-center justify-center h-full">
+                      <Loader2 className="animate-spin text-accent" size={32} />
+                    </div>
+                  ) : userTrendData.length > 0 ? (
+                    <LineChart
+                      data={userTrendData}
+                      margin={{ top: 5, right: 10, left: -20, bottom: 0 }}
+                    >
+                      <CartesianGrid
+                        strokeDasharray="3 3"
+                        vertical={false}
+                        stroke="#E5E7EB"
+                      />
+                      <XAxis
+                        dataKey="date"
+                        axisLine={false}
+                        tickLine={false}
+                        tick={{ fill: "#6B7280", fontSize: 12 }}
+                        dy={10}
+                      />
+                      <YAxis
+                        axisLine={false}
+                        tickLine={false}
+                        tick={{ fill: "#6B7280", fontSize: 12 }}
+                        domain={[0, 100]}
+                      />
+                      <Tooltip
+                        contentStyle={{
+                          borderRadius: "8px",
+                          border: "none",
+                          boxShadow: "0 4px 6px -1px rgb(0 0 0 / 0.1)",
+                        }}
+                        itemStyle={{ color: "#08293C", fontWeight: "bold" }}
+                      />
+                      <Line
+                        type="monotone"
+                        dataKey="score"
+                        stroke="#FF5A00"
+                        strokeWidth={3}
+                        dot={{
+                          fill: "#FF5A00",
+                          strokeWidth: 2,
+                          r: 4,
+                          stroke: "#FFFFFF",
+                        }}
+                        activeDot={{ r: 6, strokeWidth: 0, fill: "#08293C" }}
+                      />
+                    </LineChart>
+                  ) : (
+                    <div className="flex items-center justify-center h-full text-gray-400 text-sm">
+                      No trend data available for this period.
+                    </div>
+                  )}
                 </ResponsiveContainer>
               </div>
             </div>
@@ -446,7 +523,7 @@ export default function AdminUsersPage() {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-100">
-                    {mockUserDatasets.map((dataset) => (
+                    {selectedUser.recentUploads.map((dataset: Dataset) => (
                       <tr
                         key={dataset.id}
                         className="hover:bg-gray-50/50 transition-colors"
@@ -455,17 +532,27 @@ export default function AdminUsersPage() {
                           {dataset.name}
                         </td>
                         <td className="py-4 px-6 text-sm text-gray-500">
-                          {dataset.uploadDate}
+                          {new Date(dataset.uploaded_at).toLocaleDateString()}
                         </td>
                         <td className="py-4 px-6 text-right">
                           <span
-                            className={`inline-flex items-center justify-center px-2 py-0.5 rounded text-xs font-bold border ${getScoreColor(dataset.score)}`}
+                            className={`inline-flex items-center justify-center px-2 py-0.5 rounded text-xs font-bold border ${getScoreColor(dataset.score ?? null)}`}
                           >
                             {dataset.score}%
                           </span>
                         </td>
                       </tr>
                     ))}
+                    {selectedUser.recentUploads.length === 0 && (
+                      <tr>
+                        <td
+                          colSpan={3}
+                          className="py-8 text-center text-gray-400 text-sm"
+                        >
+                          No real data uploads found since Mar 9th.
+                        </td>
+                      </tr>
+                    )}
                   </tbody>
                 </table>
               </div>

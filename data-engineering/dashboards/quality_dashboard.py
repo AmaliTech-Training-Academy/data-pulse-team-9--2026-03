@@ -333,6 +333,7 @@ def log_query(query_name: str, params: dict = None):
 # =============================================================================
 
 
+@st.cache_resource
 def get_engine():
     try:
         url = settings["database"]["target_url"]
@@ -349,6 +350,7 @@ def get_engine():
         return None
 
 
+@st.cache_data(ttl=60)
 def run_query_safe(query: str, params: dict = None, query_name: str = "unnamed") -> pd.DataFrame:
     engine = get_engine()
     if engine is None:

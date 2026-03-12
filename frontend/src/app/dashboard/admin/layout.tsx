@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import Image from "next/image";
 import { useEffect, useState } from "react";
 import { AuthService } from "@/services/auth";
+import { getUsers } from "@/services/user";
 import {
   LayoutDashboard,
   Database,
@@ -30,6 +31,7 @@ export default function AdminDashboardLayout({
   const pathname = usePathname();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isCollapsed, setIsCollapsed] = useState(false);
+  const [hasUsers, setHasUsers] = useState(true); // Default to true to avoid flicker
 
   const navigation = [
     { name: "Dashboard", href: "/dashboard/admin", icon: LayoutDashboard },
@@ -52,7 +54,7 @@ export default function AdminDashboardLayout({
       href: "/dashboard/admin/settings",
       icon: Settings,
     },
-  ];
+  ].filter((item) => item.name !== "Users" || hasUsers);
 
   const [user, setUser] = useState<{ full_name: string; email: string } | null>(
     null
@@ -65,6 +67,10 @@ export default function AdminDashboardLayout({
         try {
           const userData = await AuthService.getMe(token);
           setUser(userData);
+
+          // Also check for users to toggle navigation
+          const users = await getUsers();
+          setHasUsers(users.length > 0);
         } catch (err) {
           console.error("Failed to fetch user profile:", err);
         }
