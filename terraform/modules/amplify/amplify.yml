@@ -3,6 +3,16 @@ frontend:
   phases:
     preBuild:
       commands:
+        # Check if frontend files changed, exit early if not
+        - |
+          if [ "$AWS_BRANCH" != "main" ] && [ "$AWS_BRANCH" != "develop" ]; then
+            # For PR builds, check if frontend files changed
+            CHANGED_FILES=$(git diff --name-only HEAD~1 HEAD || echo "frontend/")
+            if ! echo "$CHANGED_FILES" | grep -E "^(frontend/|package\.json|yarn\.lock|.*\.(js|jsx|ts|tsx|json|md)$)"; then
+              echo "No frontend files changed, skipping build"
+              exit 0
+            fi
+          fi
         - cd frontend
         - npm ci --prefer-offline
     build:
@@ -27,6 +37,15 @@ test:
   phases:
     preTest:
       commands:
+        # Same check for tests
+        - |
+          if [ "$AWS_BRANCH" != "main" ] && [ "$AWS_BRANCH" != "develop" ]; then
+            CHANGED_FILES=$(git diff --name-only HEAD~1 HEAD || echo "frontend/")
+            if ! echo "$CHANGED_FILES" | grep -E "^(frontend/|package\.json|yarn\.lock|.*\.(js|jsx|ts|tsx|json|md)$)"; then
+              echo "No frontend files changed, skipping tests"
+              exit 0
+            fi
+          fi
         - cd frontend
         - npm ci --prefer-offline
     test:
