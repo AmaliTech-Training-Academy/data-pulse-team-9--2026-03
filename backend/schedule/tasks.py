@@ -53,29 +53,30 @@ def run_scheduled_checks(dataset_id):
         engine = ValidationEngine()
         results = engine.run_all_checks(df, rules)
 
-        # 6. Save CheckResult records
-        for res in results:
-            rule = ValidationRule.objects.get(id=res["rule_id"])
-            CheckResult.objects.create(
-                dataset=dataset,
-                rule=rule,
-                passed=res["passed"],
-                failed_rows=res["failed_rows"],
-                total_rows=res["total_rows"],
-                details=res["details"],
-            )
-
         # 7. Calculate quality score
         score_data = calculate_quality_score(results, rules)
 
         # 8. Save QualityScore record
-        QualityScore.objects.create(
+        qs = QualityScore.objects.create(
             dataset=dataset,
             score=score_data["score"],
             total_rules=score_data["total_rules"],
             passed_rules=score_data["passed_rules"],
             failed_rules=score_data["failed_rules"],
         )
+
+        # 6. Save CheckResult records
+        for res in results:
+            rule = ValidationRule.objects.get(id=res["rule_id"])
+            CheckResult.objects.create(
+                dataset=dataset,
+                rule=rule,
+                quality_score=qs,
+                passed=res["passed"],
+                failed_rows=res["failed_rows"],
+                total_rows=res["total_rows"],
+                details=res["details"],
+            )
 
         # 9. Update dataset status
         dataset.status = "VALIDATED" if score_data["failed_rules"] == 0 else "FAILED"
