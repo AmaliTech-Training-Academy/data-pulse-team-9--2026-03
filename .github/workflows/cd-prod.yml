@@ -1,19 +1,14 @@
-name: CD - Deploy to Production ECS
+name: CD - Deploy to Prod
 
 on:
   push:
     branches:
       - main
 
-env:
-  AWS_REGION: eu-west-1
-  ECR_REGISTRY: 970547336735.dkr.ecr.eu-west-1.amazonaws.com
-
 jobs:
-  deploy-production:
+  deploy-prod:
     name: Deploy to Production ECS
     runs-on: ubuntu-latest
-
     permissions:
       id-token: write
       contents: read
@@ -25,174 +20,100 @@ jobs:
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
-          role-to-assume: ${{ secrets.AWS_GITHUB_ACTIONS_ROLE_ARN }}
-          aws-region: ${{ env.AWS_REGION }}
+          role-to-assume: ${{ secrets.PROD_AWS_ROLE_ARN }}
+          aws-region: eu-west-1
 
       - name: Login to Amazon ECR
         id: login-ecr
         uses: aws-actions/amazon-ecr-login@v2
 
-      - name: Build, tag, and push Backend image to ECR
+      - name: Build and push Backend image
         env:
-          ECR_REPOSITORY: datapulse-backend
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
           IMAGE_TAG: ${{ github.sha }}
         run: |
-          echo "🔨 Building backend Docker image..."
-          docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG ./backend
-          docker tag $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG $ECR_REGISTRY/$ECR_REPOSITORY:latest
+          docker build -t $ECR_REGISTRY/datapulse-backend:$IMAGE_TAG -f backend/Dockerfile backend/
+          docker push $ECR_REGISTRY/datapulse-backend:$IMAGE_TAG
+          docker tag $ECR_REGISTRY/datapulse-backend:$IMAGE_TAG $ECR_REGISTRY/datapulse-backend:latest
+          docker push $ECR_REGISTRY/datapulse-backend:latest
 
-          echo "📤 Pushing backend image to ECR..."
-          docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
-          docker push $ECR_REGISTRY/$ECR_REPOSITORY:latest
-
-          echo "✅ Backend image pushed successfully"
-
-      - name: Build, tag, and push ETL image to ECR
+      - name: Build and push ETL image
         env:
-          ECR_REPOSITORY: datapulse-etl
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
           IMAGE_TAG: ${{ github.sha }}
         run: |
-          echo "🔨 Building ETL Docker image..."
-          docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG ./data-engineering
-          docker tag $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG $ECR_REGISTRY/$ECR_REPOSITORY:latest
+          docker build -t $ECR_REGISTRY/datapulse-etl:$IMAGE_TAG -f etl/Dockerfile etl/
+          docker push $ECR_REGISTRY/datapulse-etl:$IMAGE_TAG
+          docker tag $ECR_REGISTRY/datapulse-etl:$IMAGE_TAG $ECR_REGISTRY/datapulse-etl:latest
+          docker push $ECR_REGISTRY/datapulse-etl:latest
 
-          echo "📤 Pushing ETL image to ECR..."
-          docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
-          docker push $ECR_REGISTRY/$ECR_REPOSITORY:latest
-
-          echo "✅ ETL image pushed successfully"
-
-      - name: Build, tag, and push Streamlit image to ECR
+      - name: Build and push Streamlit image
         env:
-          ECR_REPOSITORY: datapulse-streamlit
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
           IMAGE_TAG: ${{ github.sha }}
         run: |
-          echo "🔨 Building Streamlit Docker image..."
-          docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG ./data-engineering
-          docker tag $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG $ECR_REGISTRY/$ECR_REPOSITORY:latest
+          docker build -t $ECR_REGISTRY/datapulse-streamlit:$IMAGE_TAG -f streamlit/Dockerfile streamlit/
+          docker push $ECR_REGISTRY/datapulse-streamlit:$IMAGE_TAG
+          docker tag $ECR_REGISTRY/datapulse-streamlit:$IMAGE_TAG $ECR_REGISTRY/datapulse-streamlit:latest
+          docker push $ECR_REGISTRY/datapulse-streamlit:latest
 
-          echo "📤 Pushing Streamlit image to ECR..."
-          docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
-          docker push $ECR_REGISTRY/$ECR_REPOSITORY:latest
-
-          echo "✅ Streamlit image pushed successfully"
-
-      - name: Update ECS Backend Service
+      - name: Deploy Backend via CodeDeploy
+        env:
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          IMAGE_TAG: ${{ github.sha }}
         run: |
-          echo "🔄 Updating ECS backend service..."
-          aws ecs update-service \
-            --cluster datapulse-prod \
-            --service datapulse-prod-backend \
-            --force-new-deployment \
-            --region ${{ env.AWS_REGION }}
+          TASK_DEF=$(aws ecs describe-task-definition --task-definition datapulse-prod-backend --query 'taskDefinition' --output json)
+          NEW_TASK_DEF=$(echo $TASK_DEF | jq --arg IMAGE "$ECR_REGISTRY/datapulse-backend:$IMAGE_TAG" \
+            '.containerDefinitions[0].image = $IMAGE | del(.taskDefinitionArn, .revision, .status, .requiresAttributes, .compatibilities, .registeredAt, .registeredBy)')
+          NEW_TASK_ARN=$(aws ecs register-task-definition --cli-input-json "$NEW_TASK_DEF" --query 'taskDefinition.taskDefinitionArn' --output text)
 
-          echo "✅ Backend service update initiated"
+          aws deploy create-deployment \
+            --application-name datapulse-prod-backend \
+            --deployment-group-name datapulse-prod-backend-dg \
+            --revision "{\"revisionType\":\"AppSpecContent\",\"appSpecContent\":{\"content\":\"{\\\"version\\\":1,\\\"Resources\\\":[{\\\"TargetService\\\":{\\\"Type\\\":\\\"AWS::ECS::Service\\\",\\\"Properties\\\":{\\\"TaskDefinition\\\":\\\"$NEW_TASK_ARN\\\",\\\"LoadBalancerInfo\\\":{\\\"ContainerName\\\":\\\"backend\\\",\\\"ContainerPort\\\":8000}}}}]}\"}}"
 
-      - name: Update ECS Celery Worker Service
+      - name: Deploy Streamlit via CodeDeploy
+        env:
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          IMAGE_TAG: ${{ github.sha }}
         run: |
-          echo "🔄 Updating ECS celery-worker service..."
-          aws ecs update-service \
-            --cluster datapulse-prod \
-            --service datapulse-prod-celery-worker \
-            --force-new-deployment \
-            --region ${{ env.AWS_REGION }}
+          TASK_DEF=$(aws ecs describe-task-definition --task-definition datapulse-prod-streamlit --query 'taskDefinition' --output json)
+          NEW_TASK_DEF=$(echo $TASK_DEF | jq --arg IMAGE "$ECR_REGISTRY/datapulse-streamlit:$IMAGE_TAG" \
+            '.containerDefinitions[0].image = $IMAGE | del(.taskDefinitionArn, .revision, .status, .requiresAttributes, .compatibilities, .registeredAt, .registeredBy)')
+          NEW_TASK_ARN=$(aws ecs register-task-definition --cli-input-json "$NEW_TASK_DEF" --query 'taskDefinition.taskDefinitionArn' --output text)
 
-          echo "✅ Celery worker service update initiated"
+          aws deploy create-deployment \
+            --application-name datapulse-prod-streamlit \
+            --deployment-group-name datapulse-prod-streamlit-dg \
+            --revision "{\"revisionType\":\"AppSpecContent\",\"appSpecContent\":{\"content\":\"{\\\"version\\\":1,\\\"Resources\\\":[{\\\"TargetService\\\":{\\\"Type\\\":\\\"AWS::ECS::Service\\\",\\\"Properties\\\":{\\\"TaskDefinition\\\":\\\"$NEW_TASK_ARN\\\",\\\"LoadBalancerInfo\\\":{\\\"ContainerName\\\":\\\"streamlit\\\",\\\"ContainerPort\\\":8501}}}}]}\"}}"
 
-      - name: Update ECS Celery Beat Service
+      - name: Update Celery Worker
+        env:
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          IMAGE_TAG: ${{ github.sha }}
         run: |
-          echo "🔄 Updating ECS celery-beat service..."
-          aws ecs update-service \
-            --cluster datapulse-prod \
-            --service datapulse-prod-celery-beat \
-            --force-new-deployment \
-            --region ${{ env.AWS_REGION }}
+          TASK_DEF=$(aws ecs describe-task-definition --task-definition datapulse-prod-celery-worker --query 'taskDefinition' --output json)
+          NEW_TASK_DEF=$(echo $TASK_DEF | jq --arg IMAGE "$ECR_REGISTRY/datapulse-backend:$IMAGE_TAG" \
+            '.containerDefinitions[0].image = $IMAGE | del(.taskDefinitionArn, .revision, .status, .requiresAttributes, .compatibilities, .registeredAt, .registeredBy)')
+          aws ecs register-task-definition --cli-input-json "$NEW_TASK_DEF"
+          aws ecs update-service --cluster datapulse-prod --service datapulse-prod-celery-worker --force-new-deployment
 
-          echo "✅ Celery beat service update initiated"
-
-      - name: Update ECS Streamlit Service
+      - name: Update Celery Beat
+        env:
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          IMAGE_TAG: ${{ github.sha }}
         run: |
-          echo "🔄 Updating ECS streamlit service..."
-          aws ecs update-service \
-            --cluster datapulse-prod \
-            --service datapulse-prod-streamlit \
-            --force-new-deployment \
-            --region ${{ env.AWS_REGION }}
-
-          echo "✅ Streamlit service update initiated"
-
-      - name: Wait for services to stabilize
-        run: |
-          echo "⏳ Waiting for services to stabilize..."
-
-          services=(
-            "datapulse-prod-backend"
-            "datapulse-prod-celery-worker"
-            "datapulse-prod-celery-beat"
-            "datapulse-prod-streamlit"
-          )
-
-          for service in "${services[@]}"; do
-            echo "Waiting for $service..."
-            aws ecs wait services-stable \
-              --cluster datapulse-prod \
-              --services $service \
-              --region ${{ env.AWS_REGION }} || echo "⚠️  $service did not stabilize in time"
-          done
-
-          echo "✅ All services deployment complete"
-
-      - name: Verify Deployment
-        run: |
-          echo "🔍 Verifying deployment..."
-
-          # Get ALB DNS name
-          ALB_DNS=$(aws elbv2 describe-load-balancers \
-            --names datapulse-prod \
-            --query 'LoadBalancers[0].DNSName' \
-            --output text \
-            --region ${{ env.AWS_REGION }})
-
-          echo "ALB DNS: $ALB_DNS"
-
-          # Check backend health
-          echo "Checking backend health..."
-          curl -f http://$ALB_DNS/health || echo "⚠️  Backend health check failed"
-
-          # Check backend API
-          echo "Checking backend API..."
-          curl -f http://$ALB_DNS/api/ || echo "⚠️  Backend API check failed"
-
-          echo "✅ Deployment verification complete"
+          TASK_DEF=$(aws ecs describe-task-definition --task-definition datapulse-prod-celery-beat --query 'taskDefinition' --output json)
+          NEW_TASK_DEF=$(echo $TASK_DEF | jq --arg IMAGE "$ECR_REGISTRY/datapulse-backend:$IMAGE_TAG" \
+            '.containerDefinitions[0].image = $IMAGE | del(.taskDefinitionArn, .revision, .status, .requiresAttributes, .compatibilities, .registeredAt, .registeredBy)')
+          aws ecs register-task-definition --cli-input-json "$NEW_TASK_DEF"
+          aws ecs update-service --cluster datapulse-prod --service datapulse-prod-celery-beat --force-new-deployment
 
       - name: Notify Deployment Status
         if: always()
         run: |
           if [ ${{ job.status }} == 'success' ]; then
-            echo "✅ Production deployment succeeded"
-            echo "🚀 Services updated with image tag: ${{ github.sha }}"
-            echo "🌐 Application URL: http://datapulse-prod-1543503060.eu-west-1.elb.amazonaws.com"
+            echo " Production deployment succeeded"
           else
-            echo "❌ Production deployment failed"
+            echo " Production deployment failed"
           fi
-
-      - name: Create deployment summary
-        if: always()
-        run: |
-          echo "## 🚀 Production Deployment Summary" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "**Status:** ${{ job.status }}" >> $GITHUB_STEP_SUMMARY
-          echo "**Commit:** ${{ github.sha }}" >> $GITHUB_STEP_SUMMARY
-          echo "**Branch:** main" >> $GITHUB_STEP_SUMMARY
-          echo "**Region:** ${{ env.AWS_REGION }}" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "### Services Updated:" >> $GITHUB_STEP_SUMMARY
-          echo "- ✅ Backend (datapulse-prod-backend)" >> $GITHUB_STEP_SUMMARY
-          echo "- ✅ Celery Worker (datapulse-prod-celery-worker)" >> $GITHUB_STEP_SUMMARY
-          echo "- ✅ Celery Beat (datapulse-prod-celery-beat)" >> $GITHUB_STEP_SUMMARY
-          echo "- ✅ Streamlit (datapulse-prod-streamlit)" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "### URLs:" >> $GITHUB_STEP_SUMMARY
-          echo "- **Backend API:** http://datapulse-prod-1543503060.eu-west-1.elb.amazonaws.com/api/" >> $GITHUB_STEP_SUMMARY
-          echo "- **Streamlit:** http://datapulse-prod-1543503060.eu-west-1.elb.amazonaws.com/streamlit" >> $GITHUB_STEP_SUMMARY
-          echo "- **Frontend:** https://main.d6itqrswflsj6.amplifyapp.com" >> $GITHUB_STEP_SUMMARY
