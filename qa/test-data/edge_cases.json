@@ -1,0 +1,37 @@
+[
+  {
+    "id": 1,
+    "name": "Alice",
+    "email": "alice@test.com",
+    "age": 30,
+    "active": true
+  },
+  {
+    "id": 2,
+    "name": null,
+    "email": "bob@test.com",
+    "age": 25,
+    "active": false
+  },
+  {
+    "id": 1,
+    "name": "Carol",
+    "email": "not-an-email",
+    "age": -10,
+    "active": true
+  },
+  {
+    "id": 3,
+    "name": "David",
+    "email": "",
+    "age": 999,
+    "active": "maybe"
+  },
+  {
+    "id": 4,
+    "name": "Eve",
+    "email": "eve@test.com",
+    "age": null,
+    "active": true
+  }
+]
