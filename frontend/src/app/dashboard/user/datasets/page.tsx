@@ -75,7 +75,7 @@ export default function MyDatasetsPage() {
 
       // Fetch only datasets, no scores
       const [datasetsData] = await Promise.all([
-        fetchApi("/datasets", options),
+        fetchApi("/api/datasets", options),
       ]);
 
       const datasetsArray = Array.isArray(datasetsData)
@@ -138,10 +138,7 @@ export default function MyDatasetsPage() {
     // 2. Status filter
     let matchesStatus = true;
     if (statusFilter === "checked") {
-      matchesStatus =
-        d.status !== "PENDING" &&
-        d.status !== "PROCESSING" &&
-        d.status !== "ERROR";
+      matchesStatus = !["PENDING", "PROCESSING", "ERROR"].includes(d.status);
     } else if (statusFilter === "unchecked") {
       matchesStatus = d.status === "PENDING";
     }

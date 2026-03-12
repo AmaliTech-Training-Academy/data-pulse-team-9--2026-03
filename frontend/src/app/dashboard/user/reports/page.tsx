@@ -59,7 +59,7 @@ export default function ReportsPage() {
         const options = { headers: { Authorization: `Bearer ${token}` } };
 
         const [datasetsData, scoresData] = await Promise.all([
-          fetchApi("/datasets", options),
+          fetchApi("/api/datasets", options),
           getDashboardReports(),
         ]);
 

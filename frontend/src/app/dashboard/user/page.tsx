@@ -71,15 +71,11 @@ export default function DashboardOverview() {
 
   const loadDashboard = useCallback(async () => {
     try {
-      const data = await fetchApi("/reports/dashboard");
+      const data = await fetchApi("/api/reports/dashboard");
       const datasetsArray = (
         Array.isArray(data) ? data : data?.results || []
       ) as Dataset[];
-      // Filter for real data (March 9th+) or pending datasets
-      const filtered = datasetsArray.filter(
-        (d) => !d.checked_at || d.checked_at >= REAL_DATA_START_DATE
-      );
-      setDatasets(filtered);
+      setDatasets(datasetsArray);
 
       // If we have datasets and haven't selected one for trends yet, pick the first one with a score
       if (data.length > 0 && !selectedTrendDataset) {

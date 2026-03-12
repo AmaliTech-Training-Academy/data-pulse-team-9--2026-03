@@ -29,6 +29,7 @@ export default function SettingsPage() {
   const [saveSuccess, setSaveSuccess] = useState(false);
 
   const FREQUENCY_PRESETS: Record<string, string> = {
+    every_minute: "* * * * *",
     "daily-midnight": "0 0 * * *",
     "daily-noon": "0 12 * * *",
     weekly: "0 0 * * 1",
@@ -106,12 +107,6 @@ export default function SettingsPage() {
       } catch (err) {
         console.error("Failed to load dataset config:", err);
       }
-    };
-    const FREQUENCY_PRESETS: Record<string, string> = {
-      "daily-midnight": "0 0 * * *",
-      "daily-noon": "0 12 * * *",
-      weekly: "0 0 * * 1",
-      monthly: "0 0 1 * *",
     };
 
     loadConfig();
@@ -307,7 +302,7 @@ export default function SettingsPage() {
             </div>
 
             {!isAdvanced ? (
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3">
                 {Object.keys(FREQUENCY_PRESETS).map((key) => (
                   <button
                     key={key}
@@ -325,7 +320,7 @@ export default function SettingsPage() {
                         : "border-gray-100 bg-gray-50 text-gray-400 hover:border-gray-200"
                     }`}
                   >
-                    {key.replace("-", " ")}
+                    {key.replace("-", " ").replace("_", " ")}
                   </button>
                 ))}
               </div>
