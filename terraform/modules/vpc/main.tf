@@ -104,7 +104,8 @@ locals {
   # ecr.api + ecr.dkr: pull images
   # secretsmanager: ECS task secrets injection
   # logs: CloudWatch log delivery from Fargate
-  interface_endpoints = ["ecr.api", "ecr.dkr", "secretsmanager", "logs"]
+  # ssm: Systems Manager Parameter Store access
+  interface_endpoints = ["ecr.api", "ecr.dkr", "secretsmanager", "logs", "ssm"]
 }
 
 resource "aws_vpc_endpoint" "interfaces" {

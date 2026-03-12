@@ -5,7 +5,27 @@ from .base import *
 DEBUG = env.bool("DEBUG", default=False)
 
 # Strict allowed hosts required for production
-ALLOWED_HOSTS = env.list("ALLOWED_HOSTS", default=["localhost"])
+# Allow ALB health checks from private IPs and ALB DNS
+ALLOWED_HOSTS = env.list(
+    "ALLOWED_HOSTS",
+    default=[
+        "localhost",
+        "127.0.0.1",
+        ".elb.amazonaws.com",  # Allow all ALB DNS names
+        ".amplifyapp.com",  # Allow Amplify frontend
+    ],
+)
+
+# Also allow private IPs from VPC for health checks
+import socket
+
+try:
+    hostname = socket.gethostname()
+    local_ip = socket.gethostbyname(hostname)
+    if local_ip not in ALLOWED_HOSTS:
+        ALLOWED_HOSTS.append(local_ip)
+except Exception:
+    pass
 
 # Secure CORS config (origin whitelist)
 CORS_ALLOW_ALL_ORIGINS = False
