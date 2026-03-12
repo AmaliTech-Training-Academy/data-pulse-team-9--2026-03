@@ -39,7 +39,6 @@ Examples:
     args = parser.parse_args()
 
     logger.info("Starting DataPulse ETL - Mode: %s", args.mode)
-    start = datetime.now(timezone.utc)
 
     try:
         if args.strict:
