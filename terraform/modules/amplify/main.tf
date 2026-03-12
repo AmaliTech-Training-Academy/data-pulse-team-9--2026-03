@@ -18,8 +18,6 @@ resource "aws_amplify_app" "main" {
   access_token = var.github_access_token
   platform     = "WEB_COMPUTE"   # SSR support for Next.js
 
-  # Use simple build spec that handles frontend subdirectory
-  build_spec = file("${path.module}/amplify-simple.yml")
 
   custom_rule {
     source = "/<*>"
