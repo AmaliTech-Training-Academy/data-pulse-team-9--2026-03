@@ -59,19 +59,38 @@ export default function AdminUsersPage() {
     const fetchData = async () => {
       try {
         setLoading(true);
-        const [usersData, datasetsData] = await Promise.all([
+        const [usersData, allDatasets] = await Promise.all([
           getUsers(),
           getDatasets(),
         ]);
 
-        const filteredDatasets = datasetsData.filter(
-          (d: Dataset) =>
-            !d.uploaded_at ||
-            new Date(d.uploaded_at) >= new Date(REAL_DATA_START_DATE)
+        // Reconstruct ownership by fetching datasets per user since backend serializer is missing uploaded_by
+        const userDatasetsTagged = await Promise.all(
+          usersData.map(async (u) => {
+            try {
+              const datasets = await getDatasets(u.id);
+              return {
+                userId: u.id,
+                datasetIds: datasets.map((d: any) => d.id),
+              };
+            } catch (err) {
+              return { userId: u.id, datasetIds: [] };
+            }
+          })
         );
 
+        const ownershipMap = new Map();
+        userDatasetsTagged.forEach(({ userId, datasetIds }) => {
+          datasetIds.forEach((id) => ownershipMap.set(id, userId));
+        });
+
+        const enrichedDatasets = allDatasets.map((d: Dataset) => ({
+          ...d,
+          uploaded_by: ownershipMap.get(d.id),
+        }));
+
         setUsers(usersData);
-        setDatasets(filteredDatasets);
+        setDatasets(enrichedDatasets);
       } catch (err) {
         console.error("Failed to load user management data:", err);
       } finally {
@@ -86,6 +105,9 @@ export default function AdminUsersPage() {
       .map((u: User) => {
         const userDatasets = datasets.filter((d: Dataset) => {
           const uploadedBy = d.uploaded_by;
+          if (typeof uploadedBy === "number") {
+            return uploadedBy === u.id;
+          }
           if (
             uploadedBy &&
             typeof uploadedBy === "object" &&
@@ -311,7 +333,7 @@ export default function AdminUsersPage() {
                     <div className="flex flex-col items-center gap-2">
                       <Users size={48} className="text-gray-200" />
                       <p className="text-gray-500 font-medium">
-                        No active researchers found since Mar 9th.
+                        No active researchers found.
                       </p>
                       <p className="text-xs text-gray-400">
                         Try inviting a new user or adjusting your search

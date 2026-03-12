@@ -16,7 +16,7 @@ import {
   getDatasetReport,
   QualityReport,
 } from "@/services/reports";
-import { QualityScoreResponse } from "@/services/checks";
+import { QualityScoreResponse, getCheckResults } from "@/services/checks";
 
 import { getDatasets, Dataset } from "@/services/datasets";
 
@@ -77,19 +77,14 @@ export default function AdminReportsPage() {
           });
         });
         // Enrich and filter reports (Real data only)
-        const enriched = (scoresData as QualityScoreResponse[])
-          .filter(
-            (score) =>
-              !score.checked_at || score.checked_at >= REAL_DATA_START_DATE
-          )
-          .map((score) => {
-            const ds = datasetMap.get(score.dataset_id);
-            return {
-              ...score,
-              dataset_name: ds?.name || `Dataset #${score.dataset_id}`,
-              user_email: ds?.user || "Unknown",
-            };
-          });
+        const enriched = (scoresData as QualityScoreResponse[]).map((score) => {
+          const ds = datasetMap.get(score.dataset_id);
+          return {
+            ...score,
+            dataset_name: ds?.name || `Dataset #${score.dataset_id}`,
+            user_email: ds?.user || "Unknown",
+          };
+        });
 
         setReports(enriched);
       } catch (err) {
@@ -106,12 +101,37 @@ export default function AdminReportsPage() {
     try {
       setSelectedReportId(datasetId);
       setIsDetailLoading(true);
-      const detail = await getDatasetReport(datasetId);
-      setReportDetail(detail);
+
+      // Fetch both the report summary and the detailed check results
+      const [detail, results] = await Promise.all([
+        getDatasetReport(datasetId),
+        getCheckResults(datasetId),
+      ]);
+
+      // Merge results if needed (backend limitation fallback)
+      const mergedDetail = {
+        ...detail,
+        results:
+          detail.results && detail.results.length > 0
+            ? detail.results
+            : results.map((r) => ({
+                ...r,
+                pass_count: r.pass_count,
+                fail_count: r.fail_count,
+              })),
+      };
+
+      setReportDetail(mergedDetail);
     } catch (err) {
       console.error("Failed to fetch report detail:", err);
-      alert("Failed to load report details.");
-      setSelectedReportId(null);
+      // Fallback
+      try {
+        const detail = await getDatasetReport(datasetId);
+        setReportDetail(detail);
+      } catch {
+        alert("Failed to load report details.");
+        setSelectedReportId(null);
+      }
     } finally {
       setIsDetailLoading(false);
     }

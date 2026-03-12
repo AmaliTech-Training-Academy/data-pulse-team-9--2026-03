@@ -75,24 +75,35 @@ export default function AdminDatasetsPage() {
 
   const fetchDatasets = async () => {
     try {
-      const [datasetsData, usersData] = await Promise.all([
+      setIsLoading(true);
+      const [allDatasets, usersData] = await Promise.all([
         getDatasets(),
         getUsers(),
       ]);
 
-      const processed = datasetsData.map((d: Dataset) => {
-        let userEmail = "System User";
-        const uploadedBy = d.uploaded_by;
-        if (
-          uploadedBy &&
-          typeof uploadedBy === "object" &&
-          "email" in uploadedBy
-        ) {
-          userEmail = uploadedBy.email;
-        } else if (typeof uploadedBy === "number") {
-          const userObj = usersData.find((u: User) => u.id === uploadedBy);
-          if (userObj) userEmail = userObj.email;
-        }
+      // Reconstruct ownership by fetching datasets per user
+      const userDatasetsTagged = await Promise.all(
+        usersData.map(async (u) => {
+          try {
+            const datasets = await getDatasets(u.id);
+            return {
+              userId: u.id,
+              userEmail: u.email,
+              datasetIds: datasets.map((d: any) => d.id),
+            };
+          } catch (err) {
+            return { userId: u.id, userEmail: u.email, datasetIds: [] };
+          }
+        })
+      );
+
+      const ownershipMap = new Map();
+      userDatasetsTagged.forEach(({ userEmail, datasetIds }) => {
+        datasetIds.forEach((id) => ownershipMap.set(id, userEmail));
+      });
+
+      const processed = allDatasets.map((d: Dataset) => {
+        const userEmail = ownershipMap.get(d.id) || "System User";
 
         return {
           id: d.id,
@@ -143,7 +154,9 @@ export default function AdminDatasetsPage() {
     const matchesType = filterType === "all" || d.type === filterType;
     const matchesStatus =
       filterStatus === "all" ||
-      (filterStatus === "checked" ? d.score !== null : d.score === null);
+      (filterStatus === "checked"
+        ? !["PENDING", "PROCESSING", "ERROR"].includes(d.status)
+        : d.status === "PENDING");
     return matchesSearch && matchesUser && matchesType && matchesStatus;
   });
 
