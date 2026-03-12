@@ -1,0 +1,57 @@
+name: PR Validation
+
+on:
+  pull_request:
+    branches: [main, develop]
+    types: [opened, synchronize, reopened]
+
+permissions:
+  pull-requests: write
+
+jobs:
+  validate:
+    name: Validate PR
+    if: github.head_ref != 'develop' || github.base_ref != 'main'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check PR title format
+        run: |
+          TITLE="${{ github.event.pull_request.title }}"
+          echo "PR Title: $TITLE"
+          if echo "$TITLE" | grep -qE "^(feat|fix|docs|test|devops|chore|refactor|ci)(\(.+\))?: .+"; then
+            echo " PR title is valid"
+          else
+            echo " Invalid PR title: $TITLE"
+            echo "Must follow: type(scope): description"
+            echo "Examples:"
+            echo "  feat(auth): add JWT login"
+            echo "  fix(validation): handle empty CSV"
+            echo "  devops(ci): add security scan"
+            exit 1
+          fi
+
+      - name: Check branch name format
+        run: |
+          BRANCH="${{ github.head_ref }}"
+          echo "Branch: $BRANCH"
+          if echo "$BRANCH" | grep -qE "^(bugfix|feature|fix|hotfix|devops|docs|test|chore)/.+"; then
+            echo " Branch name is valid"
+          else
+            echo " Invalid branch: $BRANCH"
+            echo "Must follow: type/description"
+            echo "Examples: bugfix/auth-issue, feature/new-login, fix/null-check, devops/ci-pipeline"
+            exit 1
+          fi
+
+      - name: Check PR links to issue
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const body = context.payload.pull_request.body || '';
+            const hasIssueRef = /closes?\s*#\d+|fixes?\s*#\d+|resolves?\s*#\d+|task:\s*#\d+/i.test(body);
+
+            if (hasIssueRef) {
+              console.log(' PR references an issue');
+            } else {
+              console.log(' PR does not reference an issue - please link your task');
+            }

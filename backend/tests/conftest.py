@@ -1,7 +1,28 @@
 """Test fixtures for pytest-django."""
 
+import json
+import sys
+
 import pytest
+from django.template import context
 from rest_framework.test import APIClient
+
+
+# Patch Django BaseContext.__copy__ for Python 3.14+ compatibility
+# This fixes AttributeError: 'super' object has no attribute 'dicts' during test execution
+def patch_django_context():
+    if sys.version_info >= (3, 14):
+
+        def patched_copy(self):
+            # Create a shallow copy by manually creating a new instance and copying dicts
+            new_instance = self.__class__.__new__(self.__class__)
+            new_instance.dicts = self.dicts[:]
+            return new_instance
+
+        context.BaseContext.__copy__ = patched_copy
+
+
+patch_django_context()
 
 
 @pytest.fixture
@@ -51,7 +72,6 @@ def sample_csv_content():
 @pytest.fixture
 def sample_json_content():
     """Return a sample JSON byte string."""
-    import json
 
     data = [
         {"id": 1, "name": "Apple", "price": 1.2},

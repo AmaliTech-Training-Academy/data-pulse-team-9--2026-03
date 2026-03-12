@@ -2,6 +2,8 @@
 Register → Upload CSV → Create rules → Run checks → Get report → View trends.
 """
 
+import json
+
 import pytest
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import override_settings
@@ -37,7 +39,9 @@ def test_full_e2e_flow(client):
     upload_resp = client.post("/api/datasets/upload", {"file": uploaded}, format="multipart")
     assert upload_resp.status_code == 201
     dataset_id = upload_resp.json()["id"]
-    assert upload_resp.json()["row_count"] == 5
+    # Re-fetch: the Celery task (eager mode) has parsed the file by now
+    detail = client.get(f"/api/datasets/{dataset_id}")
+    assert detail.json()["row_count"] == 5
 
     # 3. Create rules
     rules_to_create = [
@@ -78,25 +82,23 @@ def test_full_e2e_flow(client):
 
     # 4. Run checks
     check_resp = client.post(f"/api/checks/run/{dataset_id}")
-    assert check_resp.status_code == 501
+    assert check_resp.status_code == 200
 
     # 5. Get check results
     results_resp = client.get(f"/api/checks/results/{dataset_id}")
-    assert results_resp.status_code == 501
+    assert results_resp.status_code == 200
 
-    # 6. Get report
     report_resp = client.get(f"/api/reports/{dataset_id}")
-    assert report_resp.status_code == 501
+    assert report_resp.status_code == 200
 
-    # 7. View trends
-    trends_resp = client.get("/api/reports/trends?days=30")
-    assert trends_resp.status_code == 501
+    trends_resp = client.get(f"/api/reports/{dataset_id}/trends")
+    assert trends_resp.status_code == 200
 
     # 8. Dashboard
     dash_resp = client.get("/api/reports/dashboard")
     assert dash_resp.status_code == 200
     dashboard = dash_resp.json()
-    assert len(dashboard) == 0  # No scores calculated because run_checks is 501
+    assert len(dashboard) > 0  # Score is calculated since run_checks works
 
 
 @pytest.mark.django_db
@@ -170,14 +172,13 @@ def test_full_e2e_flow_json(client):
 
     # 4. Run checks
     check_resp = client.post(f"/api/checks/run/{dataset_id}")
-    assert check_resp.status_code == 501
+    assert check_resp.status_code == 200
 
 
 @pytest.mark.django_db
 @override_settings(CELERY_TASK_ALWAYS_EAGER=True)
 def test_regex_escaping_behavior(client):
     """Test how the API handles escaped vs unescaped regex patterns."""
-    import json
 
     reg_resp = client.post(
         "/api/auth/register",
@@ -237,4 +238,4 @@ def test_regex_escaping_behavior(client):
 
     # Run Checks
     check_resp = client.post(f"/api/checks/run/{dataset_id}")
-    assert check_resp.status_code == 501
+    assert check_resp.status_code == 200

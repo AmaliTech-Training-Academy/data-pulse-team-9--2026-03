@@ -5,5 +5,6 @@ COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 COPY . .
 RUN mkdir -p /app/uploads
+RUN chmod +x /app/entrypoint.sh
 EXPOSE 8000
-CMD ["sh", "-c", "python manage.py collectstatic --noinput && python manage.py makemigrations authentication datasets rules checks reports --noinput && python manage.py migrate --noinput && gunicorn datapulse.wsgi:application -c gunicorn.conf.py"]
+ENTRYPOINT ["/bin/sh", "/app/entrypoint.sh"]
