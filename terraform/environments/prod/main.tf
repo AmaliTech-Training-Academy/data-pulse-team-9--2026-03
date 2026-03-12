@@ -154,7 +154,7 @@ module "elasticache" {
 }
 
 # -----------------------------------------------------------
-# ALB — HTTPS, blue + green target groups per service
+# ALB — HTTP (or HTTPS if domain provided), blue + green target groups per service
 # -----------------------------------------------------------
 module "alb" {
   source            = "../../modules/alb"
@@ -162,7 +162,7 @@ module "alb" {
   vpc_id            = module.vpc.vpc_id
   public_subnet_ids = module.vpc.public_subnet_ids
   alb_sg_id         = module.security.alb_sg_id
-  domain_name       = var.domain_name
+  domain_name       = var.domain_name  # Empty string = HTTP only, no ACM cert
 }
 
 # -----------------------------------------------------------
@@ -245,16 +245,16 @@ module "scheduler" {
 }
 
 # -----------------------------------------------------------
-# Amplify — Next.js frontend
+# Amplify — Next.js frontend (optional, only if you have frontend code)
 # -----------------------------------------------------------
 module "amplify" {
   source              = "../../modules/amplify"
   app_name            = "datapulse-frontend"
   github_repo         = var.github_repo
   github_access_token = var.github_access_token
-  domain_name         = var.domain_name
-  dev_api_url         = "http://${var.dev_ec2_ip}:8000"
-  prod_api_url        = "https://${var.domain_name}"
+  domain_name         = var.domain_name  # Empty string = use Amplify default domain
+  dev_api_url         = "http://placeholder-not-used"  # Dev branch preview not needed
+  prod_api_url        = var.domain_name != "" ? "https://${var.domain_name}" : "http://${module.alb.alb_dns}"
 }
 
 # -----------------------------------------------------------
@@ -332,10 +332,32 @@ resource "aws_prometheus_workspace" "main" {
   alias = "datapulse-prod"
 }
 
+# IAM role for Grafana workspace
+resource "aws_iam_role" "grafana" {
+  name = "datapulse-${local.env}-grafana"
+
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [{
+      Action = "sts:AssumeRole"
+      Effect = "Allow"
+      Principal = {
+        Service = "grafana.amazonaws.com"
+      }
+    }]
+  })
+}
+
+resource "aws_iam_role_policy_attachment" "grafana_cloudwatch" {
+  role       = aws_iam_role.grafana.name
+  policy_arn = "arn:aws:iam::aws:policy/service-role/AmazonGrafanaCloudWatchAccess"
+}
+
 resource "aws_grafana_workspace" "main" {
   name                     = "datapulse-prod"
   account_access_type      = "CURRENT_ACCOUNT"
   authentication_providers = ["AWS_SSO"]
   permission_type          = "SERVICE_MANAGED"
   data_sources             = ["PROMETHEUS", "CLOUDWATCH", "XRAY"]
+  role_arn                 = aws_iam_role.grafana.arn
 }
