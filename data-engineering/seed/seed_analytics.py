@@ -78,6 +78,20 @@ def generate_mock_file(name, file_type, row_count):
     return str(file_path)
 
 
+def wait_for_tables(engine, tables, timeout=60):
+    """Wait for specific tables to exist in the database."""
+    start_time = time.time()
+    while time.time() - start_time < timeout:
+        try:
+            with engine.connect() as conn:
+                for table in tables:
+                    conn.execute(text(f"SELECT 1 FROM {table} LIMIT 1"))
+                return True
+        except Exception:
+            time.sleep(2)
+    return False
+
+
 def seed():
     """Insert mock data into the app database.
 
@@ -85,6 +99,11 @@ def seed():
     Creates: 5 datasets, 15 rules, 100 check results.
     """
     engine = get_source_engine()
+
+    # Wait for required tables (migrations might still be running)
+    if not wait_for_tables(engine, ["datasets", "validation_rules"]):
+        logger.error("Timed out waiting for tables to be created")
+        return {"status": "error", "reason": "Required tables not found"}
 
     with engine.begin() as conn:
         # Check if mock data already exists by looking for our specific mock datasets

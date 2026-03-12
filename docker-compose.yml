@@ -200,7 +200,7 @@ services:
     command: python seed/seed_analytics.py
     depends_on:
       backend:
-        condition: service_started
+        condition: service_healthy
     networks:
       - datapulse-network
 
