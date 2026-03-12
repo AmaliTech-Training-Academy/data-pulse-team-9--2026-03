@@ -54,8 +54,6 @@ def run_scheduled_checks(dataset_id):
         results = engine.run_all_checks(df, rules)
 
         # 6. Save CheckResult records
-        # First, clear old results for this dataset
-        CheckResult.objects.filter(dataset=dataset).delete()
         for res in results:
             rule = ValidationRule.objects.get(id=res["rule_id"])
             CheckResult.objects.create(
@@ -71,7 +69,6 @@ def run_scheduled_checks(dataset_id):
         score_data = calculate_quality_score(results, rules)
 
         # 8. Save QualityScore record
-        QualityScore.objects.filter(dataset=dataset).delete()
         QualityScore.objects.create(
             dataset=dataset,
             score=score_data["score"],
