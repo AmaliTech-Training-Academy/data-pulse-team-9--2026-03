@@ -68,8 +68,8 @@ jobs:
           NEW_TASK_ARN=$(aws ecs register-task-definition --cli-input-json "$NEW_TASK_DEF" --query 'taskDefinition.taskDefinitionArn' --output text)
 
           aws deploy create-deployment \
-            --application-name datapulse-prod-backend \
-            --deployment-group-name datapulse-prod-backend-dg \
+            --application-name datapulse-prod \
+            --deployment-group-name datapulse-prod-backend \
             --revision "{\"revisionType\":\"AppSpecContent\",\"appSpecContent\":{\"content\":\"{\\\"version\\\":1,\\\"Resources\\\":[{\\\"TargetService\\\":{\\\"Type\\\":\\\"AWS::ECS::Service\\\",\\\"Properties\\\":{\\\"TaskDefinition\\\":\\\"$NEW_TASK_ARN\\\",\\\"LoadBalancerInfo\\\":{\\\"ContainerName\\\":\\\"backend\\\",\\\"ContainerPort\\\":8000}}}}]}\"}}"
 
       - name: Deploy Streamlit via CodeDeploy
@@ -83,8 +83,8 @@ jobs:
           NEW_TASK_ARN=$(aws ecs register-task-definition --cli-input-json "$NEW_TASK_DEF" --query 'taskDefinition.taskDefinitionArn' --output text)
 
           aws deploy create-deployment \
-            --application-name datapulse-prod-streamlit \
-            --deployment-group-name datapulse-prod-streamlit-dg \
+            --application-name datapulse-prod \
+            --deployment-group-name datapulse-prod-streamlit \
             --revision "{\"revisionType\":\"AppSpecContent\",\"appSpecContent\":{\"content\":\"{\\\"version\\\":1,\\\"Resources\\\":[{\\\"TargetService\\\":{\\\"Type\\\":\\\"AWS::ECS::Service\\\",\\\"Properties\\\":{\\\"TaskDefinition\\\":\\\"$NEW_TASK_ARN\\\",\\\"LoadBalancerInfo\\\":{\\\"ContainerName\\\":\\\"streamlit\\\",\\\"ContainerPort\\\":8501}}}}]}\"}}"
 
       - name: Update Celery Worker
