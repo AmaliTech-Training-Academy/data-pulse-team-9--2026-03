@@ -18,7 +18,8 @@ resource "aws_amplify_app" "main" {
   access_token = var.github_access_token
   platform     = "WEB_COMPUTE"   # SSR support for Next.js
 
-  build_spec = file("${path.module}/amplify.yml")
+  # Use simple build spec that handles frontend subdirectory
+  build_spec = file("${path.module}/amplify-simple.yml")
 
   custom_rule {
     source = "/<*>"
@@ -40,9 +41,8 @@ resource "aws_amplify_app" "main" {
 
   environment_variables = {
     NEXT_PUBLIC_APP_NAME = "DataPulse"
-    # Configure for monorepo - only build when frontend changes
-    AMPLIFY_MONOREPO_APP_ROOT = "frontend"
-    AMPLIFY_DIFF_DEPLOY = "true"
+    NODE_OPTIONS = "--max_old_space_size=4096"
+    NODE_ENV = "production"
   }
 }
 
