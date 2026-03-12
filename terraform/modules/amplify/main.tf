@@ -38,15 +38,11 @@ resource "aws_amplify_app" "main" {
   enable_branch_auto_build    = true
   enable_branch_auto_deletion = true
 
-  # Only build on frontend file changes
-  enable_auto_sub_domain = false
-  enable_basic_auth      = false
-
   environment_variables = {
     NEXT_PUBLIC_APP_NAME = "DataPulse"
-    # Skip build if no frontend changes
-    AMPLIFY_DIFF_DEPLOY = "true"
+    # Configure for monorepo - only build when frontend changes
     AMPLIFY_MONOREPO_APP_ROOT = "frontend"
+    AMPLIFY_DIFF_DEPLOY = "true"
   }
 }
 
