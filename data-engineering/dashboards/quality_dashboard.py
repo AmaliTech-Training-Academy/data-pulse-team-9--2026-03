@@ -10,6 +10,7 @@ import io
 import json
 from pathlib import Path
 from datetime import datetime, timezone
+from functools import wraps
 import hashlib
 
 sys.path.insert(0, str(Path(__file__).parent.parent))
@@ -333,7 +334,6 @@ def log_query(query_name: str, params: dict = None):
 # =============================================================================
 
 
-@st.cache_resource
 def get_engine():
     try:
         url = settings["database"]["target_url"]
@@ -350,7 +350,6 @@ def get_engine():
         return None
 
 
-@st.cache_data(ttl=60)
 def run_query_safe(query: str, params: dict = None, query_name: str = "unnamed") -> pd.DataFrame:
     engine = get_engine()
     if engine is None:
@@ -595,13 +594,12 @@ with st.sidebar:
 
     for key, icon, label in NAV_SECTIONS:
         is_active = st.session_state.active_section == key
-        if st.button(
-            label,
-            key=f"nav_{key}",
-            width="stretch",
-            help=f"Go to {label}",
-            type="primary" if is_active else "secondary",
-        ):
+        btn_style = (
+            "background:#6c63ff22;border-color:#6c63ff !important;color:#6c63ff;font-weight:700;"
+            if is_active
+            else "background:transparent;color:#1a2035;"
+        )
+        if st.button(label, key=f"nav_{key}", width="stretch", help=f"Go to {label}"):
             st.session_state.active_section = key
             st.rerun()
 

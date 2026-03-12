@@ -1,22 +1,18 @@
 export const API_URL =
-  process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+  process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api";
 
-export async function fetchApi(
-  endpoint: string,
-  options: RequestInit & { skipAuth?: boolean } = {}
-) {
-  const { skipAuth, ...fetchOptions } = options;
+export async function fetchApi(endpoint: string, options: RequestInit = {}) {
   const token =
     typeof window !== "undefined" ? localStorage.getItem("token") : null;
 
   const headers = new Headers({
     "Content-Type": "application/json",
-    ...(token && !skipAuth ? { Authorization: `Bearer ${token}` } : {}),
-    ...fetchOptions.headers,
+    ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    ...options.headers,
   });
 
   const response = await fetch(`${API_URL}${endpoint}`, {
-    ...fetchOptions,
+    ...options,
     headers,
   });
 

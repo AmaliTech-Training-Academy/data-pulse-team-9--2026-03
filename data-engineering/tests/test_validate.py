@@ -1,5 +1,15 @@
-# Tests for the validation module (pipeline/etl/validate.py).
+"""
+Tests for the validation module (pipeline/etl/validate.py).
 
+Covers:
+  - _check_row_counts   : matching, mismatched, and zero counts
+  - _check_foreign_keys : no orphans, orphaned dataset / rule / date references
+  - _check_score_ranges : all valid, score above 100, score below 0
+  - _check_duplicate_facts : no duplicates, duplicates detected
+  - validate()          : full run on clean data, strict mode, returns ValidationResult
+  - validate_with_guard(): raises RuntimeError when errors are present
+  - ValidationResult / IntegrityWarning model helpers
+"""
 
 import pytest
 from datetime import datetime, timezone
@@ -21,6 +31,7 @@ from pipeline.models import (
     Severity,
 )
 from infrastructure.db import AnalyticsBase
+from infrastructure import models  # noqa: F401 — registers ORM tables
 
 
 # ---------------------------------------------------------------------------

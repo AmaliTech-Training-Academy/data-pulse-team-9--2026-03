@@ -274,7 +274,7 @@ resource "aws_ecs_task_definition" "celery_beat" {
   network_mode             = "awsvpc"
   requires_compatibilities = ["FARGATE"]
   cpu                      = 256
-  memory                   = 512  # Changed from 256 to 512 (valid Fargate combination)
+  memory                   = 256
   execution_role_arn       = aws_iam_role.execution.arn
   task_role_arn            = aws_iam_role.task.arn
 

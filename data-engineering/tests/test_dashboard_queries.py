@@ -1,9 +1,23 @@
-# Tests for the dashboard SQL query constants (dashboards/queries.py).
+"""
+Tests for the dashboard SQL query constants (dashboards/queries.py).
 
+Covers:
+  - Every constant is a non-empty string
+  - Parameterised queries contain the {id_list} and {sev_list} placeholders
+  - Parameterised queries contain :start and :end date bind parameters
+  - Static queries (GET_DATASETS, GET_DATE_RANGE) have no placeholders
+  - Every query begins with SELECT and references at least one FROM clause
+  - Analytical queries reference fact_quality_checks (the central fact table)
+  - Static queries execute successfully against a SQLite in-memory analytics DB
+"""
 
 import pytest
+from datetime import date
+
 from sqlalchemy import create_engine, text
+
 from infrastructure.db import AnalyticsBase
+from infrastructure import models  # noqa: F401 — registers ORM tables
 import dashboards.queries as Q
 
 

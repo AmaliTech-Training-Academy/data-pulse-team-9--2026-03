@@ -3,39 +3,37 @@ frontend:
   phases:
     preBuild:
       commands:
-        - echo " Checking repository structure..."
-        - ls -la
-        - echo " Checking frontend directory..."
-        - ls -la frontend/
         - cd frontend
-        - echo " Installing dependencies..."
         - npm ci --prefer-offline
-        - echo " Fixing vulnerabilities..."
-        - npm audit fix --force || echo " Some vulnerabilities couldn't be fixed automatically"
-
     build:
       commands:
-        - echo " Building Next.js application..."
         - cd frontend
         - npm run build
-
     postBuild:
       commands:
-        - echo " Build complete for $NEXT_PUBLIC_ENVIRONMENT"
-        - echo " Build statistics:"
-        - cd frontend && ls -la .next/
-
+        - echo "Build complete for $NEXT_PUBLIC_ENVIRONMENT"
   artifacts:
     baseDirectory: frontend/.next
     files:
       - "**/*"
-
   cache:
     paths:
       - frontend/node_modules/**/*
       - frontend/.next/cache/**/*
-
   environment:
     variables:
       NODE_OPTIONS: "--max_old_space_size=4096"
-      NODE_ENV: "production"
+test:
+  phases:
+    preTest:
+      commands:
+        - cd frontend
+        - npm ci --prefer-offline
+    test:
+      commands:
+        - cd frontend
+        - npm run test:ci
+  artifacts:
+    baseDirectory: frontend/coverage
+    files:
+      - "**/*"

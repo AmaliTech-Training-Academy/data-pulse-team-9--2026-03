@@ -7,6 +7,7 @@ import {
   CheckCircle2,
   XCircle,
   ArrowLeft,
+  Download,
   Calendar,
   Loader2,
 } from "lucide-react";
@@ -17,7 +18,7 @@ import {
   getDatasetReport,
   QualityReport,
 } from "@/services/reports";
-import { QualityScoreResponse, getCheckResults } from "@/services/checks";
+import { QualityScoreResponse } from "@/services/checks";
 
 const getScoreColor = (score: number) => {
   if (score >= 80) return "text-success";
@@ -101,39 +102,12 @@ export default function ReportsPage() {
     try {
       setSelectedReportId(datasetId);
       setIsDetailLoading(true);
-
-      // Fetch both the report summary and the detailed check results
-      const [detail, results] = await Promise.all([
-        getDatasetReport(datasetId),
-        getCheckResults(datasetId),
-      ]);
-
-      // If the report detail doesn't have results (backend limitation),
-      // we merge the raw results from the checks endpoint.
-      const mergedDetail = {
-        ...detail,
-        results:
-          detail.results && detail.results.length > 0
-            ? detail.results
-            : results.map((r) => ({
-                ...r,
-                // Ensure field naming matches what the table expects
-                pass_count: r.pass_count,
-                fail_count: r.fail_count,
-              })),
-      };
-
-      setReportDetail(mergedDetail);
+      const detail = await getDatasetReport(datasetId);
+      setReportDetail(detail);
     } catch (err) {
       console.error("Failed to fetch report detail:", err);
-      // Fallback: If one fails, try to show whatever we can
-      try {
-        const detail = await getDatasetReport(datasetId);
-        setReportDetail(detail);
-      } catch {
-        alert("Failed to load report details.");
-        setSelectedReportId(null);
-      }
+      alert("Failed to load report details.");
+      setSelectedReportId(null);
     } finally {
       setIsDetailLoading(false);
     }
@@ -149,8 +123,8 @@ export default function ReportsPage() {
       {/* Header & Dataset Selector */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h2 className="text-xl font-black text-[#08293c]">QUALITY REPORTS</h2>
-          <p className="text-[12px] font-medium text-gray-400 mt-1">
+          <h2 className="text-2xl font-bold text-primary">Quality Reports</h2>
+          <p className="text-gray-500">
             View validation results and detailed rule breakdowns.
           </p>
         </div>
@@ -176,9 +150,9 @@ export default function ReportsPage() {
       <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
         <div className="p-6 border-b border-gray-100 bg-gray-50 flex items-center gap-2">
           <FileText size={20} className="text-accent" />
-          <h3 className="text-sm font-black text-[#08293c] uppercase tracking-widest leading-none">
+          <h3 className="font-bold text-primary">
             Report History:{" "}
-            <span className="text-gray-400 font-bold ml-1">
+            <span className="text-gray-600 ml-1">
               {selectedDatasetParam === "all"
                 ? "All Datasets"
                 : datasets.find((d) => d.id.toString() === selectedDatasetParam)
@@ -222,7 +196,7 @@ export default function ReportsPage() {
                   </div>
 
                   <div>
-                    <h4 className="text-base font-black text-[#08293c] group-hover:text-[#ff5a00] transition-colors">
+                    <h4 className="font-bold text-primary text-lg flex items-center gap-2">
                       {report.dataset_name}
                     </h4>
                     <div className="flex items-center gap-4 mt-2 text-sm">
@@ -232,9 +206,9 @@ export default function ReportsPage() {
                           ? new Date(report.checked_at).toLocaleString()
                           : "Unknown"}
                       </span>
-                      <span className="text-gray-400 font-bold ml-2 text-[11px] uppercase tracking-widest">
+                      <span className="text-gray-500 font-medium ml-2">
                         Rules:{" "}
-                        <span className="text-[#08293c]">
+                        <span className="text-primary">
                           {report.total_rules || 0}
                         </span>
                       </span>
@@ -307,7 +281,7 @@ export default function ReportsPage() {
               <ArrowLeft size={20} />
             </button>
             <div>
-              <h2 className="text-xl font-black text-[#08293c] uppercase tracking-widest">
+              <h2 className="text-2xl font-bold text-primary">
                 Report Details
               </h2>
               <p className="text-gray-500">
@@ -316,12 +290,16 @@ export default function ReportsPage() {
               </p>
             </div>
           </div>
+
+          <button className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 text-primary font-medium rounded-lg hover:bg-gray-50 transition-colors shadow-sm">
+            <Download size={18} /> Export JSON
+          </button>
         </div>
 
         {/* Overall Score Card */}
         <div className="bg-white p-6 md:p-8 rounded-xl shadow-sm border border-gray-100 flex flex-col md:flex-row items-center gap-8">
           <div className="text-center md:text-left flex-1 w-full">
-            <h3 className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] mb-2">
+            <h3 className="text-sm font-bold text-gray-500 uppercase tracking-widest mb-2">
               Overall Quality Score
             </h3>
             <div className="flex flex-col md:flex-row md:items-end gap-4">
@@ -364,27 +342,27 @@ export default function ReportsPage() {
         {/* Per-Rule Breakdown */}
         <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
           <div className="p-6 border-b border-gray-100">
-            <h3 className="text-sm font-black text-[#08293c] uppercase tracking-widest">
-              Per-Rule Analysis
+            <h3 className="text-lg font-bold text-primary">
+              Per-Rule Analysis (Row Counts)
             </h3>
           </div>
           <div className="overflow-x-auto">
             <table className="w-full text-left border-collapse">
               <thead>
                 <tr className="bg-gray-50 border-b border-gray-200">
-                  <th className="py-3 px-6 text-[10px] font-black text-[#08293c] uppercase tracking-widest">
+                  <th className="py-3 px-6 text-xs font-bold text-primary uppercase tracking-wider">
                     Rule Name
                   </th>
-                  <th className="py-3 px-6 text-[10px] font-black text-[#08293c] uppercase tracking-widest">
-                    Passed
+                  <th className="py-3 px-6 text-xs font-bold text-primary uppercase tracking-wider">
+                    Rows Passed
                   </th>
-                  <th className="py-3 px-6 text-[10px] font-black text-[#08293c] uppercase tracking-widest">
-                    Failed
+                  <th className="py-3 px-6 text-xs font-bold text-primary uppercase tracking-wider">
+                    Rows Failed
                   </th>
-                  <th className="py-3 px-6 text-[10px] font-black text-[#08293c] uppercase tracking-widest">
+                  <th className="py-3 px-6 text-xs font-bold text-primary uppercase tracking-wider">
                     Pass Rate
                   </th>
-                  <th className="py-3 px-6 text-[10px] font-black text-[#08293c] uppercase tracking-widest w-48">
+                  <th className="py-3 px-6 text-xs font-bold text-primary uppercase tracking-wider w-48">
                     Progress
                   </th>
                 </tr>
@@ -473,6 +451,11 @@ export default function ReportsPage() {
                     ))}
                   </tbody>
                 </table>
+              </div>
+              <div className="p-4 bg-gray-50 border-t border-gray-100 text-center">
+                <button className="text-sm font-semibold text-accent hover:underline">
+                  Download Full Error Log (CSV)
+                </button>
               </div>
             </div>
           </div>

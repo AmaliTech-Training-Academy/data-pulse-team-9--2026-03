@@ -1,32 +1,61 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import {
   Settings,
+  Bell,
   ShieldCheck,
+  History,
+  Save,
+  Database,
+  Mail,
+  UserPlus,
   AlertCircle,
-  Database, // Kept for potential future use or if it's used elsewhere not shown in diff
 } from "lucide-react";
-import { getSystemHealth, SystemHealth } from "@/services/health";
 
-// Health polling interval removed if it were unused, but it is used.
-// System health monitoring remains.
+// Mock Audit Log Data
+const auditLogs = [
+  {
+    id: 1,
+    user: "Sarah Designer",
+    action: "Dataset Upload",
+    target: "customers_q1.csv",
+    timestamp: "2023-10-24 14:30",
+  },
+  {
+    id: 2,
+    user: "Admin (System)",
+    action: "Rule Updated",
+    target: "Email Regex",
+    timestamp: "2023-10-24 12:15",
+  },
+  {
+    id: 3,
+    user: "John Doe",
+    action: "Validation Run",
+    target: "sales_data.json",
+    timestamp: "2023-10-24 10:45",
+  },
+  {
+    id: 4,
+    user: "Marketing Team",
+    action: "New User Invited",
+    target: "jane@corp.com",
+    timestamp: "2023-10-23 16:20",
+  },
+  {
+    id: 5,
+    user: "Admin (System)",
+    action: "Security Policy Change",
+    target: "Password Length",
+    timestamp: "2023-10-23 09:00",
+  },
+];
 
 export default function AdminSettingsPage() {
   const [appName, setAppName] = useState("DataPulse Pro");
   const [threshold, setThreshold] = useState(80);
   const [globalAlerts, setGlobalAlerts] = useState(true);
-  const [health, setHealth] = useState<SystemHealth | null>(null);
-
-  useEffect(() => {
-    const fetchHealth = async () => {
-      const data = await getSystemHealth();
-      setHealth(data);
-    };
-    fetchHealth();
-    const interval = setInterval(fetchHealth, 30000); // Poll every 30s
-    return () => clearInterval(interval);
-  }, []);
 
   return (
     <div className="max-w-5xl mx-auto space-y-8 pb-12 animate-in fade-in duration-500">
@@ -85,6 +114,24 @@ export default function AdminSettingsPage() {
                   </div>
                 </div>
               </div>
+
+              <div className="pt-4 border-t border-gray-100">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h4 className="font-semibold text-gray-800">
+                      New User Default Role
+                    </h4>
+                    <p className="text-xs text-gray-500">
+                      Role assigned to self-registered users.
+                    </p>
+                  </div>
+                  <select className="px-3 py-1.5 bg-gray-50 border border-gray-200 rounded-lg text-sm font-bold text-primary outline-none focus:ring-2 focus:ring-accent">
+                    <option>Standard User</option>
+                    <option>Data Analyst</option>
+                    <option>Guest (Read Only)</option>
+                  </select>
+                </div>
+              </div>
             </div>
           </section>
 
@@ -92,8 +139,7 @@ export default function AdminSettingsPage() {
           <section className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
             <div className="p-5 border-b border-gray-100 bg-gray-50/50 flex items-center gap-3">
               <div className="p-2 bg-primary/10 text-primary rounded-lg">
-                <Database size={20} />{" "}
-                {/* Re-using Database icon for notifications */}
+                <Bell size={20} />
               </div>
               <h3 className="text-lg font-bold text-primary">
                 Notifications & SMTP
@@ -103,7 +149,7 @@ export default function AdminSettingsPage() {
             <div className="p-6 space-y-6">
               <div className="flex items-center justify-between p-4 bg-accent/5 rounded-xl border border-accent/10">
                 <div className="flex items-center gap-3">
-                  <AlertCircle className="text-accent" size={24} />
+                  <Mail className="text-accent" size={24} />
                   <div>
                     <h4 className="font-bold text-primary text-sm">
                       Global Email Alerts
@@ -152,9 +198,68 @@ export default function AdminSettingsPage() {
                   Test Connection
                 </button>
                 <button className="flex items-center gap-2 px-6 py-2 bg-primary text-white font-bold rounded-lg hover:bg-primary/90 transition-colors shadow-md">
-                  <Database size={18} /> Update SMTP
+                  <Save size={18} /> Update SMTP
                 </button>
               </div>
+            </div>
+          </section>
+
+          {/* System Audit Log */}
+          <section className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+            <div className="p-5 border-b border-gray-100 bg-gray-50/50 flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-primary/10 text-primary rounded-lg">
+                  <History size={20} />
+                </div>
+                <h3 className="text-lg font-bold text-primary">
+                  System Audit Log
+                </h3>
+              </div>
+              <button className="text-xs font-bold text-accent hover:underline">
+                Download Full Log (JSON)
+              </button>
+            </div>
+
+            <div className="overflow-x-auto">
+              <table className="w-full text-left">
+                <thead>
+                  <tr className="bg-gray-50 border-b border-gray-200">
+                    <th className="py-3 px-6 text-[10px] font-bold text-gray-400 uppercase">
+                      Timestamp
+                    </th>
+                    <th className="py-3 px-6 text-[10px] font-bold text-gray-400 uppercase">
+                      User
+                    </th>
+                    <th className="py-3 px-6 text-[10px] font-bold text-gray-400 uppercase">
+                      Action
+                    </th>
+                    <th className="py-3 px-6 text-[10px] font-bold text-gray-400 uppercase">
+                      Resource
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-100">
+                  {auditLogs.map((log) => (
+                    <tr
+                      key={log.id}
+                      className="hover:bg-gray-50 transition-colors"
+                    >
+                      <td className="py-3 px-6 text-xs text-gray-500 whitespace-nowrap">
+                        {log.timestamp}
+                      </td>
+                      <td className="py-3 px-6 text-xs font-bold text-primary">
+                        {log.user}
+                      </td>
+                      <td className="py-3 px-6 text-xs font-medium text-gray-700">
+                        {log.action}
+                      </td>
+                      <td className="py-3 px-6 text-xs font-mono text-gray-400 truncate max-w-[150px]">
+                        {log.target}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
           </section>
         </div>
@@ -170,54 +275,64 @@ export default function AdminSettingsPage() {
               <div>
                 <div className="flex justify-between items-center mb-1.5">
                   <span className="text-xs font-bold text-gray-500 uppercase">
-                    PostgreSQL Database
+                    Database Connectivity
                   </span>
-                  <span
-                    className={`text-[10px] font-black px-2 py-0.5 rounded-full uppercase tracking-tighter ${
-                      health?.database === "up"
-                        ? "bg-success/10 text-success"
-                        : "bg-danger/10 text-danger"
-                    }`}
-                  >
-                    {health?.database === "up" ? "Healthy" : "Down"}
+                  <span className="text-[10px] font-black bg-success/10 text-success px-2 py-0.5 rounded-full uppercase tracking-tighter">
+                    Healthy
                   </span>
                 </div>
                 <div className="w-full h-1.5 bg-gray-100 rounded-full overflow-hidden">
-                  <div
-                    className={`h-full transition-all duration-500 ${
-                      health?.database === "up"
-                        ? "bg-success w-full"
-                        : "bg-danger w-0"
-                    }`}
-                  ></div>
+                  <div className="h-full bg-success w-[100%] shadow-[0_0_8px_rgba(13,159,110,0.5)]"></div>
                 </div>
               </div>
 
               <div>
                 <div className="flex justify-between items-center mb-1.5">
                   <span className="text-xs font-bold text-gray-500 uppercase">
-                    Redis Cache
+                    API Node Load
                   </span>
-                  <span
-                    className={`text-[10px] font-black px-2 py-0.5 rounded-full uppercase tracking-tighter ${
-                      health?.redis === "up"
-                        ? "bg-success/10 text-success"
-                        : "bg-danger/10 text-danger"
-                    }`}
-                  >
-                    {health?.redis === "up" ? "Connected" : "Disconnected"}
+                  <span className="text-[10px] font-black bg-success/10 text-success px-2 py-0.5 rounded-full uppercase tracking-tighter">
+                    Normal
                   </span>
                 </div>
                 <div className="w-full h-1.5 bg-gray-100 rounded-full overflow-hidden">
-                  <div
-                    className={`h-full transition-all duration-500 ${
-                      health?.redis === "up"
-                        ? "bg-success w-full"
-                        : "bg-danger w-0"
-                    }`}
-                  ></div>
+                  <div className="h-full bg-success w-[24%]"></div>
                 </div>
               </div>
+
+              <div>
+                <div className="flex justify-between items-center mb-1.5">
+                  <span className="text-xs font-bold text-gray-500 uppercase">
+                    Storage Capacity
+                  </span>
+                  <span className="text-[10px] font-black bg-warning/10 text-warning px-2 py-0.5 rounded-full uppercase tracking-tighter">
+                    65% Full
+                  </span>
+                </div>
+                <div className="w-full h-1.5 bg-gray-100 rounded-full overflow-hidden">
+                  <div className="h-full bg-warning w-[65%]"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Quick Actions */}
+          <div className="bg-primary text-white p-6 rounded-xl shadow-xl shadow-primary/20 relative overflow-hidden group">
+            <div className="absolute top-0 right-0 w-32 h-32 bg-white/5 rounded-full -mr-16 -mt-16 group-hover:scale-125 transition-transform duration-700"></div>
+            <h4 className="font-bold mb-4 relative z-10">
+              Admin Quick Actions
+            </h4>
+            <div className="space-y-3 relative z-10">
+              <button className="w-full flex items-center gap-3 px-4 py-3 bg-white/10 hover:bg-white/20 rounded-lg text-sm font-semibold transition-all">
+                <UserPlus size={18} className="text-accent" /> Invite New Admin
+              </button>
+              <button className="w-full flex items-center gap-3 px-4 py-3 bg-white/10 hover:bg-white/20 rounded-lg text-sm font-semibold transition-all">
+                <Database size={18} className="text-accent" /> Run Maintenance
+                Task
+              </button>
+              <button className="w-full flex items-center gap-3 px-4 py-3 bg-red-500/80 hover:bg-red-500 rounded-lg text-sm font-black transition-all">
+                <AlertCircle size={18} /> Emergency Lockout
+              </button>
             </div>
           </div>
         </div>

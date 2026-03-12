@@ -110,8 +110,8 @@ REST_FRAMEWORK = {
         "rest_framework.throttling.UserRateThrottle",
     ],
     "DEFAULT_THROTTLE_RATES": {
-        "anon": "10000/day",
-        "user": "12000/hour",
+        "anon": "100/day",
+        "user": "120/hour",
     },
 }
 
@@ -206,17 +206,7 @@ LOGGING = {
         "rules": {"handlers": ["console"], "level": "INFO", "propagate": False},
         "checks": {"handlers": ["console"], "level": "INFO", "propagate": False},
         "reports": {"handlers": ["console"], "level": "INFO", "propagate": False},
-        "core": {"handlers": ["console"], "level": "INFO", "propagate": False},
-        "schedule": {"handlers": ["console"], "level": "INFO", "propagate": False},
-        "audit": {
-            "handlers": ["console"],
-            "level": "INFO",
-            "propagate": False,
-        },  # You can optionally route django or other loggers here as well
-    },
-    "root": {
-        "handlers": ["console"],
-        "level": "INFO",
+        # You can optionally route django or other loggers here as well
     },
 }
 

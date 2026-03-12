@@ -9,7 +9,6 @@ import {
   CheckCircle2,
   AlertCircle,
 } from "lucide-react";
-import { API_URL } from "@/services/api";
 
 export default function FileUpload() {
   const [dragActive, setDragActive] = useState(false);
@@ -95,6 +94,9 @@ export default function FileUpload() {
     formData.append("file", file);
 
     try {
+      const API_URL =
+        process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api";
+
       const response = await fetch(`${API_URL}/datasets/upload`, {
         method: "POST",
         // Get token from localStorage if standard auth is used

@@ -13,8 +13,7 @@ import {
   Loader2,
   MoreVertical,
 } from "lucide-react";
-import { getUsers, User } from "@/services/user";
-import { getDatasets, Dataset } from "@/services/datasets";
+import { fetchApi } from "@/services/api";
 import { runCheck } from "@/services/checks";
 import Link from "next/link";
 
@@ -44,19 +43,14 @@ interface DatasetRow {
   type: string;
   date: string;
   status: string;
-  score: number | null;
 }
 
 export default function AdminDatasetsPage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [datasets, setDatasets] = useState<DatasetRow[]>([]);
-  const [usersList, setUsersList] = useState<User[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [checkingId, setCheckingId] = useState<number | null>(null);
   const [openDropdownId, setOpenDropdownId] = useState<number | null>(null);
-  const [filterUser, setFilterUser] = useState("all");
-  const [filterType, setFilterType] = useState("all");
-  const [filterStatus, setFilterStatus] = useState("all");
 
   const dropdownRef = useRef<HTMLDivElement>(null);
 
@@ -75,38 +69,40 @@ export default function AdminDatasetsPage() {
 
   const fetchDatasets = async () => {
     try {
-      const [datasetsData, usersData] = await Promise.all([
-        getDatasets(),
-        getUsers(),
+      const token = localStorage.getItem("token");
+      const options = {
+        headers: { Authorization: `Bearer ${token}` },
+      };
+
+      const [datasetsData] = await Promise.all([
+        fetchApi("/datasets", options),
       ]);
 
-      const processed = datasetsData.map((d: Dataset) => {
-        let userEmail = "System User";
-        const uploadedBy = d.uploaded_by;
-        if (
-          uploadedBy &&
-          typeof uploadedBy === "object" &&
-          "email" in uploadedBy
-        ) {
-          userEmail = uploadedBy.email;
-        } else if (typeof uploadedBy === "number") {
-          const userObj = usersData.find((u: User) => u.id === uploadedBy);
-          if (userObj) userEmail = userObj.email;
-        }
+      const datasetsArray = Array.isArray(datasetsData)
+        ? datasetsData
+        : datasetsData?.results || datasetsData?.datasets || [];
 
-        return {
-          id: d.id,
-          name: d.name || `dataset_file_${d.id}.${d.file_type || "csv"}`,
-          user: userEmail,
-          type: (d.file_type || "CSV").toUpperCase(),
-          date: new Date(d.uploaded_at).toLocaleDateString(),
-          status: d.status,
-          score: d.score !== undefined ? d.score : null,
-        };
-      });
+      const processed = datasetsArray.map(
+        (d: {
+          id: number;
+          name?: string;
+          file_type?: string;
+          uploaded_by?: { email?: string };
+          uploaded_at: string;
+          status: string;
+        }) => {
+          return {
+            id: d.id,
+            name: d.name || `dataset_file_${d.id}.${d.file_type || "csv"}`,
+            user: d.uploaded_by?.email || "System User", // Fallback if uploaded_by not serialized
+            type: (d.file_type || "CSV").toUpperCase(),
+            date: new Date(d.uploaded_at).toLocaleDateString(),
+            status: d.status,
+          };
+        }
+      );
 
       setDatasets(processed);
-      setUsersList(usersData);
     } catch (err) {
       console.error("Failed to load datasets:", err);
     } finally {
@@ -135,19 +131,11 @@ export default function AdminDatasetsPage() {
     }
   };
 
-  const filteredDatasets = datasets.filter((d) => {
-    const matchesSearch =
+  const filteredDatasets = datasets.filter(
+    (d) =>
       d.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      d.user.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesUser = filterUser === "all" || d.user === filterUser;
-    const matchesType = filterType === "all" || d.type === filterType;
-    const matchesStatus =
-      filterStatus === "all" ||
-      (filterStatus === "checked" ? d.score !== null : d.score === null);
-    return matchesSearch && matchesUser && matchesType && matchesStatus;
-  });
-
-  const uniqueTypes = Array.from(new Set(datasets.map((d) => d.type)));
+      d.user.toLowerCase().includes(searchTerm.toLowerCase())
+  );
 
   return (
     <div className="space-y-6">
@@ -180,44 +168,28 @@ export default function AdminDatasetsPage() {
         <div className="flex flex-wrap items-center gap-3 w-full md:w-auto">
           <div className="flex items-center gap-2 px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm text-gray-600">
             <Filter size={16} />
-            <select
-              value={filterUser}
-              onChange={(e) => setFilterUser(e.target.value)}
-              className="bg-transparent outline-none cursor-pointer text-gray-700 max-w-[150px]"
-            >
+            <select className="bg-transparent outline-none cursor-pointer text-gray-700">
               <option value="all">All Users</option>
-              {usersList.map((u) => (
-                <option key={u.id} value={u.email}>
-                  {u.email}
-                </option>
-              ))}
+              <option value="user1">Sarah Designer</option>
+              <option value="user2">John Doe</option>
+              <option value="user3">Marketing Team</option>
             </select>
           </div>
 
           <div className="flex items-center gap-2 px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm text-gray-600">
-            <select
-              value={filterType}
-              onChange={(e) => setFilterType(e.target.value)}
-              className="bg-transparent outline-none cursor-pointer"
-            >
+            <select className="bg-transparent outline-none cursor-pointer">
               <option value="all">All File Types</option>
-              {uniqueTypes.map((t) => (
-                <option key={t} value={t}>
-                  {t}
-                </option>
-              ))}
+              <option value="csv">CSV</option>
+              <option value="json">JSON</option>
             </select>
           </div>
 
           <div className="flex items-center gap-2 px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm text-gray-600">
-            <select
-              value={filterStatus}
-              onChange={(e) => setFilterStatus(e.target.value)}
-              className="bg-transparent outline-none cursor-pointer"
-            >
-              <option value="all">Any Status</option>
-              <option value="checked">Checked</option>
-              <option value="unchecked">Not Checked</option>
+            <select className="bg-transparent outline-none cursor-pointer">
+              <option value="all">Any Score</option>
+              <option value="high">High (80-100)</option>
+              <option value="medium">Medium (50-79)</option>
+              <option value="low">Low (0-49)</option>
             </select>
           </div>
         </div>

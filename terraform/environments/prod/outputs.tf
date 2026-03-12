@@ -4,15 +4,14 @@ output "alb_dns" {
 }
 
 output "service_urls" {
-  description = "Production service URLs"
+  description = "Prod service URLs"
   value = {
-    # Use custom domain if provided, otherwise use AWS-provided DNS names
-    frontend     = var.domain_name != "" ? "https://${var.domain_name}" : module.amplify.prod_url
-    frontend_dev = var.domain_name != "" ? "https://dev.${var.domain_name}" : module.amplify.dev_url
-    backend      = var.domain_name != "" ? "https://${var.domain_name}/" : "http://${module.alb.alb_dns}/"
-    streamlit    = var.domain_name != "" ? "https://${var.domain_name}/streamlit" : "http://${module.alb.alb_dns}/streamlit"
-    grafana      = aws_grafana_workspace.main.endpoint
-    prometheus   = aws_prometheus_workspace.main.prometheus_endpoint
+    frontend   = "https://${var.domain_name}"
+    frontend_dev = "https://dev.${var.domain_name}"
+    backend    = "https://${var.domain_name}/"
+    streamlit  = "https://${var.domain_name}/streamlit"
+    grafana    = aws_grafana_workspace.main.endpoint
+    prometheus = aws_prometheus_workspace.main.prometheus_endpoint
   }
 }
 

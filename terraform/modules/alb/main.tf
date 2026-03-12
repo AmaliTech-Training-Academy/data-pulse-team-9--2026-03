@@ -2,11 +2,7 @@ variable "env"               { type = string }
 variable "vpc_id"            { type = string }
 variable "public_subnet_ids" { type = list(string) }
 variable "alb_sg_id"         { type = string }
-variable "domain_name"       {
-  type    = string
-  default = ""
-  description = "Optional custom domain for HTTPS"
-}
+variable "domain_name"       { type = string }
 
 # -----------------------------------------------------------
 # ALB
@@ -24,10 +20,9 @@ resource "aws_lb" "main" {
 }
 
 # -----------------------------------------------------------
-# ACM Certificate (only if domain_name provided)
+# ACM Certificate
 # -----------------------------------------------------------
 resource "aws_acm_certificate" "main" {
-  count                     = var.domain_name != "" ? 1 : 0
   domain_name               = var.domain_name
   subject_alternative_names = ["*.${var.domain_name}"]
   validation_method         = "DNS"
@@ -35,9 +30,8 @@ resource "aws_acm_certificate" "main" {
 }
 
 resource "aws_acm_certificate_validation" "main" {
-  count                   = var.domain_name != "" ? 1 : 0
-  certificate_arn         = aws_acm_certificate.main[0].arn
-  validation_record_fqdns = [for r in aws_acm_certificate.main[0].domain_validation_options : r.resource_record_name]
+  certificate_arn         = aws_acm_certificate.main.arn
+  validation_record_fqdns = [for r in aws_acm_certificate.main.domain_validation_options : r.resource_record_name]
 }
 
 # -----------------------------------------------------------
@@ -138,36 +132,29 @@ resource "aws_lb_target_group" "streamlit_green" {
 # Listeners
 # -----------------------------------------------------------
 
-# HTTP listener — redirect to HTTPS if domain exists, otherwise forward directly
+# HTTP → HTTPS redirect
 resource "aws_lb_listener" "http" {
   load_balancer_arn = aws_lb.main.arn
   port              = 80
   protocol          = "HTTP"
 
   default_action {
-    type = var.domain_name != "" ? "redirect" : "forward"
-
-    dynamic "redirect" {
-      for_each = var.domain_name != "" ? [1] : []
-      content {
-        port        = "443"
-        protocol    = "HTTPS"
-        status_code = "HTTP_301"
-      }
+    type = "redirect"
+    redirect {
+      port        = "443"
+      protocol    = "HTTPS"
+      status_code = "HTTP_301"
     }
-
-    target_group_arn = var.domain_name == "" ? aws_lb_target_group.backend_blue.arn : null
   }
 }
 
-# HTTPS listener (only if domain_name provided)
+# HTTPS — main production listener
 resource "aws_lb_listener" "https" {
-  count             = var.domain_name != "" ? 1 : 0
   load_balancer_arn = aws_lb.main.arn
   port              = 443
   protocol          = "HTTPS"
   ssl_policy        = "ELBSecurityPolicy-TLS13-1-2-2021-06"
-  certificate_arn   = aws_acm_certificate_validation.main[0].certificate_arn
+  certificate_arn   = aws_acm_certificate_validation.main.certificate_arn
 
   # Default → backend (blue)
   default_action {
@@ -176,28 +163,9 @@ resource "aws_lb_listener" "https" {
   }
 }
 
-# Streamlit path rule on HTTP listener (when no domain)
-resource "aws_lb_listener_rule" "streamlit_http" {
-  count        = var.domain_name == "" ? 1 : 0
-  listener_arn = aws_lb_listener.http.arn
-  priority     = 10
-
-  condition {
-    path_pattern {
-      values = ["/streamlit", "/streamlit/*"]
-    }
-  }
-
-  action {
-    type             = "forward"
-    target_group_arn = aws_lb_target_group.streamlit_blue.arn
-  }
-}
-
-# Streamlit path rule on HTTPS listener (when domain exists)
-resource "aws_lb_listener_rule" "streamlit_https" {
-  count        = var.domain_name != "" ? 1 : 0
-  listener_arn = aws_lb_listener.https[0].arn
+# Streamlit path rule — /streamlit and /streamlit/*
+resource "aws_lb_listener_rule" "streamlit" {
+  listener_arn = aws_lb_listener.https.arn
   priority     = 10
 
   condition {
@@ -230,8 +198,7 @@ resource "aws_lb_listener" "test" {
 output "alb_arn"                  { value = aws_lb.main.arn }
 output "alb_arn_suffix"           { value = aws_lb.main.arn_suffix }
 output "alb_dns"                  { value = aws_lb.main.dns_name }
-output "https_listener_arn"       { value = var.domain_name != "" ? aws_lb_listener.https[0].arn : aws_lb_listener.http.arn }
-output "test_listener_arn"        { value = aws_lb_listener.test.arn }
+output "https_listener_arn"       { value = aws_lb_listener.https.arn }
 output "backend_tg_arn"           { value = aws_lb_target_group.backend_blue.arn }
 output "backend_tg_name"          { value = aws_lb_target_group.backend_blue.name }
 output "backend_tg_arn_suffix"    { value = aws_lb_target_group.backend_blue.arn_suffix }

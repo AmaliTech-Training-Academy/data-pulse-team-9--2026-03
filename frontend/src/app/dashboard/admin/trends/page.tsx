@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, useMemo } from "react";
-import { Calendar, Filter, TrendingUp, Loader2 } from "lucide-react";
+import { Calendar, Filter, Download, TrendingUp, Loader2 } from "lucide-react";
 import {
   LineChart,
   Line,
@@ -15,7 +15,6 @@ import {
 import { getDatasets, Dataset } from "@/services/datasets";
 import { getBulkQualityTrends } from "@/services/reports";
 import { QualityScoreResponse } from "@/services/checks";
-import { getAuditLogs, AuditLogResponse } from "@/services/audit";
 
 // Colors for multiple lines
 const LINE_COLORS = [
@@ -28,8 +27,6 @@ const LINE_COLORS = [
   "#10B981",
 ];
 
-const REAL_DATA_START_DATE = "2026-03-09";
-
 const getScoreColor = (score: number) => {
   if (score >= 80) return "text-success bg-success/10 border-success/20";
   if (score >= 50) return "text-warning bg-warning/10 border-warning/20";
@@ -40,11 +37,9 @@ export default function AdminTrendsPage() {
   const [datasets, setDatasets] = useState<Dataset[]>([]);
   const [selectedDatasetIds, setSelectedDatasetIds] = useState<number[]>([]);
   const [trends, setTrends] = useState<QualityScoreResponse[]>([]);
-  const [auditLogs, setAuditLogs] = useState<AuditLogResponse[]>([]);
   const [dateRange, setDateRange] = useState("30days");
   const [loading, setLoading] = useState(true);
   const [fetchingTrends, setFetchingTrends] = useState(false);
-  const [fetchingLogs, setFetchingLogs] = useState(false);
 
   // Initial load of datasets
   useEffect(() => {
@@ -85,11 +80,6 @@ export default function AdminTrendsPage() {
           const d = new Date();
           d.setDate(now.getDate() - 30);
           start_date = d.toISOString().split("T")[0];
-        } else {
-          // For "90days" or any other default
-          const d = new Date();
-          d.setDate(now.getDate() - 90);
-          start_date = d.toISOString().split("T")[0];
         }
 
         const data = await getBulkQualityTrends(selectedDatasetIds, {
@@ -105,28 +95,6 @@ export default function AdminTrendsPage() {
 
     loadTrends();
   }, [selectedDatasetIds, dateRange]);
-
-  // Load audit logs
-  useEffect(() => {
-    const loadLogs = async () => {
-      setFetchingLogs(true);
-      try {
-        const response = await getAuditLogs({
-          start_date: REAL_DATA_START_DATE,
-        });
-        if (Array.isArray(response)) {
-          setAuditLogs(response);
-        } else if (response && "results" in response) {
-          setAuditLogs(response.results);
-        }
-      } catch (err) {
-        console.error("Failed to load audit logs:", err);
-      } finally {
-        setFetchingLogs(false);
-      }
-    };
-    loadLogs();
-  }, []);
 
   // Process data for Recharts
   const chartData = useMemo(() => {
@@ -246,6 +214,12 @@ export default function AdminTrendsPage() {
           <h3 className="text-lg font-bold text-primary">
             Global Quality Performance
           </h3>
+          <button
+            className="p-2 text-gray-500 hover:text-primary hover:bg-gray-50 rounded-md transition-colors border border-gray-200"
+            title="Export Data"
+          >
+            <Download size={18} />
+          </button>
         </div>
 
         <div className="h-[450px] w-full">
@@ -338,66 +312,42 @@ export default function AdminTrendsPage() {
                 <th className="py-4 px-6 text-xs font-bold text-primary uppercase tracking-wider">
                   Dataset
                 </th>
-                <th className="py-4 px-6 text-xs font-bold text-primary uppercase tracking-wider">
-                  Triggered By
-                </th>
-                <th className="py-4 px-6 text-xs font-bold text-primary uppercase tracking-wider">
-                  Type
-                </th>
                 <th className="py-4 px-6 text-xs font-bold text-primary uppercase tracking-wider text-right">
-                  Score
+                  Quality Score
                 </th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
-              {fetchingLogs ? (
-                <tr>
-                  <td colSpan={5} className="py-12 text-center text-gray-500">
-                    <Loader2 size={24} className="animate-spin mx-auto mb-2" />
-                    Loading system logs...
-                  </td>
-                </tr>
-              ) : auditLogs.length === 0 ? (
-                <tr>
-                  <td colSpan={5} className="py-12 text-center text-gray-400">
-                    No system activity recorded since Mar 9th.
-                  </td>
-                </tr>
-              ) : (
-                auditLogs
-                  .slice()
-                  .reverse()
-                  .map((log) => (
+              {trends
+                .slice()
+                .reverse()
+                .map((record) => {
+                  const dataset = datasets.find(
+                    (d) => d.id === record.dataset_id
+                  );
+                  return (
                     <tr
-                      key={log.id}
+                      key={record.id}
                       className="hover:bg-gray-50/50 transition-colors"
                     >
                       <td className="py-4 px-6 text-sm text-gray-500 font-medium font-mono">
-                        {new Date(log.timestamp).toLocaleString()}
+                        {record.checked_at
+                          ? new Date(record.checked_at).toLocaleString()
+                          : "N/A"}
                       </td>
                       <td className="py-4 px-6 font-bold text-primary">
-                        {log.dataset_name}
-                      </td>
-                      <td className="py-4 px-6 text-sm text-gray-600">
-                        {log.triggered_by}
-                      </td>
-                      <td className="py-4 px-6">
-                        <span
-                          className={`inline-flex px-2 py-0.5 rounded text-[10px] uppercase font-bold ${log.trigger_type === "manual" ? "bg-blue-100 text-blue-700" : "bg-purple-100 text-purple-700"}`}
-                        >
-                          {log.trigger_type}
-                        </span>
+                        {dataset?.name || `ID: ${record.dataset_id}`}
                       </td>
                       <td className="py-4 px-6 text-right">
                         <span
-                          className={`inline-flex items-center justify-center px-3 py-1 rounded-full text-xs font-black border ${getScoreColor(log.score || 0)}`}
+                          className={`inline-flex items-center justify-center px-3 py-1 rounded-full text-xs font-black border ${getScoreColor(record.score || 0)}`}
                         >
-                          {log.score}%
+                          {record.score}%
                         </span>
                       </td>
                     </tr>
-                  ))
-              )}
+                  );
+                })}
             </tbody>
           </table>
         </div>

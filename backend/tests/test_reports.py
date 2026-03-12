@@ -64,7 +64,6 @@ def test_reports_unauthenticated(client):
     assert resp.status_code == 401
 
 
-'''
 @pytest.mark.django_db
 @override_settings(CELERY_TASK_ALWAYS_EAGER=True)
 def test_get_dashboard_with_unchecked_dataset(auth_client, sample_csv_content):
@@ -82,8 +81,6 @@ def test_get_dashboard_with_unchecked_dataset(auth_client, sample_csv_content):
     dataset_summary = next(item for item in data if item["dataset_id"] == dataset_id)
     assert dataset_summary["score"] is None
     assert dataset_summary["checked_at"] is None
-
-'''
 
 
 @pytest.mark.django_db

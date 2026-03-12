@@ -27,7 +27,6 @@ import {
 } from "@/services/rules";
 import { getDatasets, Dataset } from "@/services/datasets";
 
-const REAL_DATA_START_DATE = "2026-03-09";
 // Status color helper adapted for is_active
 const getStatusColor = (isActive: boolean) => {
   return isActive
@@ -103,11 +102,7 @@ export default function AdminRulesPage() {
       ]);
 
       setRules(rulesData);
-      setDatasets(
-        datasetsData.filter(
-          (d) => !d.uploaded_at || d.uploaded_at >= REAL_DATA_START_DATE
-        )
-      );
+      setDatasets(datasetsData);
       setError(null);
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "Failed to fetch data");

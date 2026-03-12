@@ -11,9 +11,8 @@ variable "availability_zones"   {
  default = ["eu-west-1a", "eu-west-1b"]
 }
 variable "domain_name"          {
-    type        = string
-    default     = ""
-    description = "Optional custom domain (e.g. datapulse.io). Leave empty to use AWS-provided DNS names"
+    type = string
+ description = "e.g. datapulse.io"
 }
 variable "github_repo"          {
     type = string

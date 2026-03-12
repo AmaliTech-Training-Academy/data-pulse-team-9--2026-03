@@ -7,6 +7,7 @@ import {
   Settings,
   Trash2,
   Activity,
+  Database,
   Plus,
   X,
   AlertCircle,
@@ -22,6 +23,7 @@ import {
   deleteRule,
   ValidationRule,
   RuleCreateData,
+  GetRulesParams,
 } from "@/services/rules";
 import { getDatasets, Dataset } from "@/services/datasets";
 
@@ -34,15 +36,15 @@ const getStatusColor = (isActive: boolean) => {
 
 export default function UserRulesPage() {
   const [rules, setRules] = useState<ValidationRule[]>([]);
-  const [, setDatasets] = useState<Dataset[]>([]);
+  const [datasets, setDatasets] = useState<Dataset[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   // Filtering & Searching State
   const [searchTerm, setSearchTerm] = useState("");
+  const [selectedDatasetType, setSelectedDatasetType] = useState("all");
   const [selectedRuleType, setSelectedRuleType] = useState("");
   const [selectedSeverity, setSelectedSeverity] = useState("");
-  const REAL_DATA_START_DATE = "2026-03-09";
 
   // Pagination State
   const [currentPage, setCurrentPage] = useState(1);
@@ -86,8 +88,16 @@ export default function UserRulesPage() {
   const fetchData = useCallback(async () => {
     setLoading(true);
     try {
+      const params: GetRulesParams = {
+        dataset_type:
+          selectedDatasetType === "all" ? undefined : selectedDatasetType,
+        search: searchTerm || undefined,
+        rule_type: selectedRuleType || undefined,
+        severity: selectedSeverity || undefined,
+      };
+
       const [rulesData, datasetsData] = await Promise.all([
-        getRules(),
+        getRules(params),
         getDatasets(),
       ]);
 
@@ -99,10 +109,14 @@ export default function UserRulesPage() {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [selectedDatasetType, searchTerm, selectedRuleType, selectedSeverity]);
 
+  // Debounced search
   useEffect(() => {
-    fetchData();
+    const handler = setTimeout(() => {
+      fetchData();
+    }, 500);
+    return () => clearTimeout(handler);
   }, [fetchData]);
 
   // Parse parameters when modal opens or rule_type changes
@@ -193,31 +207,10 @@ export default function UserRulesPage() {
     setIsDeleteModalOpen(true);
   }, []);
 
-  // 1. Client-side filtering logic
-  const filteredRules = rules.filter((rule) => {
-    // Search filter
-    const matchesSearch =
-      rule.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      rule.field_name.toLowerCase().includes(searchTerm.toLowerCase());
-
-    // Severity filter
-    const matchesSeverity =
-      !selectedSeverity || rule.severity === selectedSeverity;
-
-    // Type filter
-    const matchesType =
-      !selectedRuleType || rule.rule_type === selectedRuleType;
-
-    // Real Data filter (March 9th, 2026+)
-    const matchesDate = rule.created_at >= REAL_DATA_START_DATE;
-
-    return matchesSearch && matchesSeverity && matchesType && matchesDate;
-  });
-
-  // 2. Client-side pagination logic
-  const totalItems = filteredRules.length;
+  // Client-side pagination logic
+  const totalItems = rules.length;
   const totalPages = Math.ceil(totalItems / pageSize);
-  const paginatedRules = filteredRules.slice(
+  const paginatedRules = rules.slice(
     (currentPage - 1) * pageSize,
     currentPage * pageSize
   );
@@ -227,10 +220,8 @@ export default function UserRulesPage() {
       {/* Header */}
       <div className="flex justify-between items-center">
         <div>
-          <h2 className="text-xl font-black text-[#08293c]">
-            VALIDATION RULES
-          </h2>
-          <p className="text-[12px] font-medium text-gray-400 mt-1">
+          <h2 className="text-2xl font-bold text-primary">Validation Rules</h2>
+          <p className="text-gray-500">
             View and manage validation rules for your datasets.
           </p>
         </div>
@@ -246,17 +237,17 @@ export default function UserRulesPage() {
             });
             setIsAddModalOpen(true);
           }}
-          className="flex items-center gap-2 px-5 py-2 bg-[#ff5a00] text-white text-[12px] font-bold rounded-xl hover:shadow-lg hover:shadow-[#ff5a00]/20 transition-all uppercase tracking-widest"
+          className="flex items-center gap-2 px-4 py-2 bg-accent text-white rounded-lg hover:opacity-90 shadow-sm transition-all"
         >
-          <Plus size={16} />
+          <Plus size={18} />
           New Rule
         </button>
       </div>
 
       {/* Filters Bar */}
-      <div className="flex flex-col sm:flex-row gap-4 bg-white p-4 rounded-xl shadow-sm border border-gray-100">
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 bg-white p-4 rounded-xl shadow-sm border border-gray-100">
         {/* Search */}
-        <div className="relative group flex-1">
+        <div className="relative group col-span-1 md:col-span-1">
           <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400 group-focus-within:text-accent transition-colors">
             <Search size={16} />
           </div>
@@ -269,15 +260,34 @@ export default function UserRulesPage() {
           />
         </div>
 
+        {/* Dataset Type Filter */}
+        <div className="flex items-center gap-2 px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm text-gray-600">
+          <Database size={14} />
+          <select
+            value={selectedDatasetType}
+            onChange={(e) => setSelectedDatasetType(e.target.value)}
+            className="bg-transparent outline-none cursor-pointer text-gray-700 w-full"
+          >
+            <option value="all">All Files</option>
+            {Array.from(new Set(datasets.map((ds) => ds.file_type))).map(
+              (type) => (
+                <option key={type} value={type}>
+                  {type.toUpperCase()} Files
+                </option>
+              )
+            )}
+          </select>
+        </div>
+
         {/* Rule Type Filter */}
-        <div className="flex items-center gap-2 px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm text-gray-600 min-w-[180px]">
+        <div className="flex items-center gap-2 px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm text-gray-600">
           <Activity size={14} />
           <select
             value={selectedRuleType}
             onChange={(e) => setSelectedRuleType(e.target.value)}
             className="bg-transparent outline-none cursor-pointer text-gray-700 w-full"
           >
-            <option value="">All Types</option>
+            <option value="">All Rules</option>
             <option value="NOT_NULL">Not Null</option>
             <option value="DATA_TYPE">Data Type</option>
             <option value="RANGE">Range</option>
@@ -287,7 +297,7 @@ export default function UserRulesPage() {
         </div>
 
         {/* Severity Filter */}
-        <div className="flex items-center gap-2 px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm text-gray-600 min-w-[200px]">
+        <div className="flex items-center gap-2 px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm text-gray-600">
           <Filter size={14} />
           <select
             value={selectedSeverity}
@@ -329,22 +339,22 @@ export default function UserRulesPage() {
               <table className="w-full text-left border-collapse min-w-[1000px]">
                 <thead>
                   <tr className="bg-gray-50 border-b border-gray-200">
-                    <th className="py-4 px-6 text-[10px] font-black text-[#08293c] uppercase tracking-widest">
+                    <th className="py-4 px-6 text-xs font-bold text-primary uppercase tracking-wider">
                       Rule Information
                     </th>
-                    <th className="py-4 px-6 text-[10px] font-black text-[#08293c] uppercase tracking-widest">
+                    <th className="py-4 px-6 text-xs font-bold text-primary uppercase tracking-wider">
                       Type &amp; Parameters
                     </th>
-                    <th className="py-4 px-6 text-[10px] font-black text-[#08293c] uppercase tracking-widest text-center">
+                    <th className="py-4 px-6 text-xs font-bold text-primary uppercase tracking-wider">
                       Format
                     </th>
-                    <th className="py-4 px-6 text-[10px] font-black text-[#08293c] uppercase tracking-widest">
+                    <th className="py-4 px-6 text-xs font-bold text-primary uppercase tracking-wider">
                       Severity
                     </th>
-                    <th className="py-4 px-6 text-[10px] font-black text-[#08293c] uppercase tracking-widest text-center">
+                    <th className="py-4 px-6 text-xs font-bold text-primary uppercase tracking-wider">
                       Status
                     </th>
-                    <th className="py-4 px-6 text-[10px] font-black text-[#08293c] uppercase tracking-widest text-right">
+                    <th className="py-4 px-6 text-xs font-bold text-primary uppercase tracking-wider text-right">
                       Actions
                     </th>
                   </tr>
@@ -358,7 +368,7 @@ export default function UserRulesPage() {
                       >
                         <td className="py-4 px-6">
                           <div>
-                            <span className="text-sm font-black text-[#08293c]">
+                            <span className="font-semibold text-primary">
                               {rule.name}
                             </span>
                             <div className="text-sm text-gray-500 mt-1 flex items-center gap-1.5">
@@ -401,9 +411,9 @@ export default function UserRulesPage() {
                             {rule.severity}
                           </span>
                         </td>
-                        <td className="py-4 px-6 text-center">
+                        <td className="py-4 px-6">
                           <span
-                            className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-black border uppercase tracking-widest ${getStatusColor(rule.is_active)}`}
+                            className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold border ${getStatusColor(rule.is_active)}`}
                           >
                             <span className="w-1.5 h-1.5 rounded-full bg-current"></span>
                             {rule.is_active ? "Active" : "Disabled"}
