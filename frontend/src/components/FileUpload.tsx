@@ -95,7 +95,7 @@ export default function FileUpload() {
     formData.append("file", file);
 
     try {
-      const response = await fetch(`${API_URL}/datasets/upload`, {
+      const response = await fetch(`${API_URL}/api/datasets/upload`, {
         method: "POST",
         // Get token from localStorage if standard auth is used
         headers: {
