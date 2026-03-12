@@ -1,0 +1,131 @@
+============================= test session starts =============================
+platform win32 -- Python 3.14.3, pytest-9.0.2, pluggy-1.6.0 -- C:\Users\BerniceAdimeMawuena\AppData\Local\Python\pythoncore-3.14-64\python.exe
+cachedir: .pytest_cache
+metadata: {'Python': '3.14.3', 'Platform': 'Windows-11-10.0.22631-SP0', 'Packages': {'pytest': '9.0.2', 'pluggy': '1.6.0'}, 'Plugins': {'anyio': '4.12.1', 'Faker': '40.8.0', 'asyncio': '1.3.0', 'cov': '4.1.0', 'html': '4.1.1', 'metadata': '3.1.1'}}
+rootdir: c:\Users\BerniceAdimeMawuena\Desktop\data-pulse-team-9--2026-03\qa\api-tests
+configfile: pytest.ini
+plugins: anyio-4.12.1, Faker-40.8.0, asyncio-1.3.0, cov-4.1.0, html-4.1.1, metadata-3.1.1
+asyncio: mode=Mode.STRICT, debug=False, asyncio_default_fixture_loop_scope=None, asyncio_default_test_loop_scope=function
+collecting ... collected 93 items
+
+test_auth_api.py::test_register_new_user PASSED                          [  1%]
+test_auth_api.py::test_register_duplicate_email PASSED                   [  2%]
+test_auth_api.py::test_register_invalid_email PASSED                     [  3%]
+test_auth_api.py::test_login_valid_credentials PASSED                    [  4%]
+test_auth_api.py::test_login_invalid_password FAILED                     [  5%]
+test_auth_api.py::test_login_nonexistent_user FAILED                     [  6%]
+test_auth_api.py::test_get_current_user SKIPPED (All test users are ...) [  7%]
+test_auth_api.py::test_get_current_user_no_token PASSED                  [  8%]
+test_auth_api.py::test_refresh_token SKIPPED (All test users are rat...) [  9%]
+test_checks_api.py::test_run_check_on_dataset SKIPPED (All test user...) [ 10%]
+test_checks_api.py::test_run_check_without_auth SKIPPED (All test us...) [ 11%]
+test_checks_api.py::test_run_check_nonexistent_dataset SKIPPED (All ...) [ 12%]
+test_checks_api.py::test_get_check_results SKIPPED (All test users a...) [ 13%]
+test_checks_api.py::test_get_results_without_auth SKIPPED (All test ...) [ 15%]
+test_checks_api.py::test_get_results_nonexistent_dataset SKIPPED (Al...) [ 16%]
+test_checks_api.py::test_batch_check_execution SKIPPED (All test use...) [ 17%]
+test_checks_api.py::test_multiple_checks_same_dataset SKIPPED (All t...) [ 18%]
+test_datasets_api.py::test_upload_valid_csv SKIPPED (All test users ...) [ 19%]
+test_datasets_api.py::test_upload_valid_json SKIPPED (All test users...) [ 20%]
+test_datasets_api.py::test_upload_without_auth PASSED                    [ 21%]
+test_datasets_api.py::test_upload_invalid_file_type SKIPPED (All tes...) [ 22%]
+test_datasets_api.py::test_upload_empty_file SKIPPED (All test users...) [ 23%]
+test_datasets_api.py::test_upload_malformed_csv SKIPPED (All test us...) [ 24%]
+test_datasets_api.py::test_upload_malformed_json SKIPPED (All test u...) [ 25%]
+test_datasets_api.py::test_list_datasets SKIPPED (All test users are...) [ 26%]
+test_datasets_api.py::test_list_datasets_without_auth PASSED             [ 27%]
+test_datasets_api.py::test_upload_large_csv SKIPPED (All test users ...) [ 29%]
+test_integration.py::TestCompleteWorkflow::test_full_workflow_csv SKIPPED [ 30%]
+test_integration.py::TestCompleteWorkflow::test_full_workflow_json SKIPPED [ 31%]
+test_integration.py::TestMultipleDatasets::test_multiple_datasets_dashboard SKIPPED [ 32%]
+test_integration.py::TestRuleManagement::test_update_rule_and_rerun_checks SKIPPED [ 33%]
+test_integration.py::TestDataQualityScoring::test_perfect_score SKIPPED  [ 34%]
+test_integration.py::TestDataQualityScoring::test_failing_score SKIPPED  [ 35%]
+test_integration.py::TestErrorHandling::test_check_without_rules SKIPPED [ 36%]
+test_metrics_api.py::test_get_metrics FAILED                             [ 37%]
+test_metrics_api.py::test_metrics_format FAILED                          [ 38%]
+test_metrics_api.py::test_metrics_contains_expected_metrics PASSED       [ 39%]
+test_metrics_api.py::test_metrics_no_auth_required PASSED                [ 40%]
+test_metrics_api.py::test_metrics_performance PASSED                     [ 41%]
+test_metrics_api.py::test_metrics_multiple_requests PASSED               [ 43%]
+test_metrics_api.py::test_metrics_content_consistency PASSED             [ 44%]
+test_reports_api.py::test_get_quality_report SKIPPED (All test users...) [ 45%]
+test_reports_api.py::test_get_report_without_auth SKIPPED (All test ...) [ 46%]
+test_reports_api.py::test_get_report_nonexistent_dataset SKIPPED (Al...) [ 47%]
+test_reports_api.py::test_get_quality_trends SKIPPED (All test users...) [ 48%]
+test_reports_api.py::test_get_trends_with_date_filter SKIPPED (All t...) [ 49%]
+test_reports_api.py::test_get_trends_with_pagination SKIPPED (All te...) [ 50%]
+test_reports_api.py::test_get_dashboard_summary SKIPPED (All test us...) [ 51%]
+test_reports_api.py::test_dashboard_without_auth PASSED                  [ 52%]
+test_reports_api.py::test_report_contains_rule_breakdown SKIPPED (Al...) [ 53%]
+test_rules_api.py::test_create_not_null_rule SKIPPED (All test users...) [ 54%]
+test_rules_api.py::test_create_data_type_rule SKIPPED (All test user...) [ 55%]
+test_rules_api.py::test_create_range_rule SKIPPED (All test users ar...) [ 56%]
+test_rules_api.py::test_create_unique_rule SKIPPED (All test users a...) [ 58%]
+test_rules_api.py::test_create_regex_rule SKIPPED (All test users ar...) [ 59%]
+test_rules_api.py::test_create_rule_without_auth PASSED                  [ 60%]
+test_rules_api.py::test_create_rule_invalid_type SKIPPED (All test u...) [ 61%]
+test_rules_api.py::test_create_rule_invalid_severity SKIPPED (All te...) [ 62%]
+test_rules_api.py::test_list_rules SKIPPED (All test users are rate ...) [ 63%]
+test_rules_api.py::test_update_rule SKIPPED (All test users are rate...) [ 64%]
+test_rules_api.py::test_update_nonexistent_rule SKIPPED (All test us...) [ 65%]
+test_rules_api.py::test_delete_rule SKIPPED (All test users are rate...) [ 66%]
+test_rules_api.py::test_delete_nonexistent_rule SKIPPED (All test us...) [ 67%]
+test_scheduling_api.py::test_create_schedule SKIPPED (All test users...) [ 68%]
+test_scheduling_api.py::test_create_schedule_without_auth SKIPPED (A...) [ 69%]
+test_scheduling_api.py::test_create_schedule_invalid_cron SKIPPED (A...) [ 70%]
+test_scheduling_api.py::test_list_schedules SKIPPED (All test users ...) [ 72%]
+test_scheduling_api.py::test_list_schedules_without_auth PASSED          [ 73%]
+test_scheduling_api.py::test_pause_schedule SKIPPED (All test users ...) [ 74%]
+test_scheduling_api.py::test_pause_nonexistent_schedule SKIPPED (All...) [ 75%]
+test_scheduling_api.py::test_resume_schedule SKIPPED (All test users...) [ 76%]
+test_scheduling_api.py::test_resume_nonexistent_schedule SKIPPED (Al...) [ 77%]
+test_scheduling_api.py::test_delete_schedule SKIPPED (All test users...) [ 78%]
+test_scheduling_api.py::test_delete_nonexistent_schedule SKIPPED (Al...) [ 79%]
+test_scheduling_api.py::test_set_alert_threshold SKIPPED (All test u...) [ 80%]
+test_scheduling_api.py::test_set_alert_invalid_threshold SKIPPED (Al...) [ 81%]
+test_scheduling_api.py::test_set_alert_without_auth SKIPPED (All tes...) [ 82%]
+test_scheduling_api.py::test_set_alert_nonexistent_dataset SKIPPED (...) [ 83%]
+test_upload_api.py::test_upload_valid_csv SKIPPED (All test users ar...) [ 84%]
+test_upload_api.py::test_upload_invalid_file_type SKIPPED (All test ...) [ 86%]
+test_upload_api.py::test_upload_empty_file SKIPPED (All test users a...) [ 87%]
+test_validation_rules.py::TestNotNullValidation::test_not_null_all_valid SKIPPED [ 88%]
+test_validation_rules.py::TestNotNullValidation::test_not_null_with_nulls SKIPPED [ 89%]
+test_validation_rules.py::TestDataTypeValidation::test_data_type_int_valid SKIPPED [ 90%]
+test_validation_rules.py::TestDataTypeValidation::test_data_type_int_invalid SKIPPED [ 91%]
+test_validation_rules.py::TestRangeValidation::test_range_all_within SKIPPED [ 92%]
+test_validation_rules.py::TestRangeValidation::test_range_outside_bounds SKIPPED [ 93%]
+test_validation_rules.py::TestRangeValidation::test_range_boundary_values SKIPPED [ 94%]
+test_validation_rules.py::TestUniqueValidation::test_unique_all_unique SKIPPED [ 95%]
+test_validation_rules.py::TestUniqueValidation::test_unique_with_duplicates SKIPPED [ 96%]
+test_validation_rules.py::TestRegexValidation::test_regex_all_match SKIPPED [ 97%]
+test_validation_rules.py::TestRegexValidation::test_regex_some_mismatch SKIPPED [ 98%]
+test_validation_rules.py::TestSeverityImpact::test_high_severity_impact SKIPPED [100%]
+
+================================== FAILURES ===================================
+_________________________ test_login_invalid_password _________________________
+test_auth_api.py:63: in test_login_invalid_password
+    assert resp.status_code == 401
+E   assert 429 == 401
+E    +  where 429 = <Response [429]>.status_code
+_________________________ test_login_nonexistent_user _________________________
+test_auth_api.py:72: in test_login_nonexistent_user
+    assert resp.status_code == 401
+E   assert 429 == 401
+E    +  where 429 = <Response [429]>.status_code
+______________________________ test_get_metrics _______________________________
+test_metrics_api.py:11: in test_get_metrics
+    assert resp.status_code == 200
+E   assert 429 == 200
+E    +  where 429 = <Response [429]>.status_code
+_____________________________ test_metrics_format _____________________________
+test_metrics_api.py:30: in test_metrics_format
+    assert resp.status_code == 200
+E   assert 429 == 200
+E    +  where 429 = <Response [429]>.status_code
+=========================== short test summary info ===========================
+FAILED test_auth_api.py::test_login_invalid_password - assert 429 == 401
+FAILED test_auth_api.py::test_login_nonexistent_user - assert 429 == 401
+FAILED test_metrics_api.py::test_get_metrics - assert 429 == 200
+FAILED test_metrics_api.py::test_metrics_format - assert 429 == 200
+================== 4 failed, 15 passed, 74 skipped in 1.07s ===================

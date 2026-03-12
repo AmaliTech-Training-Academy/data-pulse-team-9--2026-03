@@ -34,6 +34,13 @@ REST_FRAMEWORK["DEFAULT_RENDERER_CLASSES"] = (
     "rest_framework.renderers.BrowsableAPIRenderer",
 )
 
+# Disable throttling in dev for QA testing
+REST_FRAMEWORK["DEFAULT_THROTTLE_CLASSES"] = []
+REST_FRAMEWORK["DEFAULT_THROTTLE_RATES"] = {
+    "anon": None,
+    "user": None,
+}
+
 # Use human-readable coloring for structlog in dev
 import structlog
 
