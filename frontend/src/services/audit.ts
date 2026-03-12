@@ -38,5 +38,5 @@ export const getAuditLogs = async (params?: {
   };
 
   const query = urlParams.toString() ? `?${urlParams.toString()}` : "";
-  return fetchApi(`/audit/${query}`, options);
+  return fetchApi(`/api/audit/${query}`, options);
 };
