@@ -44,7 +44,8 @@ export default function MinimalistLanding() {
             <span className="text-gray-400 font-bold">made simple.</span>
           </h1>
           <p className="text-xs md:text-sm text-gray-400 font-medium max-w-lg mx-auto mb-10 leading-relaxed overflow-hidden">
-            DataPulse is the simplest way to validate, monitor and track <br className="hidden md:block" />
+            DataPulse is the simplest way to validate, monitor and track{" "}
+            <br className="hidden md:block" />
             the health of your CSV and JSON datasets.
           </p>
 
@@ -65,36 +66,36 @@ export default function MinimalistLanding() {
 
           {/* Screenshot Area */}
           <div className="relative w-full max-w-4xl px-4">
-             <div className="rounded-[32px] border-[10px] border-white shadow-[0_30px_80px_-15px_rgba(0,0,0,0.08)] overflow-hidden bg-white">
-                <div className="bg-gray-50 border-b border-gray-100 px-4 py-3 flex items-center gap-2">
-                   <div className="flex gap-1.5">
-                      <div className="w-2.5 h-2.5 rounded-full bg-red-200"></div>
-                      <div className="w-2.5 h-2.5 rounded-full bg-orange-200"></div>
-                      <div className="w-2.5 h-2.5 rounded-full bg-green-200"></div>
-                   </div>
-                   <div className="flex-1 max-w-xs mx-auto bg-white rounded-md py-1 border border-gray-100 text-[9px] text-gray-400 text-center font-mono tracking-wider">
-                      datapulse/dashboard/user
-                   </div>
+            <div className="rounded-[32px] border-[10px] border-white shadow-[0_30px_80px_-15px_rgba(0,0,0,0.08)] overflow-hidden bg-white">
+              <div className="bg-gray-50 border-b border-gray-100 px-4 py-3 flex items-center gap-2">
+                <div className="flex gap-1.5">
+                  <div className="w-2.5 h-2.5 rounded-full bg-red-200"></div>
+                  <div className="w-2.5 h-2.5 rounded-full bg-orange-200"></div>
+                  <div className="w-2.5 h-2.5 rounded-full bg-green-200"></div>
                 </div>
-                <div className="aspect-[16/10] relative bg-white flex items-center justify-center overflow-hidden">
-                   <Image
-                     src="/brain/a700f800-2857-4a4b-b54d-a218ad5f9ece/dashboard_mockup_1773242997783.png"
-                     alt="Dashboard Preview"
-                     fill
-                     className="object-cover scale-[1.02] transform transition-transform duration-1000"
-                     unoptimized
-                   />
+                <div className="flex-1 max-w-xs mx-auto bg-white rounded-md py-1 border border-gray-100 text-[9px] text-gray-400 text-center font-mono tracking-wider">
+                  datapulse/dashboard/user
                 </div>
-             </div>
+              </div>
+              <div className="aspect-[16/10] relative bg-white flex items-center justify-center overflow-hidden">
+                <Image
+                  src="/images/dashboard_mockup.png"
+                  alt="Dashboard Preview"
+                  fill
+                  className="object-cover scale-[1.02] transform transition-transform duration-1000"
+                  unoptimized
+                />
+              </div>
+            </div>
           </div>
         </section>
       </main>
 
       <footer className="py-16 flex flex-col items-center">
-         <div className="w-full h-px bg-gradient-to-r from-transparent via-gray-100 to-transparent mb-10 max-w-4xl"></div>
-         <p className="text-[10px] font-bold text-gray-300 uppercase tracking-[0.25em]">
-           DataPulse © 2026 Team 9
-         </p>
+        <div className="w-full h-px bg-gradient-to-r from-transparent via-gray-100 to-transparent mb-10 max-w-4xl"></div>
+        <p className="text-[10px] font-bold text-gray-300 uppercase tracking-[0.25em]">
+          DataPulse © 2026 Team 9
+        </p>
       </footer>
     </div>
   );

@@ -54,10 +54,14 @@ export default function DashboardOverview() {
   const router = useRouter();
   const [datasets, setDatasets] = useState<Dataset[]>([]);
   const [loading, setLoading] = useState(true);
-  const [runningChecks, setRunningChecks] = useState<Record<number, boolean>>({});
+  const [runningChecks, setRunningChecks] = useState<Record<number, boolean>>(
+    {}
+  );
   const [trendData, setTrendData] = useState<TrendPoint[]>([]);
   const [trendLoading, setTrendLoading] = useState(false);
-  const [selectedTrendDataset, setSelectedTrendDataset] = useState<number | null>(null);
+  const [selectedTrendDataset, setSelectedTrendDataset] = useState<
+    number | null
+  >(null);
 
   const loadDashboard = useCallback(async () => {
     try {
@@ -89,14 +93,24 @@ export default function DashboardOverview() {
       const loadTrends = async () => {
         setTrendLoading(true);
         try {
-          const data = await getQualityTrends(selectedTrendDataset, { limit: 10 });
-          const results = (Array.isArray(data) ? data : data.results) as QualityScoreResponse[];
+          const data = await getQualityTrends(selectedTrendDataset, {
+            limit: 10,
+          });
+          const results = (
+            Array.isArray(data) ? data : data.results
+          ) as QualityScoreResponse[];
           const formatted = results
-            .filter((r): r is QualityScoreResponse & { checked_at: string } => r.checked_at !== undefined)
+            .filter(
+              (r): r is QualityScoreResponse & { checked_at: string } =>
+                r.checked_at !== undefined
+            )
             .reverse()
             .map((r) => ({
-              date: new Date(r.checked_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric' }),
-              score: r.score ?? 0
+              date: new Date(r.checked_at).toLocaleDateString(undefined, {
+                month: "short",
+                day: "numeric",
+              }),
+              score: r.score ?? 0,
             }));
           setTrendData(formatted);
         } catch (err) {
@@ -110,14 +124,14 @@ export default function DashboardOverview() {
   }, [selectedTrendDataset]);
 
   const handleRunCheck = async (datasetId: number) => {
-    setRunningChecks(prev => ({ ...prev, [datasetId]: true }));
+    setRunningChecks((prev) => ({ ...prev, [datasetId]: true }));
     try {
       await runCheck(datasetId);
       await loadDashboard(); // Reload to get updated score
     } catch (err) {
       console.error("Failed to run check:", err);
     } finally {
-      setRunningChecks(prev => ({ ...prev, [datasetId]: false }));
+      setRunningChecks((prev) => ({ ...prev, [datasetId]: false }));
     }
   };
 
@@ -131,11 +145,17 @@ export default function DashboardOverview() {
       ? Math.round(scores.reduce((a, b) => a + b, 0) / scores.length)
       : 0;
 
-  const rulesDefined = datasets.reduce((sum, d) => sum + (d.total_rules || 0), 0);
+  const rulesDefined = datasets.reduce(
+    (sum, d) => sum + (d.total_rules || 0),
+    0
+  );
 
   const latestCheck = datasets
     .filter((d) => d.checked_at !== null)
-    .sort((a, b) => new Date(b.checked_at!).getTime() - new Date(a.checked_at!).getTime())[0]?.checked_at;
+    .sort(
+      (a, b) =>
+        new Date(b.checked_at!).getTime() - new Date(a.checked_at!).getTime()
+    )[0]?.checked_at;
 
   const formattedLastCheck = latestCheck
     ? new Date(latestCheck).toLocaleDateString()
@@ -148,7 +168,8 @@ export default function DashboardOverview() {
         <div>
           <h2 className="text-xl font-black text-[#08293c]">OVERVIEW</h2>
           <p className="text-[12px] font-medium text-gray-400 mt-1">
-            Welcome back! Here&apos;s what&apos;s happening with your data today.
+            Welcome back! Here&apos;s what&apos;s happening with your data
+            today.
           </p>
         </div>
         <Link
@@ -162,19 +183,54 @@ export default function DashboardOverview() {
       {/* Summary Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         {[
-          { icon: Database, label: "Total Datasets", value: totalDatasets, color: "bg-primary/10 text-primary" },
-          { icon: Activity, label: "Avg Quality Score", value: `${avgScore}%`, color: "bg-success/10 text-success" },
-          { icon: ClipboardCheck, label: "Rules Defined", value: rulesDefined, color: "bg-accent/10 text-accent" },
-          { icon: Clock, label: "Last Check Run", value: formattedLastCheck, color: "bg-primary/10 text-primary", isRaw: true },
+          {
+            icon: Database,
+            label: "Total Datasets",
+            value: totalDatasets,
+            color: "bg-primary/10 text-primary",
+          },
+          {
+            icon: Activity,
+            label: "Avg Quality Score",
+            value: `${avgScore}%`,
+            color: "bg-success/10 text-success",
+          },
+          {
+            icon: ClipboardCheck,
+            label: "Rules Defined",
+            value: rulesDefined,
+            color: "bg-accent/10 text-accent",
+          },
+          {
+            icon: Clock,
+            label: "Last Check Run",
+            value: formattedLastCheck,
+            color: "bg-primary/10 text-primary",
+            isRaw: true,
+          },
         ].map((card, i) => (
-          <div key={i} className="bg-panel p-6 rounded-xl shadow-sm border border-gray-100 flex items-center gap-4 animate-in slide-in-from-bottom-4 duration-500" style={{ animationDelay: `${i * 100}ms` }}>
-            <div className={`w-12 h-12 ${card.color} rounded-lg flex items-center justify-center`}>
+          <div
+            key={i}
+            className="bg-panel p-6 rounded-xl shadow-sm border border-gray-100 flex items-center gap-4 animate-in slide-in-from-bottom-4 duration-500"
+            style={{ animationDelay: `${i * 100}ms` }}
+          >
+            <div
+              className={`w-12 h-12 ${card.color} rounded-lg flex items-center justify-center`}
+            >
               <card.icon size={24} />
             </div>
             <div>
-              <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-0.5">{card.label}</p>
-              <h3 className={`font-black text-[#08293c] ${card.isRaw ? "text-base" : "text-xl"}`}>
-                {loading ? <span className="animate-pulse">...</span> : card.value}
+              <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-0.5">
+                {card.label}
+              </p>
+              <h3
+                className={`font-black text-[#08293c] ${card.isRaw ? "text-base" : "text-xl"}`}
+              >
+                {loading ? (
+                  <span className="animate-pulse">...</span>
+                ) : (
+                  card.value
+                )}
               </h3>
             </div>
           </div>
@@ -195,9 +251,11 @@ export default function DashboardOverview() {
                 <select
                   className="bg-gray-50 border border-gray-200 text-sm rounded-lg px-3 py-2 text-gray-600 outline-none focus:ring-2 focus:ring-accent"
                   value={selectedTrendDataset || ""}
-                  onChange={(e) => setSelectedTrendDataset(Number(e.target.value))}
+                  onChange={(e) =>
+                    setSelectedTrendDataset(Number(e.target.value))
+                  }
                 >
-                  {datasets.map(d => (
+                  {datasets.map((d) => (
                     <option key={d.dataset_id} value={d.dataset_id}>
                       {d.dataset_name || `Dataset #${d.dataset_id}`}
                     </option>
@@ -217,11 +275,30 @@ export default function DashboardOverview() {
                     data={trendData}
                     margin={{ top: 5, right: 30, left: -20, bottom: 5 }}
                   >
-                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E5E7EB" />
-                    <XAxis dataKey="date" axisLine={false} tickLine={false} tick={{ fill: "#6B7280", fontSize: 12 }} dy={10} />
-                    <YAxis axisLine={false} tickLine={false} tick={{ fill: "#6B7280", fontSize: 12 }} domain={[0, 100]} />
+                    <CartesianGrid
+                      strokeDasharray="3 3"
+                      vertical={false}
+                      stroke="#E5E7EB"
+                    />
+                    <XAxis
+                      dataKey="date"
+                      axisLine={false}
+                      tickLine={false}
+                      tick={{ fill: "#6B7280", fontSize: 12 }}
+                      dy={10}
+                    />
+                    <YAxis
+                      axisLine={false}
+                      tickLine={false}
+                      tick={{ fill: "#6B7280", fontSize: 12 }}
+                      domain={[0, 100]}
+                    />
                     <Tooltip
-                      contentStyle={{ borderRadius: "12px", border: "none", boxShadow: "0 10px 15px -3px rgb(0 0 0 / 0.1)" }}
+                      contentStyle={{
+                        borderRadius: "12px",
+                        border: "none",
+                        boxShadow: "0 10px 15px -3px rgb(0 0 0 / 0.1)",
+                      }}
                       itemStyle={{ color: "#08293C", fontWeight: "bold" }}
                     />
                     <Line
@@ -229,15 +306,22 @@ export default function DashboardOverview() {
                       dataKey="score"
                       stroke="#FF5A00"
                       strokeWidth={3}
-                      dot={{ fill: "#FF5A00", strokeWidth: 2, r: 4, stroke: "#FFFFFF" }}
+                      dot={{
+                        fill: "#FF5A00",
+                        strokeWidth: 2,
+                        r: 4,
+                        stroke: "#FFFFFF",
+                      }}
                       activeDot={{ r: 6, strokeWidth: 0 }}
                     />
                   </LineChart>
                 </ResponsiveContainer>
               ) : (
                 <div className="h-full flex flex-col items-center justify-center text-gray-400 bg-gray-50/50 rounded-xl border border-dashed border-gray-200">
-                   <Activity size={40} className="mb-2 opacity-20" />
-                   <p className="text-sm font-medium">No trend data yet. Run some checks!</p>
+                  <Activity size={40} className="mb-2 opacity-20" />
+                  <p className="text-sm font-medium">
+                    No trend data yet. Run some checks!
+                  </p>
                 </div>
               )}
             </div>
@@ -249,7 +333,10 @@ export default function DashboardOverview() {
               <h3 className="text-sm font-black text-[#08293c] uppercase tracking-widest">
                 Recent Datasets
               </h3>
-              <Link href="/dashboard/user/datasets" className="text-[10px] font-black text-[#ff5a00] hover:opacity-70 transition-all uppercase tracking-widest">
+              <Link
+                href="/dashboard/user/datasets"
+                className="text-[10px] font-black text-[#ff5a00] hover:opacity-70 transition-all uppercase tracking-widest"
+              >
                 View All
               </Link>
             </div>
@@ -283,7 +370,8 @@ export default function DashboardOverview() {
                             <FileText size={16} />
                           </div>
                           <span className="text-[#08293c] text-sm font-bold truncate max-w-[150px] md:max-w-[250px]">
-                            {dataset.dataset_name || `Dataset #${dataset.dataset_id}`}
+                            {dataset.dataset_name ||
+                              `Dataset #${dataset.dataset_id}`}
                           </span>
                         </div>
                       </td>
@@ -295,10 +383,14 @@ export default function DashboardOverview() {
                       <td className="py-4 px-6">
                         {dataset.score !== null ? (
                           <div className="flex items-center gap-2">
-                             <div className={`w-2 h-2 rounded-full ${dataset.score >= 80 ? 'bg-success' : dataset.score >= 50 ? 'bg-warning' : 'bg-danger'}`}></div>
-                             <span className={`px-2 py-0.5 rounded-full text-xs font-bold ${getScoreColor(dataset.score)}`}>
-                                {dataset.score}%
-                             </span>
+                            <div
+                              className={`w-2 h-2 rounded-full ${dataset.score >= 80 ? "bg-success" : dataset.score >= 50 ? "bg-warning" : "bg-danger"}`}
+                            ></div>
+                            <span
+                              className={`px-2 py-0.5 rounded-full text-xs font-bold ${getScoreColor(dataset.score)}`}
+                            >
+                              {dataset.score}%
+                            </span>
                           </div>
                         ) : (
                           <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-xs font-bold bg-gray-100 text-gray-400">
@@ -318,10 +410,18 @@ export default function DashboardOverview() {
                             }`}
                             title="Run Check"
                           >
-                            {runningChecks[dataset.dataset_id] ? <Loader2 size={16} className="animate-spin" /> : <Play size={16} />}
+                            {runningChecks[dataset.dataset_id] ? (
+                              <Loader2 size={16} className="animate-spin" />
+                            ) : (
+                              <Play size={16} />
+                            )}
                           </button>
                           <button
-                            onClick={() => router.push(`/dashboard/user/reports?dataset=${dataset.dataset_id}`)}
+                            onClick={() =>
+                              router.push(
+                                `/dashboard/user/reports?dataset=${dataset.dataset_id}`
+                              )
+                            }
                             className="p-1.5 text-gray-400 hover:text-primary bg-white rounded-lg border border-gray-200 shadow-sm transition-all"
                             title="View Details"
                           >
@@ -335,21 +435,37 @@ export default function DashboardOverview() {
                     <tr>
                       <td colSpan={4} className="py-12 text-center">
                         <div className="flex flex-col items-center text-gray-400">
-                           <Database size={40} className="mb-4 opacity-20" />
-                           <p className="font-semibold">No datasets found</p>
-                           <Link href="/dashboard/user/upload" className="text-accent text-sm mt-1 hover:underline">Upload your first file to begin</Link>
+                          <Database size={40} className="mb-4 opacity-20" />
+                          <p className="font-semibold">No datasets found</p>
+                          <Link
+                            href="/dashboard/user/upload"
+                            className="text-accent text-sm mt-1 hover:underline"
+                          >
+                            Upload your first file to begin
+                          </Link>
                         </div>
                       </td>
                     </tr>
                   )}
-                  {loading && Array(3).fill(0).map((_, i) => (
-                    <tr key={i} className="animate-pulse">
-                      <td className="py-4 px-6"><div className="h-4 bg-gray-100 rounded w-48"></div></td>
-                      <td className="py-4 px-6"><div className="h-4 bg-gray-100 rounded w-24"></div></td>
-                      <td className="py-4 px-6"><div className="h-6 bg-gray-100 rounded-full w-16"></div></td>
-                      <td className="py-4 px-6"><div className="h-8 bg-gray-100 rounded ml-auto w-20"></div></td>
-                    </tr>
-                  ))}
+                  {loading &&
+                    Array(3)
+                      .fill(0)
+                      .map((_, i) => (
+                        <tr key={i} className="animate-pulse">
+                          <td className="py-4 px-6">
+                            <div className="h-4 bg-gray-100 rounded w-48"></div>
+                          </td>
+                          <td className="py-4 px-6">
+                            <div className="h-4 bg-gray-100 rounded w-24"></div>
+                          </td>
+                          <td className="py-4 px-6">
+                            <div className="h-6 bg-gray-100 rounded-full w-16"></div>
+                          </td>
+                          <td className="py-4 px-6">
+                            <div className="h-8 bg-gray-100 rounded ml-auto w-20"></div>
+                          </td>
+                        </tr>
+                      ))}
                 </tbody>
               </table>
             </div>
@@ -360,7 +476,9 @@ export default function DashboardOverview() {
         <div className="lg:col-span-1">
           <div className="bg-panel rounded-xl shadow-sm border border-gray-100 flex flex-col h-full">
             <div className="p-6 border-b border-gray-100">
-              <h3 className="text-sm font-black text-[#08293c] uppercase tracking-widest">Recent Activity</h3>
+              <h3 className="text-sm font-black text-[#08293c] uppercase tracking-widest">
+                Recent Activity
+              </h3>
               <p className="text-[10px] font-medium text-gray-400 mt-1">
                 Latest validation results
               </p>
@@ -372,7 +490,11 @@ export default function DashboardOverview() {
                 .map((report, idx, arr) => (
                   <div
                     key={report.dataset_id}
-                    onClick={() => router.push(`/dashboard/user/reports?dataset=${report.dataset_id}`)}
+                    onClick={() =>
+                      router.push(
+                        `/dashboard/user/reports?dataset=${report.dataset_id}`
+                      )
+                    }
                     className={`p-5 flex items-center justify-between hover:bg-gray-50 transition-all cursor-pointer group ${
                       idx !== arr.length - 1 ? "border-b border-gray-100" : ""
                     }`}
@@ -384,7 +506,12 @@ export default function DashboardOverview() {
                       <div className="flex items-center gap-2 mt-1">
                         <Clock size={12} className="text-gray-400" />
                         <p className="text-[10px] font-bold text-gray-400 uppercase">
-                          {report.checked_at ? new Date(report.checked_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : ""}
+                          {report.checked_at
+                            ? new Date(report.checked_at).toLocaleTimeString(
+                                [],
+                                { hour: "2-digit", minute: "2-digit" }
+                              )
+                            : ""}
                         </p>
                       </div>
                     </div>
@@ -403,10 +530,13 @@ export default function DashboardOverview() {
                     </div>
                   </div>
                 ))}
-              {datasets.filter((d) => d.score !== null).length === 0 && !loading && (
+              {datasets.filter((d) => d.score !== null).length === 0 &&
+                !loading && (
                   <div className="p-12 text-center flex flex-col items-center">
                     <Activity size={32} className="text-gray-200 mb-2" />
-                    <p className="text-sm text-gray-400 font-medium">No activity recorded</p>
+                    <p className="text-sm text-gray-400 font-medium">
+                      No activity recorded
+                    </p>
                   </div>
                 )}
             </div>
