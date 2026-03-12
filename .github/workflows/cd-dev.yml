@@ -3,7 +3,7 @@ name: CD - Deploy to Dev
 on:
   push:
     branches:
-      - develop
+      - staging
 
 jobs:
   deploy-dev:
@@ -38,10 +38,10 @@ jobs:
             cd /opt/datapulse
 
             # Pull latest changes
-            echo "📥 Pulling latest code from develop branch..."
+            echo "📥 Pulling latest code from staging branch..."
             git fetch origin
-            git checkout develop
-            git pull origin develop
+            git checkout staging
+            git pull origin staging
 
             # Stop running containers
             echo "🛑 Stopping existing containers..."
