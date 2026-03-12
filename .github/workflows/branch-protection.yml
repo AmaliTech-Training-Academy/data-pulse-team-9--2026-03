@@ -12,7 +12,7 @@ jobs:
       - name: Validate merge to develop
         if: github.base_ref == 'develop'
         run: |
-          if [[ ! "${{ github.head_ref }}" =~ ^(feature|bugfix|hotfix | docs)/ ]]; then
+          if [[ ! "${{ github.head_ref }}" =~ ^(feature|bugfix|hotfix|docs)/ ]]; then
             echo "Error: Only feature/, bugfix/,docs/ or hotfix/ branches can merge to develop"
             exit 1
           fi
