@@ -1,5 +1,5 @@
 database:
-  source_url: ${DATABASE_URL}
+  source_url: ${SOURCE_DB_URL}
   target_url: ${TARGET_DB_URL}
 
 etl:

@@ -49,11 +49,13 @@ def seed():
     engine = get_source_engine()
 
     with engine.begin() as conn:
-        # Check if data already exists
-        count = conn.execute(text("SELECT COUNT(*) FROM datasets")).scalar()
+        # Check if mock data already exists by looking for our specific mock datasets
+        count = conn.execute(
+            text("SELECT COUNT(*) FROM datasets WHERE name IN ('employee_records.csv', 'sales_q1.csv')")
+        ).scalar()
         if count > 0:
-            logger.info("App DB already has %d datasets — skipping seed", count)
-            return {"status": "skipped", "reason": "Data already exists"}
+            logger.info("App DB already has mock datasets — skipping seed")
+            return {"status": "skipped", "reason": "Mock data already exists"}
 
         # Seed datasets
         for name, file_type, row_count, col_count, status in DATASETS:
