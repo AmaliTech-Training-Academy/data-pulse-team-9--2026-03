@@ -86,8 +86,8 @@ export default function SettingsPage() {
     <div className="max-w-4xl mx-auto space-y-8 pb-12">
       {/* Header */}
       <div>
-        <h2 className="text-2xl font-bold text-primary">Account Settings</h2>
-        <p className="text-gray-500">
+        <h2 className="text-xl font-black text-[#08293c]">ACCOUNT SETTINGS</h2>
+        <p className="text-[12px] font-medium text-gray-400 mt-1">
           Manage your profile, preferences, and quality alerts.
         </p>
       </div>
@@ -100,10 +100,10 @@ export default function SettingsPage() {
               <Bell size={20} />
             </div>
             <div>
-              <h3 className="text-lg font-bold text-primary">
+              <h3 className="text-sm font-black text-[#08293c] uppercase tracking-widest leading-none">
                 Data Quality Alerts
               </h3>
-              <p className="text-sm text-gray-500">
+              <p className="text-[12px] font-medium text-gray-400 mt-1">
                 Configure score thresholds and email notifications.
               </p>
             </div>

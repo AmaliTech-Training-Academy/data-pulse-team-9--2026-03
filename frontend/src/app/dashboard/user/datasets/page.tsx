@@ -137,8 +137,8 @@ export default function MyDatasetsPage() {
     <div className="space-y-6">
       {/* Header */}
       <div>
-        <h2 className="text-2xl font-bold text-primary">My Datasets</h2>
-        <p className="text-gray-500">
+        <h2 className="text-xl font-black text-[#08293c]">MY DATASETS</h2>
+        <p className="text-[12px] font-medium text-gray-400 mt-1">
           Manage and validate your uploaded data files.
         </p>
       </div>
@@ -187,19 +187,19 @@ export default function MyDatasetsPage() {
           <table className="w-full text-left border-collapse min-w-[800px]">
             <thead>
               <tr className="bg-gray-50 border-b border-gray-200">
-                <th className="py-4 px-6 text-xs font-bold text-primary uppercase tracking-wider">
+                <th className="py-4 px-6 text-[10px] font-black text-[#08293c] uppercase tracking-widest">
                   File Name
                 </th>
-                <th className="py-4 px-6 text-xs font-bold text-primary uppercase tracking-wider">
+                <th className="py-4 px-6 text-[10px] font-black text-[#08293c] uppercase tracking-widest">
                   Type
                 </th>
-                <th className="py-4 px-6 text-xs font-bold text-primary uppercase tracking-wider">
+                <th className="py-4 px-6 text-[10px] font-black text-[#08293c] uppercase tracking-widest">
                   Upload Date
                 </th>
-                <th className="py-4 px-6 text-xs font-bold text-primary uppercase tracking-wider">
+                <th className="py-4 px-6 text-[10px] font-black text-[#08293c] uppercase tracking-widest">
                   Status
                 </th>
-                <th className="py-4 px-6 text-xs font-bold text-primary uppercase tracking-wider text-right">
+                <th className="py-4 px-6 text-[10px] font-black text-[#08293c] uppercase tracking-widest text-right">
                   Actions
                 </th>
               </tr>
@@ -248,7 +248,7 @@ export default function MyDatasetsPage() {
                             <FileJson size={18} />
                           )}
                         </div>
-                        <span className="font-semibold text-primary">
+                        <span className="text-sm font-bold text-[#08293c]">
                           {dataset.name}
                         </span>
                       </div>
