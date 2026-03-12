@@ -15,7 +15,9 @@ export interface Dataset {
 }
 
 export async function getDatasets(userId?: number): Promise<Dataset[]> {
-  const endpoint = userId ? `/api/datasets/?uploaded_by=${userId}` : "/api/datasets/";
+  const endpoint = userId
+    ? `/api/datasets/?uploaded_by=${userId}`
+    : "/api/datasets/";
   const response = await fetchApi(endpoint);
   if (response && response.results && Array.isArray(response.results)) {
     return response.results;
