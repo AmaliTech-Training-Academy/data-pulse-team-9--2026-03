@@ -201,7 +201,9 @@ export default function TrendsPage() {
           </div>
         )}
         <div className="flex items-center justify-between mb-8">
-          <h3 className="text-sm font-black text-[#08293c] uppercase tracking-widest">Score Comparison</h3>
+          <h3 className="text-sm font-black text-[#08293c] uppercase tracking-widest">
+            Score Comparison
+          </h3>
           <button
             className="p-2 text-gray-500 hover:text-accent hover:bg-gray-50 rounded-md transition-colors border border-gray-200"
             title="Export Chart"
@@ -286,7 +288,9 @@ export default function TrendsPage() {
       {/* Historical Scores Table */}
       <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
         <div className="p-6 border-b border-gray-100">
-          <h3 className="text-sm font-black text-[#08293c] uppercase tracking-widest">Score History Log</h3>
+          <h3 className="text-sm font-black text-[#08293c] uppercase tracking-widest">
+            Score History Log
+          </h3>
         </div>
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse">

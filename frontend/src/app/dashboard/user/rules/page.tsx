@@ -220,7 +220,9 @@ export default function UserRulesPage() {
       {/* Header */}
       <div className="flex justify-between items-center">
         <div>
-          <h2 className="text-xl font-black text-[#08293c]">VALIDATION RULES</h2>
+          <h2 className="text-xl font-black text-[#08293c]">
+            VALIDATION RULES
+          </h2>
           <p className="text-[12px] font-medium text-gray-400 mt-1">
             View and manage validation rules for your datasets.
           </p>

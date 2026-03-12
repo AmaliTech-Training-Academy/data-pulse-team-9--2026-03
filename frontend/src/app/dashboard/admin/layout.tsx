@@ -87,7 +87,9 @@ export default function AdminDashboardLayout({
           isCollapsed ? "w-20" : "w-64"
         }`}
       >
-        <div className={`flex ${isCollapsed ? "flex-col justify-center py-2 gap-1.5" : "flex-row justify-between px-5"} items-center border-b border-white/5 h-20 min-h-[5rem]`}>
+        <div
+          className={`flex ${isCollapsed ? "flex-col justify-center py-2 gap-1.5" : "flex-row justify-between px-5"} items-center border-b border-white/5 h-20 min-h-[5rem]`}
+        >
           <Link href="/" className="flex items-center justify-center">
             <img
               src="/images/logo.png"
@@ -100,7 +102,11 @@ export default function AdminDashboardLayout({
             className="p-1.5 hover:bg-white/5 rounded-lg text-gray-400 hover:text-white transition-colors"
             title={isCollapsed ? "Expand Sidebar" : "Collapse Sidebar"}
           >
-            {isCollapsed ? <ChevronRight size={16} /> : <ChevronLeft size={18} />}
+            {isCollapsed ? (
+              <ChevronRight size={16} />
+            ) : (
+              <ChevronLeft size={18} />
+            )}
           </button>
         </div>
 
@@ -144,7 +150,11 @@ export default function AdminDashboardLayout({
             className="flex items-center gap-3 px-3.5 py-3 text-gray-400 hover:text-red-400 hover:bg-red-500/10 rounded-xl transition-all w-full group overflow-hidden"
           >
             <LogOut size={20} className="flex-shrink-0" />
-            {!isCollapsed && <span className="text-[11px] font-bold uppercase tracking-widest truncate">Logout</span>}
+            {!isCollapsed && (
+              <span className="text-[11px] font-bold uppercase tracking-widest truncate">
+                Logout
+              </span>
+            )}
             {isCollapsed && (
               <div className="absolute left-full ml-4 px-2 py-1 bg-[#08293c] text-white text-[10px] font-bold rounded opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity z-[100] whitespace-nowrap shadow-xl border border-white/10 uppercase tracking-widest">
                 Logout
@@ -165,7 +175,7 @@ export default function AdminDashboardLayout({
             >
               <Menu size={24} />
             </button>
-            <h1 className="text-xl font-semibold text-primary">
+            <h1 className="text-sm font-black text-[#08293c] uppercase tracking-[0.2em]">
               {getPageTitle()}
             </h1>
           </div>
