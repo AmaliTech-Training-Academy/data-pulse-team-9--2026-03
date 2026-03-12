@@ -1,9 +1,12 @@
 # Seed the app database with mock data for ETL development.
 
 import argparse
+import json
+import os
 import random
 import time
 from datetime import datetime, timedelta
+from pathlib import Path
 from sqlalchemy import text
 
 from infrastructure.db import get_source_engine
@@ -39,6 +42,41 @@ RULES = [
     ("Lead email format", "marketing", "email", "REGEX", '{"pattern": "^[\\\\w.+-]+@[\\\\w-]+\\\\.\\\\w+$"}', "MEDIUM"),
 ]
 
+# Path to the uploads directory (relative to backend root)
+# In Docker, it's /app/uploads. Locally, it's <project_root>/backend/uploads
+BACKEND_DIR = Path(__file__).parent.parent.parent / "backend"
+UPLOAD_DIR = BACKEND_DIR / "uploads"
+
+
+def generate_mock_file(name, file_type, row_count):
+    """Generate a physical mock file for the dataset."""
+    UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
+    file_path = UPLOAD_DIR / name
+
+    if file_type == "csv":
+        with open(file_path, "w", encoding="utf-8") as f:
+            f.write("id,name,email,age,department,salary,hire_date\n")
+            for i in range(1, row_count + 1):
+                f.write(f"{i},User {i},user{i}@example.com,30,Engineering,100000,2023-01-01\n")
+    else:  # json
+        data = []
+        for i in range(1, row_count + 1):
+            data.append(
+                {
+                    "id": i,
+                    "name": f"User {i}",
+                    "email": f"user{i}@example.com",
+                    "age": 30,
+                    "department": "Engineering",
+                    "salary": 100000,
+                    "hire_date": "2023-01-01",
+                }
+            )
+        with open(file_path, "w", encoding="utf-8") as f:
+            json.dump(data, f)
+
+    return str(file_path)
+
 
 def seed():
     """Insert mock data into the app database.
@@ -61,11 +99,12 @@ def seed():
         for name, file_type, row_count, col_count, status in DATASETS:
             days_ago = random.randint(5, 30)
             uploaded_at = datetime.now() - timedelta(days=days_ago)
-            conn.execute(
+            dataset_id = conn.execute(
                 text(
                     """
                 INSERT INTO datasets (name, file_type, row_count, column_count, uploaded_at, status)
                 VALUES (:name, :file_type, :row_count, :column_count, :uploaded_at, :status)
+                RETURNING id
             """
                 ),
                 {
@@ -76,8 +115,24 @@ def seed():
                     "uploaded_at": uploaded_at,
                     "status": status,
                 },
+            ).scalar()
+
+            # Generate physical file and link it
+            full_path = generate_mock_file(name, file_type, row_count)
+            conn.execute(
+                text(
+                    """
+                INSERT INTO dataset_files (dataset_id, file_path, original_filename)
+                VALUES (:dataset_id, :file_path, :original_filename)
+            """
+                ),
+                {
+                    "dataset_id": dataset_id,
+                    "file_path": full_path,
+                    "original_filename": name,
+                },
             )
-        logger.info("Seeded %d datasets", len(DATASETS))
+        logger.info("Seeded %d datasets and created mock files", len(DATASETS))
 
         # Seed validation rules
         for name, ds_type, field, rule_type, params, severity in RULES:
