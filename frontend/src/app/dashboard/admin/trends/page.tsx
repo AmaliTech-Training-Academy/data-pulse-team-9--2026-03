@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, useMemo } from "react";
-import { Calendar, Filter, Download, TrendingUp, Loader2 } from "lucide-react";
+import { Calendar, Filter, TrendingUp, Loader2 } from "lucide-react";
 import {
   LineChart,
   Line,
@@ -85,7 +85,8 @@ export default function AdminTrendsPage() {
           const d = new Date();
           d.setDate(now.getDate() - 30);
           start_date = d.toISOString().split("T")[0];
-        } else { // For "90days" or any other default
+        } else {
+          // For "90days" or any other default
           const d = new Date();
           d.setDate(now.getDate() - 90);
           start_date = d.toISOString().split("T")[0];
@@ -110,10 +111,12 @@ export default function AdminTrendsPage() {
     const loadLogs = async () => {
       setFetchingLogs(true);
       try {
-        const response = await getAuditLogs({ start_date: REAL_DATA_START_DATE });
+        const response = await getAuditLogs({
+          start_date: REAL_DATA_START_DATE,
+        });
         if (Array.isArray(response)) {
           setAuditLogs(response);
-        } else if (response && 'results' in response) {
+        } else if (response && "results" in response) {
           setAuditLogs(response.results);
         }
       } catch (err) {

@@ -54,7 +54,7 @@ export default function AdminDashboardLayout({
       href: "/dashboard/admin/settings",
       icon: Settings,
     },
-  ].filter(item => item.name !== "Users" || hasUsers);
+  ].filter((item) => item.name !== "Users" || hasUsers);
 
   const [user, setUser] = useState<{ full_name: string; email: string } | null>(
     null

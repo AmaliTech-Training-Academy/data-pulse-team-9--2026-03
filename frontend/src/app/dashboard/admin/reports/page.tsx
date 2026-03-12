@@ -60,23 +60,28 @@ export default function AdminReportsPage() {
 
         // Create a lookup map for dataset details
         const datasetMap = new Map();
-        datasetsData.forEach(
-          (d: Dataset) => {
-            const uploadedBy = d.uploaded_by;
-            let userEmail = "System User";
-            if (uploadedBy && typeof uploadedBy === "object" && "email" in uploadedBy) {
-              userEmail = uploadedBy.email;
-            }
-            datasetMap.set(d.id, {
-              name: d.name || `Dataset #${d.id}`,
-              user: userEmail,
-              uploaded_at: d.uploaded_at
-            });
+        datasetsData.forEach((d: Dataset) => {
+          const uploadedBy = d.uploaded_by;
+          let userEmail = "System User";
+          if (
+            uploadedBy &&
+            typeof uploadedBy === "object" &&
+            "email" in uploadedBy
+          ) {
+            userEmail = uploadedBy.email;
           }
-        );
+          datasetMap.set(d.id, {
+            name: d.name || `Dataset #${d.id}`,
+            user: userEmail,
+            uploaded_at: d.uploaded_at,
+          });
+        });
         // Enrich and filter reports (Real data only)
         const enriched = (scoresData as QualityScoreResponse[])
-          .filter(score => !score.checked_at || score.checked_at >= REAL_DATA_START_DATE)
+          .filter(
+            (score) =>
+              !score.checked_at || score.checked_at >= REAL_DATA_START_DATE
+          )
           .map((score) => {
             const ds = datasetMap.get(score.dataset_id);
             return {

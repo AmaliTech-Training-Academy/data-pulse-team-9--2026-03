@@ -3,8 +3,6 @@
 import { useEffect, useState, useMemo } from "react";
 import { Calendar, Filter, TrendingUp, Loader2 } from "lucide-react";
 import {
-  LineChart,
-  Line,
   XAxis,
   YAxis,
   CartesianGrid,
@@ -106,21 +104,28 @@ export default function TrendsPage() {
         // 1. Load Trends (Chart)
         const trendsData = (await getBulkQualityTrends(selectedDatasetIds, {
           start_date,
-        })) as QualityScoreResponse[] | { results?: QualityScoreResponse[]; trends?: QualityScoreResponse[] };
+        })) as
+          | QualityScoreResponse[]
+          | {
+              results?: QualityScoreResponse[];
+              trends?: QualityScoreResponse[];
+            };
         const trendsArray = Array.isArray(trendsData)
           ? trendsData
-          : (trendsData?.results || trendsData?.trends || []);
+          : trendsData?.results || trendsData?.trends || [];
 
         // Filter out any leaked mock data just in case
-        const filteredTrends = (Array.isArray(trendsArray) ? trendsArray : []).filter(
-          (t) => t.checked_at && t.checked_at >= REAL_DATA_START_DATE
-        );
+        const filteredTrends = (
+          Array.isArray(trendsArray) ? trendsArray : []
+        ).filter((t) => t.checked_at && t.checked_at >= REAL_DATA_START_DATE);
         setTrends(filteredTrends);
 
         // 2. Load Audit Logs (History)
         // Fetch logs for the date range
         const logsData = await getAuditLogs({ start_date });
-        const allLogs = Array.isArray(logsData) ? logsData : logsData.results || [];
+        const allLogs = Array.isArray(logsData)
+          ? logsData
+          : logsData.results || [];
 
         // Filter for selected datasets and project start date
         const filteredLogs = allLogs.filter(
@@ -147,9 +152,10 @@ export default function TrendsPage() {
     const dataMap: Record<string, Record<string, string | number>> = {};
 
     trends.forEach((t) => {
-      const date = mounted && t.checked_at
-        ? new Date(t.checked_at).toLocaleDateString()
-        : "N/A";
+      const date =
+        mounted && t.checked_at
+          ? new Date(t.checked_at).toLocaleDateString()
+          : "N/A";
       if (!dataMap[date]) {
         dataMap[date] = { date };
       }
@@ -162,17 +168,21 @@ export default function TrendsPage() {
     return Object.values(dataMap).sort(
       (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()
     );
-  }, [trends, datasets]);
+  }, [trends, datasets, mounted]);
 
   const stats = useMemo(() => {
     const sorted = [...(Array.isArray(auditLogs) ? auditLogs : [])].sort(
-      (a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
+      (a, b) =>
+        new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
     );
-    const scores = trends.map(t => t.score || 0);
+    const scores = trends.map((t) => t.score || 0);
     return {
-      avg: scores.length > 0 ? Math.round(scores.reduce((a, b) => a + b, 0) / scores.length) : 0,
+      avg:
+        scores.length > 0
+          ? Math.round(scores.reduce((a, b) => a + b, 0) / scores.length)
+          : 0,
       best: scores.length > 0 ? Math.max(...scores) : 0,
-      total: sorted.length
+      total: sorted.length,
     };
   }, [trends, auditLogs]);
 
@@ -255,7 +265,9 @@ export default function TrendsPage() {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
         <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 flex items-center justify-between hover:border-success/50 transition-colors group">
           <div>
-            <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1 group-hover:text-success transition-colors">Average quality</p>
+            <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1 group-hover:text-success transition-colors">
+              Average quality
+            </p>
             <h3 className="text-3xl font-black text-[#08293c]">{stats.avg}%</h3>
           </div>
           <div className="w-12 h-12 bg-success/10 rounded-full flex items-center justify-center text-success group-hover:scale-110 transition-transform">
@@ -265,8 +277,12 @@ export default function TrendsPage() {
 
         <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 flex items-center justify-between hover:border-accent/50 transition-colors group">
           <div>
-            <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1 group-hover:text-accent transition-colors">Best Performance</p>
-            <h3 className="text-3xl font-black text-[#08293c]">{stats.best}%</h3>
+            <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1 group-hover:text-accent transition-colors">
+              Best Performance
+            </p>
+            <h3 className="text-3xl font-black text-[#08293c]">
+              {stats.best}%
+            </h3>
           </div>
           <div className="w-12 h-12 bg-accent/10 rounded-full flex items-center justify-center text-accent group-hover:scale-110 transition-transform">
             <TrendingUp size={24} />
@@ -275,8 +291,12 @@ export default function TrendsPage() {
 
         <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 flex items-center justify-between hover:border-primary/50 transition-colors group">
           <div>
-            <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1 group-hover:text-primary transition-colors">Total Checks</p>
-            <h3 className="text-3xl font-black text-[#08293c]">{stats.total}</h3>
+            <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1 group-hover:text-primary transition-colors">
+              Total Checks
+            </p>
+            <h3 className="text-3xl font-black text-[#08293c]">
+              {stats.total}
+            </h3>
           </div>
           <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center text-primary group-hover:scale-110 transition-transform">
             <Calendar size={24} />
@@ -456,36 +476,37 @@ export default function TrendsPage() {
               {auditLogs
                 .slice((currentPage - 1) * pageSize, currentPage * pageSize)
                 .map((record) => {
-                return (
-                  <tr
-                    key={record.id}
-                    className="hover:bg-gray-50/50 transition-colors"
-                  >
-                    <td className="py-4 px-6 text-sm text-gray-600 font-medium">
-                      {mounted && record.timestamp
-                        ? new Date(record.timestamp).toLocaleString()
-                        : "N/A"}
-                    </td>
-                    <td className="py-4 px-6">
-                      <div className="flex flex-col">
-                        <span className="text-sm font-black text-[#08293c]">
-                          {record.dataset_name || "Unknown Dataset"}
+                  return (
+                    <tr
+                      key={record.id}
+                      className="hover:bg-gray-50/50 transition-colors"
+                    >
+                      <td className="py-4 px-6 text-sm text-gray-600 font-medium">
+                        {mounted && record.timestamp
+                          ? new Date(record.timestamp).toLocaleString()
+                          : "N/A"}
+                      </td>
+                      <td className="py-4 px-6">
+                        <div className="flex flex-col">
+                          <span className="text-sm font-black text-[#08293c]">
+                            {record.dataset_name || "Unknown Dataset"}
+                          </span>
+                          <span className="text-[10px] text-gray-400 font-medium">
+                            Triggered by: {record.triggered_by} (
+                            {record.trigger_type})
+                          </span>
+                        </div>
+                      </td>
+                      <td className="py-4 px-6">
+                        <span
+                          className={`inline-flex items-center justify-center px-2.5 py-1 rounded-full text-xs font-bold ${getScoreColor(record.score || 0)}`}
+                        >
+                          {record.score}%
                         </span>
-                        <span className="text-[10px] text-gray-400 font-medium">
-                          Triggered by: {record.triggered_by} ({record.trigger_type})
-                        </span>
-                      </div>
-                    </td>
-                    <td className="py-4 px-6">
-                      <span
-                        className={`inline-flex items-center justify-center px-2.5 py-1 rounded-full text-xs font-bold ${getScoreColor(record.score || 0)}`}
-                      >
-                        {record.score}%
-                      </span>
-                    </td>
-                  </tr>
-                );
-              })}
+                      </td>
+                    </tr>
+                  );
+                })}
               {auditLogs.length === 0 && !fetchingTrends && (
                 <tr>
                   <td colSpan={3} className="py-8 text-center text-gray-500">
@@ -501,11 +522,13 @@ export default function TrendsPage() {
         {auditLogs.length > pageSize && (
           <div className="p-4 bg-gray-50 border-t border-gray-100 flex items-center justify-between">
             <div className="text-[10px] font-black text-gray-400 uppercase tracking-widest">
-              Showing {(currentPage - 1) * pageSize + 1} to {Math.min(currentPage * pageSize, auditLogs.length)} of {auditLogs.length} records
+              Showing {(currentPage - 1) * pageSize + 1} to{" "}
+              {Math.min(currentPage * pageSize, auditLogs.length)} of{" "}
+              {auditLogs.length} records
             </div>
             <div className="flex items-center gap-2">
               <button
-                onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                onClick={() => setCurrentPage((prev) => Math.max(1, prev - 1))}
                 disabled={currentPage === 1 || fetchingTrends}
                 className="p-1 rounded bg-white border border-gray-200 text-gray-400 hover:text-accent disabled:opacity-50 transition-colors"
               >
@@ -515,8 +538,15 @@ export default function TrendsPage() {
                 Page {currentPage} of {Math.ceil(auditLogs.length / pageSize)}
               </div>
               <button
-                onClick={() => setCurrentPage(prev => Math.min(Math.ceil(auditLogs.length / pageSize), prev + 1))}
-                disabled={currentPage >= Math.ceil(auditLogs.length / pageSize) || fetchingTrends}
+                onClick={() =>
+                  setCurrentPage((prev) =>
+                    Math.min(Math.ceil(auditLogs.length / pageSize), prev + 1)
+                  )
+                }
+                disabled={
+                  currentPage >= Math.ceil(auditLogs.length / pageSize) ||
+                  fetchingTrends
+                }
                 className="p-1 rounded bg-white border border-gray-200 text-gray-400 hover:text-accent disabled:opacity-50 transition-colors"
               >
                 <ChevronRight size={16} />

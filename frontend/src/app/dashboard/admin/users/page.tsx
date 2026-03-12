@@ -50,7 +50,9 @@ export default function AdminUsersPage() {
   const [datasets, setDatasets] = useState<Dataset[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedUser, setSelectedUser] = useState<EnrichedUser | null>(null);
-  const [userTrendData, setUserTrendData] = useState<{ date: string; score: number }[]>([]);
+  const [userTrendData, setUserTrendData] = useState<
+    { date: string; score: number }[]
+  >([]);
   const [trendLoading, setTrendLoading] = useState(false);
 
   useEffect(() => {
@@ -62,8 +64,10 @@ export default function AdminUsersPage() {
           getDatasets(),
         ]);
 
-        const filteredDatasets = datasetsData.filter((d: Dataset) =>
-          !d.uploaded_at || new Date(d.uploaded_at) >= new Date(REAL_DATA_START_DATE)
+        const filteredDatasets = datasetsData.filter(
+          (d: Dataset) =>
+            !d.uploaded_at ||
+            new Date(d.uploaded_at) >= new Date(REAL_DATA_START_DATE)
         );
 
         setUsers(usersData);
@@ -78,32 +82,53 @@ export default function AdminUsersPage() {
   }, []);
 
   const usersWithStats = useMemo(() => {
-    return users.map((u: User) => {
-      const userDatasets = datasets.filter((d: Dataset) => {
-        const uploadedBy = d.uploaded_by;
-        if (uploadedBy && typeof uploadedBy === "object" && "id" in uploadedBy) {
-          return uploadedBy.id === u.id;
-        }
-        return false;
-      });
-      const datasetsWithScores = userDatasets.filter((d: Dataset) => d.score !== null && d.score !== undefined);
-      const avgScore = datasetsWithScores.length > 0
-        ? Math.round(datasetsWithScores.reduce((acc: number, d: Dataset) => acc + (d.score || 0), 0) / datasetsWithScores.length)
-        : 0;
+    return users
+      .map((u: User) => {
+        const userDatasets = datasets.filter((d: Dataset) => {
+          const uploadedBy = d.uploaded_by;
+          if (
+            uploadedBy &&
+            typeof uploadedBy === "object" &&
+            "id" in uploadedBy
+          ) {
+            return uploadedBy.id === u.id;
+          }
+          return false;
+        });
+        const datasetsWithScores = userDatasets.filter(
+          (d: Dataset) => d.score !== null && d.score !== undefined
+        );
+        const avgScore =
+          datasetsWithScores.length > 0
+            ? Math.round(
+                datasetsWithScores.reduce(
+                  (acc: number, d: Dataset) => acc + (d.score || 0),
+                  0
+                ) / datasetsWithScores.length
+              )
+            : 0;
 
-      return {
-        ...u,
-        name: u.full_name || u.email.split('@')[0],
-        datasetsCount: userDatasets.length,
-        avgScore,
-        lastActive: userDatasets.length > 0 ? "Recently" : "Never",
-        status: "Active", // Logic for active/inactive could be added based on last uploaded_at
-        recentUploads: userDatasets.sort((a: Dataset, b: Dataset) => new Date(b.uploaded_at).getTime() - new Date(a.uploaded_at).getTime()).slice(0, 5)
-      };
-    }).filter((u: EnrichedUser) =>
-      u.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      u.email.toLowerCase().includes(searchTerm.toLowerCase())
-    );
+        return {
+          ...u,
+          name: u.full_name || u.email.split("@")[0],
+          datasetsCount: userDatasets.length,
+          avgScore,
+          lastActive: userDatasets.length > 0 ? "Recently" : "Never",
+          status: "Active", // Logic for active/inactive could be added based on last uploaded_at
+          recentUploads: userDatasets
+            .sort(
+              (a: Dataset, b: Dataset) =>
+                new Date(b.uploaded_at).getTime() -
+                new Date(a.uploaded_at).getTime()
+            )
+            .slice(0, 5),
+        };
+      })
+      .filter(
+        (u: EnrichedUser) =>
+          u.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          u.email.toLowerCase().includes(searchTerm.toLowerCase())
+      );
   }, [users, datasets, searchTerm]);
 
   // Load trends for selected user
@@ -114,33 +139,49 @@ export default function AdminUsersPage() {
         try {
           const userDatasets = datasets.filter((d: Dataset) => {
             const uploadedBy = d.uploaded_by;
-            if (uploadedBy && typeof uploadedBy === "object" && "id" in uploadedBy) {
+            if (
+              uploadedBy &&
+              typeof uploadedBy === "object" &&
+              "id" in uploadedBy
+            ) {
               return uploadedBy.id === selectedUser.id;
             }
             return false;
           });
           if (userDatasets.length > 0) {
             const ids = userDatasets.map((d: Dataset) => d.id);
-            const trends = await getBulkQualityTrends(ids, { start_date: REAL_DATA_START_DATE });
+            const trends = await getBulkQualityTrends(ids, {
+              start_date: REAL_DATA_START_DATE,
+            });
 
             if (Array.isArray(trends)) {
-              const initialAcc: Record<string, { date: string; score: number; count: number }> = {};
+              const initialAcc: Record<
+                string,
+                { date: string; score: number; count: number }
+              > = {};
               const grouped = trends.reduce((acc, t) => {
                 if (!t.checked_at) return acc;
-                const date = new Date(t.checked_at).toLocaleDateString(undefined, {
-                  month: "short",
-                  day: "numeric",
-                });
+                const date = new Date(t.checked_at).toLocaleDateString(
+                  undefined,
+                  {
+                    month: "short",
+                    day: "numeric",
+                  }
+                );
                 if (!acc[date]) acc[date] = { date, score: 0, count: 0 };
                 acc[date].score += t.score || 0;
                 acc[date].count += 1;
                 return acc;
               }, initialAcc);
 
-              setUserTrendData(Object.values(grouped).map((g: { date: string; score: number; count: number }) => ({
-                date: g.date,
-                score: Math.round(g.score / g.count)
-              })).slice(-7));
+              setUserTrendData(
+                Object.values(grouped)
+                  .map((g: { date: string; score: number; count: number }) => ({
+                    date: g.date,
+                    score: Math.round(g.score / g.count),
+                  }))
+                  .slice(-7)
+              );
             }
           } else {
             setUserTrendData([]);
@@ -170,9 +211,7 @@ export default function AdminUsersPage() {
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <h2 className="text-2xl font-bold text-primary">User Management</h2>
-          <p className="text-gray-500">
-            View and moderate platform users.
-          </p>
+          <p className="text-gray-500">View and moderate platform users.</p>
         </div>
       </div>
 
@@ -237,7 +276,9 @@ export default function AdminUsersPage() {
                       </div>
                     </td>
                     <td className="py-4 px-6 text-sm text-gray-600 font-medium">
-                      {user.created_at ? new Date(user.created_at).toLocaleDateString() : "N/A"}
+                      {user.created_at
+                        ? new Date(user.created_at).toLocaleDateString()
+                        : "N/A"}
                     </td>
                     <td className="py-4 px-6 text-center">
                       <span className="inline-flex items-center gap-1.5 px-3 py-1 font-semibold text-primary bg-primary/5 rounded-full">
@@ -268,9 +309,14 @@ export default function AdminUsersPage() {
                 <tr>
                   <td colSpan={5} className="py-20 text-center">
                     <div className="flex flex-col items-center gap-2">
-                       <Users size={48} className="text-gray-200" />
-                       <p className="text-gray-500 font-medium">No active researchers found since Mar 9th.</p>
-                       <p className="text-xs text-gray-400">Try inviting a new user or adjusting your search filters.</p>
+                      <Users size={48} className="text-gray-200" />
+                      <p className="text-gray-500 font-medium">
+                        No active researchers found since Mar 9th.
+                      </p>
+                      <p className="text-xs text-gray-400">
+                        Try inviting a new user or adjusting your search
+                        filters.
+                      </p>
                     </div>
                   </td>
                 </tr>
@@ -343,7 +389,9 @@ export default function AdminUsersPage() {
                     Registered
                   </p>
                   <p className="text-sm font-semibold text-primary">
-                    {selectedUser.created_at ? new Date(selectedUser.created_at).toLocaleDateString() : "N/A"}
+                    {selectedUser.created_at
+                      ? new Date(selectedUser.created_at).toLocaleDateString()
+                      : "N/A"}
                   </p>
                 </div>
               </div>
@@ -390,62 +438,62 @@ export default function AdminUsersPage() {
                 </div>
               </div>
               <div className="h-64 w-full">
-                  <ResponsiveContainer width="100%" height="100%">
-                    {trendLoading ? (
-                      <div className="flex items-center justify-center h-full">
-                        <Loader2 className="animate-spin text-accent" size={32} />
-                      </div>
-                    ) : userTrendData.length > 0 ? (
-                      <LineChart
-                        data={userTrendData}
-                        margin={{ top: 5, right: 10, left: -20, bottom: 0 }}
-                      >
-                        <CartesianGrid
-                          strokeDasharray="3 3"
-                          vertical={false}
-                          stroke="#E5E7EB"
-                        />
-                        <XAxis
-                          dataKey="date"
-                          axisLine={false}
-                          tickLine={false}
-                          tick={{ fill: "#6B7280", fontSize: 12 }}
-                          dy={10}
-                        />
-                        <YAxis
-                          axisLine={false}
-                          tickLine={false}
-                          tick={{ fill: "#6B7280", fontSize: 12 }}
-                          domain={[0, 100]}
-                        />
-                        <Tooltip
-                          contentStyle={{
-                            borderRadius: "8px",
-                            border: "none",
-                            boxShadow: "0 4px 6px -1px rgb(0 0 0 / 0.1)",
-                          }}
-                          itemStyle={{ color: "#08293C", fontWeight: "bold" }}
-                        />
-                        <Line
-                          type="monotone"
-                          dataKey="score"
-                          stroke="#FF5A00"
-                          strokeWidth={3}
-                          dot={{
-                            fill: "#FF5A00",
-                            strokeWidth: 2,
-                            r: 4,
-                            stroke: "#FFFFFF",
-                          }}
-                          activeDot={{ r: 6, strokeWidth: 0, fill: "#08293C" }}
-                        />
-                      </LineChart>
-                    ) : (
-                      <div className="flex items-center justify-center h-full text-gray-400 text-sm">
-                        No trend data available for this period.
-                      </div>
-                    )}
-                  </ResponsiveContainer>
+                <ResponsiveContainer width="100%" height="100%">
+                  {trendLoading ? (
+                    <div className="flex items-center justify-center h-full">
+                      <Loader2 className="animate-spin text-accent" size={32} />
+                    </div>
+                  ) : userTrendData.length > 0 ? (
+                    <LineChart
+                      data={userTrendData}
+                      margin={{ top: 5, right: 10, left: -20, bottom: 0 }}
+                    >
+                      <CartesianGrid
+                        strokeDasharray="3 3"
+                        vertical={false}
+                        stroke="#E5E7EB"
+                      />
+                      <XAxis
+                        dataKey="date"
+                        axisLine={false}
+                        tickLine={false}
+                        tick={{ fill: "#6B7280", fontSize: 12 }}
+                        dy={10}
+                      />
+                      <YAxis
+                        axisLine={false}
+                        tickLine={false}
+                        tick={{ fill: "#6B7280", fontSize: 12 }}
+                        domain={[0, 100]}
+                      />
+                      <Tooltip
+                        contentStyle={{
+                          borderRadius: "8px",
+                          border: "none",
+                          boxShadow: "0 4px 6px -1px rgb(0 0 0 / 0.1)",
+                        }}
+                        itemStyle={{ color: "#08293C", fontWeight: "bold" }}
+                      />
+                      <Line
+                        type="monotone"
+                        dataKey="score"
+                        stroke="#FF5A00"
+                        strokeWidth={3}
+                        dot={{
+                          fill: "#FF5A00",
+                          strokeWidth: 2,
+                          r: 4,
+                          stroke: "#FFFFFF",
+                        }}
+                        activeDot={{ r: 6, strokeWidth: 0, fill: "#08293C" }}
+                      />
+                    </LineChart>
+                  ) : (
+                    <div className="flex items-center justify-center h-full text-gray-400 text-sm">
+                      No trend data available for this period.
+                    </div>
+                  )}
+                </ResponsiveContainer>
               </div>
             </div>
 
@@ -497,7 +545,10 @@ export default function AdminUsersPage() {
                     ))}
                     {selectedUser.recentUploads.length === 0 && (
                       <tr>
-                        <td colSpan={3} className="py-8 text-center text-gray-400 text-sm">
+                        <td
+                          colSpan={3}
+                          className="py-8 text-center text-gray-400 text-sm"
+                        >
                           No real data uploads found since Mar 9th.
                         </td>
                       </tr>

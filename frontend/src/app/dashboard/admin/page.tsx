@@ -46,19 +46,22 @@ export default function AdminOverview() {
   const [rules, setRules] = useState<Rule[]>([]);
   const [auditLogs, setAuditLogs] = useState<AuditLog[]>([]);
   const [health, setHealth] = useState<SystemHealth | null>(null);
-  const [chartData, setChartData] = useState<{ date: string; score: number }[]>([]);
+  const [chartData, setChartData] = useState<{ date: string; score: number }[]>(
+    []
+  );
 
   useEffect(() => {
     const fetchData = async () => {
       try {
         setLoading(true);
-        const [usersData, datasetsData, rulesData, auditData, healthData] = await Promise.all([
-          getUsers(),
-          getDatasets(),
-          getRules(),
-          getAuditLogs(),
-          getSystemHealth(),
-        ]);
+        const [usersData, datasetsData, rulesData, auditData, healthData] =
+          await Promise.all([
+            getUsers(),
+            getDatasets(),
+            getRules(),
+            getAuditLogs(),
+            getSystemHealth(),
+          ]);
 
         const filteredDatasets = datasetsData;
 
@@ -72,27 +75,45 @@ export default function AdminOverview() {
 
         // Fetch trends for chart (collect all dataset IDs)
         if (filteredDatasets.length > 0) {
-          const ids = filteredDatasets.map(d => d.id);
-          const trends = await getBulkQualityTrends(ids, { start_date: REAL_DATA_START_DATE });
+          const ids = filteredDatasets.map((d) => d.id);
+          const trends = await getBulkQualityTrends(ids, {
+            start_date: REAL_DATA_START_DATE,
+          });
 
           if (Array.isArray(trends)) {
             // Group trends by date for a system-wide view
-            const grouped = trends.reduce((acc: Record<string, { date: string; score: number; count: number }>, t) => {
-              if (!t.checked_at) return acc;
-              const date = new Date(t.checked_at).toLocaleDateString(undefined, {
-                month: "short",
-                day: "numeric",
-              });
-              if (!acc[date]) acc[date] = { date, score: 0, count: 0 };
-              acc[date].score += t.score || 0;
-              acc[date].count += 1;
-              return acc;
-            }, {});
+            const grouped = trends.reduce(
+              (
+                acc: Record<
+                  string,
+                  { date: string; score: number; count: number }
+                >,
+                t
+              ) => {
+                if (!t.checked_at) return acc;
+                const date = new Date(t.checked_at).toLocaleDateString(
+                  undefined,
+                  {
+                    month: "short",
+                    day: "numeric",
+                  }
+                );
+                if (!acc[date]) acc[date] = { date, score: 0, count: 0 };
+                acc[date].score += t.score || 0;
+                acc[date].count += 1;
+                return acc;
+              },
+              {}
+            );
 
-            setChartData(Object.values(grouped).map((g) => ({
-              date: g.date,
-              score: Math.round(g.score / g.count)
-            })).slice(-7));
+            setChartData(
+              Object.values(grouped)
+                .map((g) => ({
+                  date: g.date,
+                  score: Math.round(g.score / g.count),
+                }))
+                .slice(-7)
+            );
           }
         }
       } catch (err) {
@@ -106,27 +127,40 @@ export default function AdminOverview() {
   }, []);
 
   const stats = useMemo(() => {
-    const datasetsWithScores = datasets.filter(d => d.score !== undefined && d.score !== null);
-    const avgScore = datasetsWithScores.length > 0
-      ? Math.round(datasetsWithScores.reduce((acc, d) => acc + (d.score || 0), 0) / datasetsWithScores.length)
-      : 0;
+    const datasetsWithScores = datasets.filter(
+      (d) => d.score !== undefined && d.score !== null
+    );
+    const avgScore =
+      datasetsWithScores.length > 0
+        ? Math.round(
+            datasetsWithScores.reduce((acc, d) => acc + (d.score || 0), 0) /
+              datasetsWithScores.length
+          )
+        : 0;
 
     const worstDatasets = datasets
-      .filter(d => d.score !== null && d.score !== undefined)
+      .filter((d) => d.score !== null && d.score !== undefined)
       .sort((a, b) => (a.score || 0) - (b.score || 0))
       .slice(0, 5);
 
-    const activeUsers = users.map(u => {
-      const userDatasets = datasets.filter(d => d.uploaded_by === u.id);
-      const userAvgScore = userDatasets.length > 0
-        ? Math.round(userDatasets.reduce((acc, d) => acc + (d.score || 0), 0) / userDatasets.length)
-        : 0;
-      return {
-        ...u,
-        uploads: userDatasets.length,
-        avgScore: userAvgScore
-      };
-    }).sort((a, b) => b.uploads - a.uploads).slice(0, 5);
+    const activeUsers = users
+      .map((u) => {
+        const userDatasets = datasets.filter((d) => d.uploaded_by === u.id);
+        const userAvgScore =
+          userDatasets.length > 0
+            ? Math.round(
+                userDatasets.reduce((acc, d) => acc + (d.score || 0), 0) /
+                  userDatasets.length
+              )
+            : 0;
+        return {
+          ...u,
+          uploads: userDatasets.length,
+          avgScore: userAvgScore,
+        };
+      })
+      .sort((a, b) => b.uploads - a.uploads)
+      .slice(0, 5);
 
     return {
       avgScore,
@@ -135,7 +169,7 @@ export default function AdminOverview() {
       totalDatasets: datasets.length,
       totalUsers: users.length,
       totalRules: rules.length,
-      totalActivity: auditLogs.length
+      totalActivity: auditLogs.length,
     };
   }, [users, datasets, rules, auditLogs]);
 
@@ -143,7 +177,9 @@ export default function AdminOverview() {
     return (
       <div className="flex flex-col items-center justify-center min-h-[60vh] gap-4">
         <Loader2 className="animate-spin text-accent" size={48} />
-        <p className="text-gray-500 font-medium animate-pulse">Calculating real-time analytics...</p>
+        <p className="text-gray-500 font-medium animate-pulse">
+          Calculating real-time analytics...
+        </p>
       </div>
     );
   }
@@ -158,11 +194,19 @@ export default function AdminOverview() {
           </p>
         </div>
         <div className="flex items-center gap-3">
-          <div className={`px-5 py-2 bg-white border border-gray-100 text-[12px] font-bold rounded-xl flex items-center gap-2 ${
-            health?.status === "healthy" ? "text-success" : "text-danger"
-          }`}>
-            <ShieldCheck size={14} className={health?.status === "healthy" ? "text-success" : "text-danger"} />
-            System Status: {health?.status === "healthy" ? "HEALTHY" : "CRITICAL"}
+          <div
+            className={`px-5 py-2 bg-white border border-gray-100 text-[12px] font-bold rounded-xl flex items-center gap-2 ${
+              health?.status === "healthy" ? "text-success" : "text-danger"
+            }`}
+          >
+            <ShieldCheck
+              size={14}
+              className={
+                health?.status === "healthy" ? "text-success" : "text-danger"
+              }
+            />
+            System Status:{" "}
+            {health?.status === "healthy" ? "HEALTHY" : "CRITICAL"}
           </div>
           <div className="px-5 py-2 bg-white border border-gray-100 text-[12px] font-bold text-[#08293c] rounded-xl flex items-center gap-2 text-gray-400">
             <Clock size={14} className="text-[#ff5a00]" />
@@ -198,27 +242,32 @@ export default function AdminOverview() {
             value: stats.totalRules,
             color: "bg-accent/10 text-accent",
           },
-        ].filter(card => !(card.label === "System Avg Score" && stats.avgScore === 0)).map((card, i) => (
-          <div
-            key={i}
-            className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 flex items-center gap-4 animate-in slide-in-from-bottom-4 duration-500"
-            style={{ animationDelay: `${i * 100}ms` }}
-          >
+        ]
+          .filter(
+            (card) =>
+              !(card.label === "System Avg Score" && stats.avgScore === 0)
+          )
+          .map((card, i) => (
             <div
-              className={`w-12 h-12 ${card.color} rounded-lg flex items-center justify-center`}
+              key={i}
+              className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 flex items-center gap-4 animate-in slide-in-from-bottom-4 duration-500"
+              style={{ animationDelay: `${i * 100}ms` }}
             >
-              <card.icon size={24} />
+              <div
+                className={`w-12 h-12 ${card.color} rounded-lg flex items-center justify-center`}
+              >
+                <card.icon size={24} />
+              </div>
+              <div>
+                <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-0.5">
+                  {card.label}
+                </p>
+                <h3 className="font-black text-[#08293c] text-xl">
+                  {card.value}
+                </h3>
+              </div>
             </div>
-            <div>
-              <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-0.5">
-                {card.label}
-              </p>
-              <h3 className="font-black text-[#08293c] text-xl">
-                {card.value}
-              </h3>
-            </div>
-          </div>
-        ))}
+          ))}
       </div>
 
       {/* Main Grid Layout */}
@@ -335,9 +384,12 @@ export default function AdminOverview() {
                         </td>
                         <td className="py-3 px-5 text-sm text-gray-600 flex items-center gap-2">
                           <div className="w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center text-xs font-bold text-primary">
-                            {users.find(u => u.id === dataset.uploaded_by)?.full_name?.charAt(0) || "U"}
+                            {users
+                              .find((u) => u.id === dataset.uploaded_by)
+                              ?.full_name?.charAt(0) || "U"}
                           </div>
-                          {users.find(u => u.id === dataset.uploaded_by)?.full_name || "Unknown"}
+                          {users.find((u) => u.id === dataset.uploaded_by)
+                            ?.full_name || "Unknown"}
                         </td>
                         <td className="py-3 px-5 text-sm font-semibold text-danger">
                           {dataset.failed_rules || 0} rules failed
@@ -353,8 +405,12 @@ export default function AdminOverview() {
                     ))
                   ) : (
                     <tr>
-                      <td colSpan={4} className="py-12 text-center text-gray-400 italic">
-                        System is healthy - No critical failures detected since Mar 9th.
+                      <td
+                        colSpan={4}
+                        className="py-12 text-center text-gray-400 italic"
+                      >
+                        System is healthy - No critical failures detected since
+                        Mar 9th.
                       </td>
                     </tr>
                   )}
@@ -385,11 +441,17 @@ export default function AdminOverview() {
                         {activity.trigger_type}
                       </span>
                       <span className="text-xs text-gray-400">
-                        {new Date(activity.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                        {new Date(activity.timestamp).toLocaleTimeString([], {
+                          hour: "2-digit",
+                          minute: "2-digit",
+                        })}
                       </span>
                     </div>
                     <p className="text-sm text-gray-800">
-                      <span className="font-semibold">{activity.triggered_by}</span> on{" "}
+                      <span className="font-semibold">
+                        {activity.triggered_by}
+                      </span>{" "}
+                      on{" "}
                       <span className="font-mono text-primary bg-primary/5 px-1 py-0.5 rounded">
                         {activity.dataset_name}
                       </span>
@@ -407,7 +469,10 @@ export default function AdminOverview() {
                 ))}
               </div>
               <div className="p-4 border-t border-gray-100 text-center bg-gray-50/50 rounded-b-xl">
-                <Link href="/dashboard/admin/trends" className="text-sm font-semibold text-primary hover:text-accent transition-colors flex items-center justify-center gap-1 w-full">
+                <Link
+                  href="/dashboard/admin/trends"
+                  className="text-sm font-semibold text-primary hover:text-accent transition-colors flex items-center justify-center gap-1 w-full"
+                >
                   View Full Audit Log <ArrowRight size={16} />
                 </Link>
               </div>

@@ -26,7 +26,10 @@ export async function getAlertConfig(
     const error = err as Error;
     // If method is not allowed, it means backend hasn't implemented GET yet.
     // We return a default instead of null to allow the frontend to function.
-    if (error.message?.includes("Method") || error.message?.includes("Allowed")) {
+    if (
+      error.message?.includes("Method") ||
+      error.message?.includes("Allowed")
+    ) {
       return {
         id: 0,
         dataset_id: datasetId,

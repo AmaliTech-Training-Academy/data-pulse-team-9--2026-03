@@ -103,7 +103,11 @@ export default function AdminRulesPage() {
       ]);
 
       setRules(rulesData);
-      setDatasets(datasetsData.filter(d => !d.uploaded_at || d.uploaded_at >= REAL_DATA_START_DATE));
+      setDatasets(
+        datasetsData.filter(
+          (d) => !d.uploaded_at || d.uploaded_at >= REAL_DATA_START_DATE
+        )
+      );
       setError(null);
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "Failed to fetch data");

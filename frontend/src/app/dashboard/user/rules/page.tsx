@@ -7,7 +7,6 @@ import {
   Settings,
   Trash2,
   Activity,
-  Database,
   Plus,
   X,
   AlertCircle,
@@ -23,7 +22,6 @@ import {
   deleteRule,
   ValidationRule,
   RuleCreateData,
-  GetRulesParams,
 } from "@/services/rules";
 import { getDatasets, Dataset } from "@/services/datasets";
 
@@ -36,7 +34,7 @@ const getStatusColor = (isActive: boolean) => {
 
 export default function UserRulesPage() {
   const [rules, setRules] = useState<ValidationRule[]>([]);
-  const [datasets, setDatasets] = useState<Dataset[]>([]);
+  const [, setDatasets] = useState<Dataset[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -203,10 +201,12 @@ export default function UserRulesPage() {
       rule.field_name.toLowerCase().includes(searchTerm.toLowerCase());
 
     // Severity filter
-    const matchesSeverity = !selectedSeverity || rule.severity === selectedSeverity;
+    const matchesSeverity =
+      !selectedSeverity || rule.severity === selectedSeverity;
 
     // Type filter
-    const matchesType = !selectedRuleType || rule.rule_type === selectedRuleType;
+    const matchesType =
+      !selectedRuleType || rule.rule_type === selectedRuleType;
 
     // Real Data filter (March 9th, 2026+)
     const matchesDate = rule.created_at >= REAL_DATA_START_DATE;

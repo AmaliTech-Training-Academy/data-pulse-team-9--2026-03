@@ -7,7 +7,6 @@ import {
   CheckCircle2,
   XCircle,
   ArrowLeft,
-  Download,
   Calendar,
   Loader2,
 } from "lucide-react";
@@ -131,7 +130,7 @@ export default function ReportsPage() {
       try {
         const detail = await getDatasetReport(datasetId);
         setReportDetail(detail);
-      } catch (innerErr) {
+      } catch {
         alert("Failed to load report details.");
         setSelectedReportId(null);
       }

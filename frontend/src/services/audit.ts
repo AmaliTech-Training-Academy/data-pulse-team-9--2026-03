@@ -17,12 +17,15 @@ export const getAuditLogs = async (params?: {
   dataset_id?: number | string;
   start_date?: string;
   end_date?: string;
-}): Promise<AuditLogResponse[] | { results: AuditLogResponse[]; count: number }> => {
+}): Promise<
+  AuditLogResponse[] | { results: AuditLogResponse[]; count: number }
+> => {
   const token = localStorage.getItem("token");
   if (!token) throw new Error("No authentication token found");
 
   const urlParams = new URLSearchParams();
-  if (params?.dataset_id) urlParams.append("dataset_id", params.dataset_id.toString());
+  if (params?.dataset_id)
+    urlParams.append("dataset_id", params.dataset_id.toString());
   if (params?.start_date) urlParams.append("start_date", params.start_date);
   if (params?.end_date) urlParams.append("end_date", params.end_date);
 

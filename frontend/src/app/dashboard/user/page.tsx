@@ -16,7 +16,6 @@ import {
   ClipboardCheck,
   Clock,
   Loader2,
-  AlertCircle,
 } from "lucide-react";
 import {
   LineChart,
@@ -73,7 +72,9 @@ export default function DashboardOverview() {
   const loadDashboard = useCallback(async () => {
     try {
       const data = await fetchApi("/reports/dashboard");
-      const datasetsArray = (Array.isArray(data) ? data : data?.results || []) as Dataset[];
+      const datasetsArray = (
+        Array.isArray(data) ? data : data?.results || []
+      ) as Dataset[];
       // Filter for real data (March 9th+) or pending datasets
       const filtered = datasetsArray.filter(
         (d) => !d.checked_at || d.checked_at >= REAL_DATA_START_DATE
@@ -109,10 +110,23 @@ export default function DashboardOverview() {
             start_date: REAL_DATA_START_DATE,
             limit: 10,
           });
-          const results = (Array.isArray(data)
-            ? data
-            : (data as { results?: QualityScoreResponse[]; trends?: QualityScoreResponse[] })?.results ||
-              (data as { results?: QualityScoreResponse[]; trends?: QualityScoreResponse[] })?.trends || []) as QualityScoreResponse[];
+          const results = (
+            Array.isArray(data)
+              ? data
+              : (
+                  data as {
+                    results?: QualityScoreResponse[];
+                    trends?: QualityScoreResponse[];
+                  }
+                )?.results ||
+                (
+                  data as {
+                    results?: QualityScoreResponse[];
+                    trends?: QualityScoreResponse[];
+                  }
+                )?.trends ||
+                []
+          ) as QualityScoreResponse[];
           const formatted = (Array.isArray(results) ? results : [])
             .filter(
               (r): r is QualityScoreResponse & { checked_at: string } =>
@@ -165,15 +179,20 @@ export default function DashboardOverview() {
   );
 
   const latestCheck = datasets
-    .filter((d) => d.checked_at !== null && d.checked_at >= REAL_DATA_START_DATE)
+    .filter(
+      (d) => d.checked_at !== null && d.checked_at >= REAL_DATA_START_DATE
+    )
     .sort(
       (a, b) =>
         new Date(b.checked_at!).getTime() - new Date(a.checked_at!).getTime()
     )[0]?.checked_at;
 
-  const formattedLastCheck = mounted && latestCheck
-    ? new Date(latestCheck).toLocaleDateString()
-    : mounted ? "No checks run" : "---";
+  const formattedLastCheck =
+    mounted && latestCheck
+      ? new Date(latestCheck).toLocaleDateString()
+      : mounted
+        ? "No checks run"
+        : "---";
 
   return (
     <div className="space-y-6 animate-in fade-in duration-500">

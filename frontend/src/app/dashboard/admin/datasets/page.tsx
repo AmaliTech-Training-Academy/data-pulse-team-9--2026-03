@@ -80,27 +80,30 @@ export default function AdminDatasetsPage() {
         getUsers(),
       ]);
 
-      const processed = datasetsData
-        .map((d: Dataset) => {
-          let userEmail = "System User";
-          const uploadedBy = d.uploaded_by;
-          if (uploadedBy && typeof uploadedBy === "object" && "email" in uploadedBy) {
-            userEmail = uploadedBy.email;
-          } else if (typeof uploadedBy === "number") {
-            const userObj = usersData.find((u: User) => u.id === uploadedBy);
-            if (userObj) userEmail = userObj.email;
-          }
+      const processed = datasetsData.map((d: Dataset) => {
+        let userEmail = "System User";
+        const uploadedBy = d.uploaded_by;
+        if (
+          uploadedBy &&
+          typeof uploadedBy === "object" &&
+          "email" in uploadedBy
+        ) {
+          userEmail = uploadedBy.email;
+        } else if (typeof uploadedBy === "number") {
+          const userObj = usersData.find((u: User) => u.id === uploadedBy);
+          if (userObj) userEmail = userObj.email;
+        }
 
-          return {
-            id: d.id,
-            name: d.name || `dataset_file_${d.id}.${d.file_type || "csv"}`,
-            user: userEmail,
-            type: (d.file_type || "CSV").toUpperCase(),
-            date: new Date(d.uploaded_at).toLocaleDateString(),
-            status: d.status,
-            score: d.score !== undefined ? d.score : null,
-          };
-        });
+        return {
+          id: d.id,
+          name: d.name || `dataset_file_${d.id}.${d.file_type || "csv"}`,
+          user: userEmail,
+          type: (d.file_type || "CSV").toUpperCase(),
+          date: new Date(d.uploaded_at).toLocaleDateString(),
+          status: d.status,
+          score: d.score !== undefined ? d.score : null,
+        };
+      });
 
       setDatasets(processed);
       setUsersList(usersData);

@@ -1,14 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import {
-  User,
-  Bell,
-  ShieldAlert,
-  Save,
-  Loader2,
-  CheckCircle2,
-} from "lucide-react";
+import { Bell, ShieldAlert, Save, Loader2, CheckCircle2 } from "lucide-react";
 import { getDatasets, Dataset } from "@/services/datasets";
 import {
   getAlertConfig,
@@ -38,8 +31,8 @@ export default function SettingsPage() {
   const FREQUENCY_PRESETS: Record<string, string> = {
     "daily-midnight": "0 0 * * *",
     "daily-noon": "0 12 * * *",
-    "weekly": "0 0 * * 1",
-    "monthly": "0 0 1 * *",
+    weekly: "0 0 * * 1",
+    monthly: "0 0 1 * *",
   };
   // Initial load
   useEffect(() => {
@@ -73,22 +66,28 @@ export default function SettingsPage() {
         ]);
 
         // Ensure alertConfig is initialized even if null
-        setAlertConfig(alertData || {
-          id: 0,
-          dataset_id: selectedDatasetId,
-          threshold: 80,
-          email_notifications: true,
-          is_alert_active: false,
-          created_at: "",
-          updated_at: ""
-        });
+        setAlertConfig(
+          alertData || {
+            id: 0,
+            dataset_id: selectedDatasetId,
+            threshold: 80,
+            email_notifications: true,
+            is_alert_active: false,
+            created_at: "",
+            updated_at: "",
+          }
+        );
 
         // Find existing schedule or set default
-        const existing = schedulesData.find(s => s.dataset === selectedDatasetId);
+        const existing = schedulesData.find(
+          (s) => s.dataset === selectedDatasetId
+        );
         if (existing) {
           setSchedule(existing);
           // Try to match with preset
-          const presetValue = Object.keys(FREQUENCY_PRESETS).find(key => FREQUENCY_PRESETS[key] === existing.cron_expression);
+          const presetValue = Object.keys(FREQUENCY_PRESETS).find(
+            (key) => FREQUENCY_PRESETS[key] === existing.cron_expression
+          );
           if (presetValue) {
             setFrequency(presetValue);
             setIsAdvanced(false);
@@ -97,7 +96,10 @@ export default function SettingsPage() {
             setIsAdvanced(true);
           }
         } else {
-          setSchedule({ dataset: selectedDatasetId, cron_expression: "0 0 * * *" });
+          setSchedule({
+            dataset: selectedDatasetId,
+            cron_expression: "0 0 * * *",
+          });
           setFrequency("daily-midnight");
           setIsAdvanced(false);
         }
@@ -105,6 +107,13 @@ export default function SettingsPage() {
         console.error("Failed to load dataset config:", err);
       }
     };
+    const FREQUENCY_PRESETS: Record<string, string> = {
+      "daily-midnight": "0 0 * * *",
+      "daily-noon": "0 12 * * *",
+      weekly: "0 0 * * 1",
+      monthly: "0 0 1 * *",
+    };
+
     loadConfig();
   }, [selectedDatasetId]);
 
@@ -148,7 +157,9 @@ export default function SettingsPage() {
     <div className="max-w-4xl mx-auto space-y-8 pb-12">
       {/* Header */}
       <div>
-        <h2 className="text-xl font-black text-[#08293c]">DATA QUALITY SETTINGS</h2>
+        <h2 className="text-xl font-black text-[#08293c]">
+          DATA QUALITY SETTINGS
+        </h2>
         <p className="text-[12px] font-medium text-gray-400 mt-1">
           Manage thresholds, schedules, and alerts for your datasets.
         </p>
@@ -204,9 +215,7 @@ export default function SettingsPage() {
           {/* Email Alerts Toggle */}
           <div className="flex items-center justify-between group p-4 rounded-xl hover:bg-gray-50 transition-colors">
             <div>
-              <h4 className="font-bold text-[#08293c]">
-                Email Notifications
-              </h4>
+              <h4 className="font-bold text-[#08293c]">Email Notifications</h4>
               <p className="text-sm text-gray-500">
                 Receive an email when quality score drops below threshold.
               </p>
@@ -304,7 +313,11 @@ export default function SettingsPage() {
                     key={key}
                     onClick={() => {
                       setFrequency(key);
-                      setSchedule(prev => prev ? { ...prev, cron_expression: FREQUENCY_PRESETS[key] } : null);
+                      setSchedule((prev) =>
+                        prev
+                          ? { ...prev, cron_expression: FREQUENCY_PRESETS[key] }
+                          : null
+                      );
                     }}
                     className={`py-3 px-2 rounded-xl border-2 transition-all font-bold text-[11px] uppercase tracking-wider ${
                       frequency === key
@@ -322,11 +335,16 @@ export default function SettingsPage() {
                   type="text"
                   placeholder="0 0 * * *"
                   value={schedule?.cron_expression || ""}
-                  onChange={(e) => setSchedule(prev => prev ? { ...prev, cron_expression: e.target.value } : null)}
+                  onChange={(e) =>
+                    setSchedule((prev) =>
+                      prev ? { ...prev, cron_expression: e.target.value } : null
+                    )
+                  }
                   className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-accent outline-none transition-all font-mono text-primary text-center"
                 />
                 <p className="text-[10px] text-gray-400 font-medium text-center italic">
-                  Format: minute hour day month weekday (e.g., 0 0 * * * for daily).
+                  Format: minute hour day month weekday (e.g., 0 0 * * * for
+                  daily).
                 </p>
               </div>
             )}

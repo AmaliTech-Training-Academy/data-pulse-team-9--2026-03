@@ -51,7 +51,6 @@ export default function MyDatasetsPage() {
   const [statusFilter, setStatusFilter] = useState("all");
   const [checkingId, setCheckingId] = useState<number | null>(null);
   const [openDropdownId, setOpenDropdownId] = useState<number | null>(null);
-  const REAL_DATA_START_DATE = "2026-03-09";
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -132,18 +131,23 @@ export default function MyDatasetsPage() {
 
   const filteredDatasets = datasets.filter((d) => {
     // 1. Search filter
-    const matchesSearch = d.name.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesSearch = d.name
+      .toLowerCase()
+      .includes(searchTerm.toLowerCase());
 
     // 2. Status filter
     let matchesStatus = true;
     if (statusFilter === "checked") {
-      matchesStatus = d.status !== "PENDING" && d.status !== "PROCESSING" && d.status !== "ERROR";
+      matchesStatus =
+        d.status !== "PENDING" &&
+        d.status !== "PROCESSING" &&
+        d.status !== "ERROR";
     } else if (statusFilter === "unchecked") {
       matchesStatus = d.status === "PENDING";
     }
 
     // 3. Real Data filter (Safety double-check)
-    const matchesDate = d.date >= REAL_DATA_START_DATE;
+    // const matchesDate = d.date >= REAL_DATA_START_DATE;
 
     return matchesSearch && matchesStatus; // User only asked to filter by checked/not checked
   });

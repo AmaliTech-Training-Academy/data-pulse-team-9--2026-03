@@ -9,44 +9,8 @@ import {
 } from "lucide-react";
 import { getSystemHealth, SystemHealth } from "@/services/health";
 
-// Mock Audit Log Data (This section is kept as per the diff, but the audit log display section is removed)
-const auditLogs = [
-  {
-    id: 1,
-    user: "Sarah Designer",
-    action: "Dataset Upload",
-    target: "customers_q1.csv",
-    timestamp: "2023-10-24 14:30",
-  },
-  {
-    id: 2,
-    user: "Admin (System)",
-    action: "Rule Updated",
-    target: "Email Regex",
-    timestamp: "2023-10-24 12:15",
-  },
-  {
-    id: 3,
-    user: "John Doe",
-    action: "Validation Run",
-    target: "sales_data.json",
-    timestamp: "2023-10-24 10:45",
-  },
-  {
-    id: 4,
-    user: "Marketing Team",
-    action: "New User Invited",
-    target: "jane@corp.com",
-    timestamp: "2023-10-23 16:20",
-  },
-  {
-    id: 5,
-    user: "Admin (System)",
-    action: "Security Policy Change",
-    target: "Password Length",
-    timestamp: "2023-10-23 09:00",
-  },
-];
+// Health polling interval removed if it were unused, but it is used.
+// System health monitoring remains.
 
 export default function AdminSettingsPage() {
   const [appName, setAppName] = useState("DataPulse Pro");
@@ -128,7 +92,8 @@ export default function AdminSettingsPage() {
           <section className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
             <div className="p-5 border-b border-gray-100 bg-gray-50/50 flex items-center gap-3">
               <div className="p-2 bg-primary/10 text-primary rounded-lg">
-                <Database size={20} /> {/* Re-using Database icon for notifications */}
+                <Database size={20} />{" "}
+                {/* Re-using Database icon for notifications */}
               </div>
               <h3 className="text-lg font-bold text-primary">
                 Notifications & SMTP
@@ -207,16 +172,24 @@ export default function AdminSettingsPage() {
                   <span className="text-xs font-bold text-gray-500 uppercase">
                     PostgreSQL Database
                   </span>
-                  <span className={`text-[10px] font-black px-2 py-0.5 rounded-full uppercase tracking-tighter ${
-                    health?.database === "up" ? "bg-success/10 text-success" : "bg-danger/10 text-danger"
-                  }`}>
+                  <span
+                    className={`text-[10px] font-black px-2 py-0.5 rounded-full uppercase tracking-tighter ${
+                      health?.database === "up"
+                        ? "bg-success/10 text-success"
+                        : "bg-danger/10 text-danger"
+                    }`}
+                  >
                     {health?.database === "up" ? "Healthy" : "Down"}
                   </span>
                 </div>
                 <div className="w-full h-1.5 bg-gray-100 rounded-full overflow-hidden">
-                  <div className={`h-full transition-all duration-500 ${
-                    health?.database === "up" ? "bg-success w-full" : "bg-danger w-0"
-                  }`}></div>
+                  <div
+                    className={`h-full transition-all duration-500 ${
+                      health?.database === "up"
+                        ? "bg-success w-full"
+                        : "bg-danger w-0"
+                    }`}
+                  ></div>
                 </div>
               </div>
 
@@ -225,16 +198,24 @@ export default function AdminSettingsPage() {
                   <span className="text-xs font-bold text-gray-500 uppercase">
                     Redis Cache
                   </span>
-                  <span className={`text-[10px] font-black px-2 py-0.5 rounded-full uppercase tracking-tighter ${
-                    health?.redis === "up" ? "bg-success/10 text-success" : "bg-danger/10 text-danger"
-                  }`}>
+                  <span
+                    className={`text-[10px] font-black px-2 py-0.5 rounded-full uppercase tracking-tighter ${
+                      health?.redis === "up"
+                        ? "bg-success/10 text-success"
+                        : "bg-danger/10 text-danger"
+                    }`}
+                  >
                     {health?.redis === "up" ? "Connected" : "Disconnected"}
                   </span>
                 </div>
                 <div className="w-full h-1.5 bg-gray-100 rounded-full overflow-hidden">
-                  <div className={`h-full transition-all duration-500 ${
-                    health?.redis === "up" ? "bg-success w-full" : "bg-danger w-0"
-                  }`}></div>
+                  <div
+                    className={`h-full transition-all duration-500 ${
+                      health?.redis === "up"
+                        ? "bg-success w-full"
+                        : "bg-danger w-0"
+                    }`}
+                  ></div>
                 </div>
               </div>
             </div>
