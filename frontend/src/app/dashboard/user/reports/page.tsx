@@ -123,8 +123,8 @@ export default function ReportsPage() {
       {/* Header & Dataset Selector */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h2 className="text-2xl font-bold text-primary">Quality Reports</h2>
-          <p className="text-gray-500">
+          <h2 className="text-xl font-black text-[#08293c]">QUALITY REPORTS</h2>
+          <p className="text-[12px] font-medium text-gray-400 mt-1">
             View validation results and detailed rule breakdowns.
           </p>
         </div>
@@ -150,9 +150,9 @@ export default function ReportsPage() {
       <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
         <div className="p-6 border-b border-gray-100 bg-gray-50 flex items-center gap-2">
           <FileText size={20} className="text-accent" />
-          <h3 className="font-bold text-primary">
+          <h3 className="text-sm font-black text-[#08293c] uppercase tracking-widest leading-none">
             Report History:{" "}
-            <span className="text-gray-600 ml-1">
+            <span className="text-gray-400 font-bold ml-1">
               {selectedDatasetParam === "all"
                 ? "All Datasets"
                 : datasets.find((d) => d.id.toString() === selectedDatasetParam)
@@ -196,7 +196,7 @@ export default function ReportsPage() {
                   </div>
 
                   <div>
-                    <h4 className="font-bold text-primary text-lg flex items-center gap-2">
+                    <h4 className="text-base font-black text-[#08293c] group-hover:text-[#ff5a00] transition-colors">
                       {report.dataset_name}
                     </h4>
                     <div className="flex items-center gap-4 mt-2 text-sm">
@@ -206,9 +206,9 @@ export default function ReportsPage() {
                           ? new Date(report.checked_at).toLocaleString()
                           : "Unknown"}
                       </span>
-                      <span className="text-gray-500 font-medium ml-2">
+                      <span className="text-gray-400 font-bold ml-2 text-[11px] uppercase tracking-widest">
                         Rules:{" "}
-                        <span className="text-primary">
+                        <span className="text-[#08293c]">
                           {report.total_rules || 0}
                         </span>
                       </span>
@@ -281,7 +281,7 @@ export default function ReportsPage() {
               <ArrowLeft size={20} />
             </button>
             <div>
-              <h2 className="text-2xl font-bold text-primary">
+              <h2 className="text-xl font-black text-[#08293c] uppercase tracking-widest">
                 Report Details
               </h2>
               <p className="text-gray-500">
@@ -299,7 +299,7 @@ export default function ReportsPage() {
         {/* Overall Score Card */}
         <div className="bg-white p-6 md:p-8 rounded-xl shadow-sm border border-gray-100 flex flex-col md:flex-row items-center gap-8">
           <div className="text-center md:text-left flex-1 w-full">
-            <h3 className="text-sm font-bold text-gray-500 uppercase tracking-widest mb-2">
+            <h3 className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] mb-2">
               Overall Quality Score
             </h3>
             <div className="flex flex-col md:flex-row md:items-end gap-4">
@@ -342,27 +342,27 @@ export default function ReportsPage() {
         {/* Per-Rule Breakdown */}
         <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
           <div className="p-6 border-b border-gray-100">
-            <h3 className="text-lg font-bold text-primary">
-              Per-Rule Analysis (Row Counts)
+            <h3 className="text-sm font-black text-[#08293c] uppercase tracking-widest">
+              Per-Rule Analysis
             </h3>
           </div>
           <div className="overflow-x-auto">
             <table className="w-full text-left border-collapse">
               <thead>
                 <tr className="bg-gray-50 border-b border-gray-200">
-                  <th className="py-3 px-6 text-xs font-bold text-primary uppercase tracking-wider">
+                  <th className="py-3 px-6 text-[10px] font-black text-[#08293c] uppercase tracking-widest">
                     Rule Name
                   </th>
-                  <th className="py-3 px-6 text-xs font-bold text-primary uppercase tracking-wider">
-                    Rows Passed
+                  <th className="py-3 px-6 text-[10px] font-black text-[#08293c] uppercase tracking-widest">
+                    Passed
                   </th>
-                  <th className="py-3 px-6 text-xs font-bold text-primary uppercase tracking-wider">
-                    Rows Failed
+                  <th className="py-3 px-6 text-[10px] font-black text-[#08293c] uppercase tracking-widest">
+                    Failed
                   </th>
-                  <th className="py-3 px-6 text-xs font-bold text-primary uppercase tracking-wider">
+                  <th className="py-3 px-6 text-[10px] font-black text-[#08293c] uppercase tracking-widest">
                     Pass Rate
                   </th>
-                  <th className="py-3 px-6 text-xs font-bold text-primary uppercase tracking-wider w-48">
+                  <th className="py-3 px-6 text-[10px] font-black text-[#08293c] uppercase tracking-widest w-48">
                     Progress
                   </th>
                 </tr>
