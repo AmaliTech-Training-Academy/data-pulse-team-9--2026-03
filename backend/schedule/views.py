@@ -167,8 +167,11 @@ class AlertConfigView(generics.CreateAPIView):
                 status=status.HTTP_422_UNPROCESSABLE_ENTITY,
             )
 
-        threshold = serializer.validated_data["threshold"]
-        alert_config, created = AlertConfig.objects.update_or_create(dataset=dataset, defaults={"threshold": threshold})
+        defaults = serializer.validated_data
+        # We don't want to include dataset in defaults as it's used for lookup
+        defaults.pop("dataset", None)
+
+        alert_config, created = AlertConfig.objects.update_or_create(dataset=dataset, defaults=defaults)
 
         # Set is_alert_active to False when updating/creating threshold to allow re-alerting if needed
         # Or keep its state? Requirement implies "Repeat alerts are suppressed until ... recovers".
@@ -179,7 +182,7 @@ class AlertConfigView(generics.CreateAPIView):
         logger.info(
             "schedule.alert_config.saved",
             dataset_id=dataset.id,
-            threshold=threshold,
+            threshold=alert_config.threshold,
             user_id=request.user.id if request.user.is_authenticated else None,
         )
         response_serializer = self.get_serializer(alert_config)
