@@ -92,10 +92,31 @@ jobs:
             '.containerDefinitions[0].image = $IMAGE | del(.taskDefinitionArn, .revision, .status, .requiresAttributes, .compatibilities, .registeredAt, .registeredBy)')
           NEW_TASK_ARN=$(aws ecs register-task-definition --cli-input-json "$NEW_TASK_DEF" --query 'taskDefinition.taskDefinitionArn' --output text)
 
+          cat > appspec.json <<EOF
+          {
+            "version": 1,
+            "Resources": [
+              {
+                "TargetService": {
+                  "Type": "AWS::ECS::Service",
+                  "Properties": {
+                    "TaskDefinition": "$NEW_TASK_ARN",
+                    "LoadBalancerInfo": {
+                      "ContainerName": "streamlit",
+                      "ContainerPort": 8501
+                    }
+                  }
+                }
+              }
+            ]
+          }
+          EOF
+
+          APPSPEC_CONTENT=$(cat appspec.json | jq -c .)
           aws deploy create-deployment \
             --application-name datapulse-prod \
             --deployment-group-name datapulse-prod-streamlit \
-            --revision "{\"revisionType\":\"AppSpecContent\",\"appSpecContent\":{\"content\":\"{\\\"version\\\":1,\\\"Resources\\\":[{\\\"TargetService\\\":{\\\"Type\\\":\\\"AWS::ECS::Service\\\",\\\"Properties\\\":{\\\"TaskDefinition\\\":\\\"$NEW_TASK_ARN\\\",\\\"LoadBalancerInfo\\\":{\\\"ContainerName\\\":\\\"streamlit\\\",\\\"ContainerPort\\\":8501}}}}}]}\"}}"
+            --revision "{\"revisionType\":\"AppSpecContent\",\"appSpecContent\":{\"content\":\"$APPSPEC_CONTENT\"}}"
 
       - name: Deploy Grafana via CodeDeploy
         env:
@@ -107,10 +128,31 @@ jobs:
             '.containerDefinitions[0].image = $IMAGE | del(.taskDefinitionArn, .revision, .status, .requiresAttributes, .compatibilities, .registeredAt, .registeredBy)')
           NEW_TASK_ARN=$(aws ecs register-task-definition --cli-input-json "$NEW_TASK_DEF" --query 'taskDefinition.taskDefinitionArn' --output text)
 
+          cat > appspec.json <<EOF
+          {
+            "version": 1,
+            "Resources": [
+              {
+                "TargetService": {
+                  "Type": "AWS::ECS::Service",
+                  "Properties": {
+                    "TaskDefinition": "$NEW_TASK_ARN",
+                    "LoadBalancerInfo": {
+                      "ContainerName": "grafana",
+                      "ContainerPort": 3000
+                    }
+                  }
+                }
+              }
+            ]
+          }
+          EOF
+
+          APPSPEC_CONTENT=$(cat appspec.json | jq -c .)
           aws deploy create-deployment \
             --application-name datapulse-prod \
             --deployment-group-name datapulse-prod-grafana \
-            --revision "{\"revisionType\":\"AppSpecContent\",\"appSpecContent\":{\"content\":\"{\\\"version\\\":1,\\\"Resources\\\":[{\\\"TargetService\\\":{\\\"Type\\\":\\\"AWS::ECS::Service\\\",\\\"Properties\\\":{\\\"TaskDefinition\\\":\\\"$NEW_TASK_ARN\\\",\\\"LoadBalancerInfo\\\":{\\\"ContainerName\\\":\\\"grafana\\\",\\\"ContainerPort\\\":3000}}}}]}\"}}"
+            --revision "{\"revisionType\":\"AppSpecContent\",\"appSpecContent\":{\"content\":\"$APPSPEC_CONTENT\"}}"
 
       - name: Update Celery Worker
         env:
