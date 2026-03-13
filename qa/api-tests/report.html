@@ -1,0 +1,1091 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8"/>
+    <title id="head-title">report.html</title>
+      <style type="text/css">body {
+  font-family: Helvetica, Arial, sans-serif;
+  font-size: 12px;
+  /* do not increase min-width as some may use split screens */
+  min-width: 800px;
+  color: #999;
+}
+
+h1 {
+  font-size: 24px;
+  color: black;
+}
+
+h2 {
+  font-size: 16px;
+  color: black;
+}
+
+p {
+  color: black;
+}
+
+a {
+  color: #999;
+}
+
+table {
+  border-collapse: collapse;
+}
+
+/******************************
+ * SUMMARY INFORMATION
+ ******************************/
+#environment td {
+  padding: 5px;
+  border: 1px solid #e6e6e6;
+  vertical-align: top;
+}
+#environment tr:nth-child(odd) {
+  background-color: #f6f6f6;
+}
+#environment ul {
+  margin: 0;
+  padding: 0 20px;
+}
+
+/******************************
+ * TEST RESULT COLORS
+ ******************************/
+span.passed,
+.passed .col-result {
+  color: green;
+}
+
+span.skipped,
+span.xfailed,
+span.rerun,
+.skipped .col-result,
+.xfailed .col-result,
+.rerun .col-result {
+  color: orange;
+}
+
+span.error,
+span.failed,
+span.xpassed,
+.error .col-result,
+.failed .col-result,
+.xpassed .col-result {
+  color: red;
+}
+
+.col-links__extra {
+  margin-right: 3px;
+}
+
+/******************************
+ * RESULTS TABLE
+ *
+ * 1. Table Layout
+ * 2. Extra
+ * 3. Sorting items
+ *
+ ******************************/
+/*------------------
+ * 1. Table Layout
+ *------------------*/
+#results-table {
+  border: 1px solid #e6e6e6;
+  color: #999;
+  font-size: 12px;
+  width: 100%;
+}
+#results-table th,
+#results-table td {
+  padding: 5px;
+  border: 1px solid #e6e6e6;
+  text-align: left;
+}
+#results-table th {
+  font-weight: bold;
+}
+
+/*------------------
+ * 2. Extra
+ *------------------*/
+.logwrapper {
+  max-height: 230px;
+  overflow-y: scroll;
+  background-color: #e6e6e6;
+}
+.logwrapper.expanded {
+  max-height: none;
+}
+.logwrapper.expanded .logexpander:after {
+  content: "collapse [-]";
+}
+.logwrapper .logexpander {
+  z-index: 1;
+  position: sticky;
+  top: 10px;
+  width: max-content;
+  border: 1px solid;
+  border-radius: 3px;
+  padding: 5px 7px;
+  margin: 10px 0 10px calc(100% - 80px);
+  cursor: pointer;
+  background-color: #e6e6e6;
+}
+.logwrapper .logexpander:after {
+  content: "expand [+]";
+}
+.logwrapper .logexpander:hover {
+  color: #000;
+  border-color: #000;
+}
+.logwrapper .log {
+  min-height: 40px;
+  position: relative;
+  top: -50px;
+  height: calc(100% + 50px);
+  border: 1px solid #e6e6e6;
+  color: black;
+  display: block;
+  font-family: "Courier New", Courier, monospace;
+  padding: 5px;
+  padding-right: 80px;
+  white-space: pre-wrap;
+}
+
+div.media {
+  border: 1px solid #e6e6e6;
+  float: right;
+  height: 240px;
+  margin: 0 5px;
+  overflow: hidden;
+  width: 320px;
+}
+
+.media-container {
+  display: grid;
+  grid-template-columns: 25px auto 25px;
+  align-items: center;
+  flex: 1 1;
+  overflow: hidden;
+  height: 200px;
+}
+
+.media-container--fullscreen {
+  grid-template-columns: 0px auto 0px;
+}
+
+.media-container__nav--right,
+.media-container__nav--left {
+  text-align: center;
+  cursor: pointer;
+}
+
+.media-container__viewport {
+  cursor: pointer;
+  text-align: center;
+  height: inherit;
+}
+.media-container__viewport img,
+.media-container__viewport video {
+  object-fit: cover;
+  width: 100%;
+  max-height: 100%;
+}
+
+.media__name,
+.media__counter {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-around;
+  flex: 0 0 25px;
+  align-items: center;
+}
+
+.collapsible td:not(.col-links) {
+  cursor: pointer;
+}
+.collapsible td:not(.col-links):hover::after {
+  color: #bbb;
+  font-style: italic;
+  cursor: pointer;
+}
+
+.col-result {
+  width: 130px;
+}
+.col-result:hover::after {
+  content: " (hide details)";
+}
+
+.col-result.collapsed:hover::after {
+  content: " (show details)";
+}
+
+#environment-header h2:hover::after {
+  content: " (hide details)";
+  color: #bbb;
+  font-style: italic;
+  cursor: pointer;
+  font-size: 12px;
+}
+
+#environment-header.collapsed h2:hover::after {
+  content: " (show details)";
+  color: #bbb;
+  font-style: italic;
+  cursor: pointer;
+  font-size: 12px;
+}
+
+/*------------------
+ * 3. Sorting items
+ *------------------*/
+.sortable {
+  cursor: pointer;
+}
+.sortable.desc:after {
+  content: " ";
+  position: relative;
+  left: 5px;
+  bottom: -12.5px;
+  border: 10px solid #4caf50;
+  border-bottom: 0;
+  border-left-color: transparent;
+  border-right-color: transparent;
+}
+.sortable.asc:after {
+  content: " ";
+  position: relative;
+  left: 5px;
+  bottom: 12.5px;
+  border: 10px solid #4caf50;
+  border-top: 0;
+  border-left-color: transparent;
+  border-right-color: transparent;
+}
+
+.hidden, .summary__reload__button.hidden {
+  display: none;
+}
+
+.summary__data {
+  flex: 0 0 550px;
+}
+.summary__reload {
+  flex: 1 1;
+  display: flex;
+  justify-content: center;
+}
+.summary__reload__button {
+  flex: 0 0 300px;
+  display: flex;
+  color: white;
+  font-weight: bold;
+  background-color: #4caf50;
+  text-align: center;
+  justify-content: center;
+  align-items: center;
+  border-radius: 3px;
+  cursor: pointer;
+}
+.summary__reload__button:hover {
+  background-color: #46a049;
+}
+.summary__spacer {
+  flex: 0 0 550px;
+}
+
+.controls {
+  display: flex;
+  justify-content: space-between;
+}
+
+.filters,
+.collapse {
+  display: flex;
+  align-items: center;
+}
+.filters button,
+.collapse button {
+  color: #999;
+  border: none;
+  background: none;
+  cursor: pointer;
+  text-decoration: underline;
+}
+.filters button:hover,
+.collapse button:hover {
+  color: #ccc;
+}
+
+.filter__label {
+  margin-right: 10px;
+}
+
+      </style>
+
+  </head>
+  <body>
+    <h1 id="title">report.html</h1>
+    <p>Report generated on 11-Mar-2026 at 09:51:06 by <a href="https://pypi.python.org/pypi/pytest-html">pytest-html</a>
+        v4.1.1</p>
+    <div id="environment-header">
+      <h2>Environment</h2>
+    </div>
+    <table id="environment"></table>
+    <!-- TEMPLATES -->
+      <template id="template_environment_row">
+      <tr>
+        <td></td>
+        <td></td>
+      </tr>
+    </template>
+    <template id="template_results-table__body--empty">
+      <tbody class="results-table-row">
+        <tr id="not-found-message">
+          <td colspan="4">No results found. Check the filters.</th>
+        </tr>
+    </template>
+    <template id="template_results-table__tbody">
+      <tbody class="results-table-row">
+        <tr class="collapsible">
+        </tr>
+        <tr class="extras-row">
+          <td class="extra" colspan="4">
+            <div class="extraHTML"></div>
+            <div class="media">
+              <div class="media-container">
+                  <div class="media-container__nav--left"><</div>
+                  <div class="media-container__viewport">
+                    <img src="" />
+                    <video controls>
+                      <source src="" type="video/mp4">
+                    </video>
+                  </div>
+                  <div class="media-container__nav--right">></div>
+                </div>
+                <div class="media__name"></div>
+                <div class="media__counter"></div>
+            </div>
+            <div class="logwrapper">
+              <div class="logexpander"></div>
+              <div class="log"></div>
+            </div>
+          </td>
+        </tr>
+      </tbody>
+    </template>
+    <!-- END TEMPLATES -->
+    <div class="summary">
+      <div class="summary__data">
+        <h2>Summary</h2>
+        <div class="additional-summary prefix">
+        </div>
+        <p class="run-count">82 tests took 00:00:05.</p>
+        <p class="filter">(Un)check the boxes to filter the results.</p>
+        <div class="summary__reload">
+          <div class="summary__reload__button hidden" onclick="location.reload()">
+            <div>There are still tests running. <br />Reload this page to get the latest results!</div>
+          </div>
+        </div>
+        <div class="summary__spacer"></div>
+        <div class="controls">
+          <div class="filters">
+            <input checked="true" class="filter" name="filter_checkbox" type="checkbox" data-test-result="failed" />
+            <span class="failed">43 Failed,</span>
+            <input checked="true" class="filter" name="filter_checkbox" type="checkbox" data-test-result="passed" />
+            <span class="passed">39 Passed,</span>
+            <input checked="true" class="filter" name="filter_checkbox" type="checkbox" data-test-result="skipped" disabled/>
+            <span class="skipped">0 Skipped,</span>
+            <input checked="true" class="filter" name="filter_checkbox" type="checkbox" data-test-result="xfailed" disabled/>
+            <span class="xfailed">0 Expected failures,</span>
+            <input checked="true" class="filter" name="filter_checkbox" type="checkbox" data-test-result="xpassed" disabled/>
+            <span class="xpassed">0 Unexpected passes,</span>
+            <input checked="true" class="filter" name="filter_checkbox" type="checkbox" data-test-result="error" />
+            <span class="error">11 Errors,</span>
+            <input checked="true" class="filter" name="filter_checkbox" type="checkbox" data-test-result="rerun" disabled/>
+            <span class="rerun">0 Reruns</span>
+          </div>
+          <div class="collapse">
+            <button id="show_all_details">Show all details</button>&nbsp;/&nbsp;<button id="hide_all_details">Hide all details</button>
+          </div>
+        </div>
+      </div>
+      <div class="additional-summary summary">
+      </div>
+      <div class="additional-summary postfix">
+      </div>
+    </div>
+    <table id="results-table">
+      <thead id="results-table-head">
+        <tr>
+          <th class="sortable" data-column-type="result">Result</th>
+          <th class="sortable" data-column-type="testId">Test</th>
+          <th class="sortable" data-column-type="duration">Duration</th>
+          <th>Links</th>
+        </tr>
+      </thead>
+    </table>
+  </body>
+  <footer>
+    <div id="data-container" data-jsonblob="{&#34;environment&#34;: {&#34;Python&#34;: &#34;3.14.3&#34;, &#34;Platform&#34;: &#34;Windows-11-10.0.22631-SP0&#34;, &#34;Packages&#34;: {&#34;pytest&#34;: &#34;9.0.2&#34;, &#34;pluggy&#34;: &#34;1.6.0&#34;}, &#34;Plugins&#34;: {&#34;anyio&#34;: &#34;4.12.1&#34;, &#34;Faker&#34;: &#34;40.8.0&#34;, &#34;asyncio&#34;: &#34;1.3.0&#34;, &#34;cov&#34;: &#34;4.1.0&#34;, &#34;html&#34;: &#34;4.1.1&#34;, &#34;metadata&#34;: &#34;3.1.1&#34;}}, &#34;tests&#34;: {&#34;qa/api-tests/test_auth_api.py::test_register_new_user&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Failed&#34;, &#34;testId&#34;: &#34;qa/api-tests/test_auth_api.py::test_register_new_user&#34;, &#34;duration&#34;: &#34;110 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Failed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;qa/api-tests/test_auth_api.py::test_register_new_user&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;110 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;def test_register_new_user():\n        &amp;quot;&amp;quot;&amp;quot;Test user registration with valid data.&amp;quot;&amp;quot;&amp;quot;\n        user_data = {\n            &amp;quot;email&amp;quot;: f&amp;quot;testuser_{pytest.timestamp}@test.com&amp;quot;,\n            &amp;quot;password&amp;quot;: &amp;quot;TestPass123&amp;quot;,  # Strong password with uppercase\n            &amp;quot;full_name&amp;quot;: &amp;quot;Test User&amp;quot;\n        }\n        resp = requests.post(f&amp;quot;{BASE_URL}/api/auth/register&amp;quot;, json=user_data)\n&amp;gt;       assert resp.status_code == 201\nE       assert 400 == 201\nE        +  where 400 = &amp;lt;Response [400]&amp;gt;.status_code\n\ntest_auth_api.py:16: AssertionError\n&#34;}], &#34;qa/api-tests/test_auth_api.py::test_register_duplicate_email&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;qa/api-tests/test_auth_api.py::test_register_duplicate_email&#34;, &#34;duration&#34;: &#34;16 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;qa/api-tests/test_auth_api.py::test_register_duplicate_email&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;16 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;No log output captured.&#34;}], &#34;qa/api-tests/test_auth_api.py::test_register_invalid_email&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;qa/api-tests/test_auth_api.py::test_register_invalid_email&#34;, &#34;duration&#34;: &#34;15 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;qa/api-tests/test_auth_api.py::test_register_invalid_email&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;15 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;No log output captured.&#34;}], &#34;qa/api-tests/test_auth_api.py::test_login_valid_credentials&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;qa/api-tests/test_auth_api.py::test_login_valid_credentials&#34;, &#34;duration&#34;: &#34;338 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;qa/api-tests/test_auth_api.py::test_login_valid_credentials&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;338 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;No log output captured.&#34;}], &#34;qa/api-tests/test_auth_api.py::test_login_invalid_password&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;qa/api-tests/test_auth_api.py::test_login_invalid_password&#34;, &#34;duration&#34;: &#34;289 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;qa/api-tests/test_auth_api.py::test_login_invalid_password&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;289 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;No log output captured.&#34;}], &#34;qa/api-tests/test_auth_api.py::test_login_nonexistent_user&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;qa/api-tests/test_auth_api.py::test_login_nonexistent_user&#34;, &#34;duration&#34;: &#34;23 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;qa/api-tests/test_auth_api.py::test_login_nonexistent_user&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;23 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;No log output captured.&#34;}], &#34;qa/api-tests/test_auth_api.py::test_get_current_user&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;qa/api-tests/test_auth_api.py::test_get_current_user&#34;, &#34;duration&#34;: &#34;349 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;qa/api-tests/test_auth_api.py::test_get_current_user&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;349 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;No log output captured.&#34;}], &#34;qa/api-tests/test_auth_api.py::test_get_current_user_no_token&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;qa/api-tests/test_auth_api.py::test_get_current_user_no_token&#34;, &#34;duration&#34;: &#34;8 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;qa/api-tests/test_auth_api.py::test_get_current_user_no_token&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;8 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;No log output captured.&#34;}], &#34;qa/api-tests/test_auth_api.py::test_refresh_token&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;qa/api-tests/test_auth_api.py::test_refresh_token&#34;, &#34;duration&#34;: &#34;299 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;qa/api-tests/test_auth_api.py::test_refresh_token&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;299 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;No log output captured.&#34;}], &#34;qa/api-tests/test_checks_api.py::test_run_check_on_dataset&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Failed&#34;, &#34;testId&#34;: &#34;qa/api-tests/test_checks_api.py::test_run_check_on_dataset&#34;, &#34;duration&#34;: &#34;153 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Failed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;qa/api-tests/test_checks_api.py::test_run_check_on_dataset&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;153 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;auth_headers = {&amp;#x27;Authorization&amp;#x27;: &amp;#x27;Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzczMzA5MDYxLCJ...mp0aSI6ImNmODcxNzJjNzg5MTQ5YmQ5MTM1NzBkMjEyNzU1NDRlIiwidXNlcl9pZCI6IjIifQ.VDx3B4UTRpX1UFNgNVAnkXahUqlt1SEVmnClrsooJy8&amp;#x27;}\nuploaded_dataset = 57, created_rule = 20\n\n    def test_run_check_on_dataset(auth_headers, uploaded_dataset, created_rule):\n        &amp;quot;&amp;quot;&amp;quot;Test running quality checks on a dataset.&amp;quot;&amp;quot;&amp;quot;\n        resp = requests.post(\n            f&amp;quot;{BASE_URL}/api/checks/run/{uploaded_dataset}&amp;quot;,\n            headers=auth_headers\n        )\n        assert resp.status_code in [200, 201]\n        data = resp.json()\n&amp;gt;       assert &amp;quot;quality_score&amp;quot; in data\nE       AssertionError: assert &amp;#x27;quality_score&amp;#x27; in {&amp;#x27;checked_at&amp;#x27;: &amp;#x27;2026-03-11T04:51:01.852569&amp;#x27;, &amp;#x27;dataset_id&amp;#x27;: 57, &amp;#x27;failed_rules&amp;#x27;: 0, &amp;#x27;id&amp;#x27;: 31, ...}\n\ntest_checks_api.py:17: AssertionError\n&#34;}], &#34;qa/api-tests/test_checks_api.py::test_run_check_without_auth&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;qa/api-tests/test_checks_api.py::test_run_check_without_auth&#34;, &#34;duration&#34;: &#34;47 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;qa/api-tests/test_checks_api.py::test_run_check_without_auth&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;47 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;No log output captured.&#34;}], &#34;qa/api-tests/test_checks_api.py::test_run_check_nonexistent_dataset&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;qa/api-tests/test_checks_api.py::test_run_check_nonexistent_dataset&#34;, &#34;duration&#34;: &#34;20 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;qa/api-tests/test_checks_api.py::test_run_check_nonexistent_dataset&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;20 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;No log output captured.&#34;}], &#34;qa/api-tests/test_checks_api.py::test_get_check_results&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;qa/api-tests/test_checks_api.py::test_get_check_results&#34;, &#34;duration&#34;: &#34;162 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;qa/api-tests/test_checks_api.py::test_get_check_results&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;162 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;No log output captured.&#34;}], &#34;qa/api-tests/test_checks_api.py::test_get_results_without_auth&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;qa/api-tests/test_checks_api.py::test_get_results_without_auth&#34;, &#34;duration&#34;: &#34;52 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;qa/api-tests/test_checks_api.py::test_get_results_without_auth&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;52 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;No log output captured.&#34;}], &#34;qa/api-tests/test_checks_api.py::test_get_results_nonexistent_dataset&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;qa/api-tests/test_checks_api.py::test_get_results_nonexistent_dataset&#34;, &#34;duration&#34;: &#34;26 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;qa/api-tests/test_checks_api.py::test_get_results_nonexistent_dataset&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;26 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;No log output captured.&#34;}], &#34;qa/api-tests/test_checks_api.py::test_batch_check_execution&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Failed&#34;, &#34;testId&#34;: &#34;qa/api-tests/test_checks_api.py::test_batch_check_execution&#34;, &#34;duration&#34;: &#34;54 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Failed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;qa/api-tests/test_checks_api.py::test_batch_check_execution&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;54 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;auth_headers = {&amp;#x27;Authorization&amp;#x27;: &amp;#x27;Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzczMzA5MDYxLCJ...mp0aSI6ImNmODcxNzJjNzg5MTQ5YmQ5MTM1NzBkMjEyNzU1NDRlIiwidXNlcl9pZCI6IjIifQ.VDx3B4UTRpX1UFNgNVAnkXahUqlt1SEVmnClrsooJy8&amp;#x27;}\nuploaded_dataset = 61\n\n    def test_batch_check_execution(auth_headers, uploaded_dataset):\n        &amp;quot;&amp;quot;&amp;quot;Test batch check execution.&amp;quot;&amp;quot;&amp;quot;\n        batch_data = {\n            &amp;quot;dataset_ids&amp;quot;: [uploaded_dataset]\n        }\n        resp = requests.post(\n            f&amp;quot;{BASE_URL}/api/scheduling/batch&amp;quot;,\n            headers=auth_headers,\n            json=batch_data\n        )\n&amp;gt;       assert resp.status_code in [200, 201, 202]\nE       assert 404 in [200, 201, 202]\nE        +  where 404 = &amp;lt;Response [404]&amp;gt;.status_code\n\ntest_checks_api.py:80: AssertionError\n&#34;}], &#34;qa/api-tests/test_checks_api.py::test_multiple_checks_same_dataset&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Failed&#34;, &#34;testId&#34;: &#34;qa/api-tests/test_checks_api.py::test_multiple_checks_same_dataset&#34;, &#34;duration&#34;: &#34;93 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Failed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;qa/api-tests/test_checks_api.py::test_multiple_checks_same_dataset&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;93 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;auth_headers = {&amp;#x27;Authorization&amp;#x27;: &amp;#x27;Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzczMzA5MDYxLCJ...mp0aSI6ImNmODcxNzJjNzg5MTQ5YmQ5MTM1NzBkMjEyNzU1NDRlIiwidXNlcl9pZCI6IjIifQ.VDx3B4UTRpX1UFNgNVAnkXahUqlt1SEVmnClrsooJy8&amp;#x27;}\nuploaded_dataset = 62, created_rule = 22\n\n    def test_multiple_checks_same_dataset(auth_headers, uploaded_dataset, created_rule):\n        &amp;quot;&amp;quot;&amp;quot;Test running multiple checks on same dataset.&amp;quot;&amp;quot;&amp;quot;\n        # Run first check\n        resp1 = requests.post(\n            f&amp;quot;{BASE_URL}/api/checks/run/{uploaded_dataset}&amp;quot;,\n            headers=auth_headers\n        )\n        assert resp1.status_code in [200, 201]\n&amp;gt;       score1 = resp1.json()[&amp;quot;quality_score&amp;quot;]\n                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nE       KeyError: &amp;#x27;quality_score&amp;#x27;\n\ntest_checks_api.py:91: KeyError\n&#34;}], &#34;qa/api-tests/test_datasets_api.py::test_upload_valid_csv&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Failed&#34;, &#34;testId&#34;: &#34;qa/api-tests/test_datasets_api.py::test_upload_valid_csv&#34;, &#34;duration&#34;: &#34;35 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Failed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;qa/api-tests/test_datasets_api.py::test_upload_valid_csv&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;35 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;auth_headers = {&amp;#x27;Authorization&amp;#x27;: &amp;#x27;Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzczMzA5MDYxLCJ...mp0aSI6ImNmODcxNzJjNzg5MTQ5YmQ5MTM1NzBkMjEyNzU1NDRlIiwidXNlcl9pZCI6IjIifQ.VDx3B4UTRpX1UFNgNVAnkXahUqlt1SEVmnClrsooJy8&amp;#x27;}\nsample_csv_file = (&amp;#x27;test.csv&amp;#x27;, b&amp;#x27;id,name,email,age,salary\\n1,Alice,alice@test.com,30,50000\\n2,Bob,bob@test.com,25,45000\\n3,Carol,carol@test.com,35,60000\\n4,David,david@test.com,28,48000\\n5,Eve,eve@test.com,32,55000&amp;#x27;, &amp;#x27;text/csv&amp;#x27;)\n\n    def test_upload_valid_csv(auth_headers, sample_csv_file):\n        &amp;quot;&amp;quot;&amp;quot;Test uploading a valid CSV file.&amp;quot;&amp;quot;&amp;quot;\n        resp = requests.post(\n            f&amp;quot;{BASE_URL}/api/datasets/upload&amp;quot;,\n            headers=auth_headers,\n            files={&amp;quot;file&amp;quot;: sample_csv_file}\n        )\n        assert resp.status_code == 201\n        data = resp.json()\n        assert data[&amp;quot;file_type&amp;quot;] == &amp;quot;csv&amp;quot;\n&amp;gt;       assert data[&amp;quot;row_count&amp;quot;] == 5\nE       assert 0 == 5\n\ntest_datasets_api.py:18: AssertionError\n&#34;}], &#34;qa/api-tests/test_datasets_api.py::test_upload_valid_json&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Failed&#34;, &#34;testId&#34;: &#34;qa/api-tests/test_datasets_api.py::test_upload_valid_json&#34;, &#34;duration&#34;: &#34;410 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Failed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;qa/api-tests/test_datasets_api.py::test_upload_valid_json&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;410 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;auth_headers = {&amp;#x27;Authorization&amp;#x27;: &amp;#x27;Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzczMzA5MDYxLCJ...mp0aSI6ImNmODcxNzJjNzg5MTQ5YmQ5MTM1NzBkMjEyNzU1NDRlIiwidXNlcl9pZCI6IjIifQ.VDx3B4UTRpX1UFNgNVAnkXahUqlt1SEVmnClrsooJy8&amp;#x27;}\nsample_json_file = (&amp;#x27;test.json&amp;#x27;, b&amp;#x27;[\\n    {&amp;quot;id&amp;quot;: 1, &amp;quot;name&amp;quot;: &amp;quot;Alice&amp;quot;, &amp;quot;email&amp;quot;: &amp;quot;alice@test.com&amp;quot;, &amp;quot;age&amp;quot;: 30, &amp;quot;salary&amp;quot;: 50000},\\n    {&amp;quot;id&amp;quot;: ...45000},\\n    {&amp;quot;id&amp;quot;: 3, &amp;quot;name&amp;quot;: &amp;quot;Carol&amp;quot;, &amp;quot;email&amp;quot;: &amp;quot;carol@test.com&amp;quot;, &amp;quot;age&amp;quot;: 35, &amp;quot;salary&amp;quot;: 60000}\\n]&amp;#x27;, &amp;#x27;application/json&amp;#x27;)\n\n    def test_upload_valid_json(auth_headers, sample_json_file):\n        &amp;quot;&amp;quot;&amp;quot;Test uploading a valid JSON file.&amp;quot;&amp;quot;&amp;quot;\n        resp = requests.post(\n            f&amp;quot;{BASE_URL}/api/datasets/upload&amp;quot;,\n            headers=auth_headers,\n            files={&amp;quot;file&amp;quot;: sample_json_file}\n        )\n        assert resp.status_code == 201\n        data = resp.json()\n        assert data[&amp;quot;file_type&amp;quot;] == &amp;quot;json&amp;quot;\n&amp;gt;       assert data[&amp;quot;row_count&amp;quot;] == 3\nE       assert 0 == 3\n\ntest_datasets_api.py:32: AssertionError\n&#34;}], &#34;qa/api-tests/test_datasets_api.py::test_upload_without_auth&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;qa/api-tests/test_datasets_api.py::test_upload_without_auth&#34;, &#34;duration&#34;: &#34;8 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;qa/api-tests/test_datasets_api.py::test_upload_without_auth&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;8 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;No log output captured.&#34;}], &#34;qa/api-tests/test_datasets_api.py::test_upload_invalid_file_type&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;qa/api-tests/test_datasets_api.py::test_upload_invalid_file_type&#34;, &#34;duration&#34;: &#34;23 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;qa/api-tests/test_datasets_api.py::test_upload_invalid_file_type&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;23 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;No log output captured.&#34;}], &#34;qa/api-tests/test_datasets_api.py::test_upload_empty_file&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;qa/api-tests/test_datasets_api.py::test_upload_empty_file&#34;, &#34;duration&#34;: &#34;26 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;qa/api-tests/test_datasets_api.py::test_upload_empty_file&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;26 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;No log output captured.&#34;}], &#34;qa/api-tests/test_datasets_api.py::test_upload_malformed_csv&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;qa/api-tests/test_datasets_api.py::test_upload_malformed_csv&#34;, &#34;duration&#34;: &#34;97 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;qa/api-tests/test_datasets_api.py::test_upload_malformed_csv&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;97 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;No log output captured.&#34;}], &#34;qa/api-tests/test_datasets_api.py::test_upload_malformed_json&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Failed&#34;, &#34;testId&#34;: &#34;qa/api-tests/test_datasets_api.py::test_upload_malformed_json&#34;, &#34;duration&#34;: &#34;51 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Failed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;qa/api-tests/test_datasets_api.py::test_upload_malformed_json&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;51 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;auth_headers = {&amp;#x27;Authorization&amp;#x27;: &amp;#x27;Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzczMzA5MDYxLCJ...mp0aSI6ImNmODcxNzJjNzg5MTQ5YmQ5MTM1NzBkMjEyNzU1NDRlIiwidXNlcl9pZCI6IjIifQ.VDx3B4UTRpX1UFNgNVAnkXahUqlt1SEVmnClrsooJy8&amp;#x27;}\n\n    def test_upload_malformed_json(auth_headers):\n        &amp;quot;&amp;quot;&amp;quot;Test uploading malformed JSON.&amp;quot;&amp;quot;&amp;quot;\n        json_content = b&amp;#x27;[{&amp;quot;id&amp;quot;: 1, &amp;quot;name&amp;quot;: &amp;quot;Alice&amp;quot;&amp;#x27;\n        files = {&amp;quot;file&amp;quot;: (&amp;quot;malformed.json&amp;quot;, json_content, &amp;quot;application/json&amp;quot;)}\n        resp = requests.post(\n            f&amp;quot;{BASE_URL}/api/datasets/upload&amp;quot;,\n            headers=auth_headers,\n            files=files\n        )\n&amp;gt;       assert resp.status_code == 400\nE       assert 201 == 400\nE        +  where 201 = &amp;lt;Response [201]&amp;gt;.status_code\n\ntest_datasets_api.py:88: AssertionError\n&#34;}], &#34;qa/api-tests/test_datasets_api.py::test_list_datasets&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Failed&#34;, &#34;testId&#34;: &#34;qa/api-tests/test_datasets_api.py::test_list_datasets&#34;, &#34;duration&#34;: &#34;55 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Failed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;qa/api-tests/test_datasets_api.py::test_list_datasets&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;55 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;auth_headers = {&amp;#x27;Authorization&amp;#x27;: &amp;#x27;Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzczMzA5MDYxLCJ...mp0aSI6ImNmODcxNzJjNzg5MTQ5YmQ5MTM1NzBkMjEyNzU1NDRlIiwidXNlcl9pZCI6IjIifQ.VDx3B4UTRpX1UFNgNVAnkXahUqlt1SEVmnClrsooJy8&amp;#x27;}\nuploaded_dataset = 67\n\n    def test_list_datasets(auth_headers, uploaded_dataset):\n        &amp;quot;&amp;quot;&amp;quot;Test listing uploaded datasets.&amp;quot;&amp;quot;&amp;quot;\n        resp = requests.get(f&amp;quot;{BASE_URL}/api/datasets/&amp;quot;, headers=auth_headers)\n        assert resp.status_code == 200\n        data = resp.json()\n&amp;gt;       assert isinstance(data, list)\nE       assert False\nE        +  where False = isinstance({&amp;#x27;datasets&amp;#x27;: [{&amp;#x27;column_count&amp;#x27;: 5, &amp;#x27;column_names&amp;#x27;: &amp;#x27;[&amp;quot;id&amp;quot;, &amp;quot;name&amp;quot;, &amp;quot;email&amp;quot;, &amp;quot;age&amp;quot;, &amp;quot;salary&amp;quot;]&amp;#x27;, &amp;#x27;file_type&amp;#x27;: &amp;#x27;csv&amp;#x27;, &amp;#x27;id&amp;#x27;...: 5, &amp;#x27;column_names&amp;#x27;: &amp;#x27;[&amp;quot;id&amp;quot;, &amp;quot;name&amp;quot;, &amp;quot;email&amp;quot;, &amp;quot;age&amp;quot;, &amp;quot;salary&amp;quot;]&amp;#x27;, &amp;#x27;file_type&amp;#x27;: &amp;#x27;csv&amp;#x27;, &amp;#x27;id&amp;#x27;: 62, ...}, ...], &amp;#x27;total&amp;#x27;: 62}, list)\n\ntest_datasets_api.py:96: AssertionError\n&#34;}], &#34;qa/api-tests/test_datasets_api.py::test_list_datasets_without_auth&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;qa/api-tests/test_datasets_api.py::test_list_datasets_without_auth&#34;, &#34;duration&#34;: &#34;6 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;qa/api-tests/test_datasets_api.py::test_list_datasets_without_auth&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;6 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;No log output captured.&#34;}], &#34;qa/api-tests/test_datasets_api.py::test_upload_large_csv&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Failed&#34;, &#34;testId&#34;: &#34;qa/api-tests/test_datasets_api.py::test_upload_large_csv&#34;, &#34;duration&#34;: &#34;33 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Failed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;qa/api-tests/test_datasets_api.py::test_upload_large_csv&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;33 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;auth_headers = {&amp;#x27;Authorization&amp;#x27;: &amp;#x27;Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzczMzA5MDYxLCJ...mp0aSI6ImNmODcxNzJjNzg5MTQ5YmQ5MTM1NzBkMjEyNzU1NDRlIiwidXNlcl9pZCI6IjIifQ.VDx3B4UTRpX1UFNgNVAnkXahUqlt1SEVmnClrsooJy8&amp;#x27;}\n\n    def test_upload_large_csv(auth_headers):\n        &amp;quot;&amp;quot;&amp;quot;Test uploading larger CSV file.&amp;quot;&amp;quot;&amp;quot;\n        rows = [&amp;quot;id,name,value&amp;quot;]\n        rows.extend([f&amp;quot;{i},User{i},{i*100}&amp;quot; for i in range(1, 101)])\n        csv_content = &amp;quot;\\n&amp;quot;.join(rows).encode()\n    \n        files = {&amp;quot;file&amp;quot;: (&amp;quot;large.csv&amp;quot;, csv_content, &amp;quot;text/csv&amp;quot;)}\n        resp = requests.post(\n            f&amp;quot;{BASE_URL}/api/datasets/upload&amp;quot;,\n            headers=auth_headers,\n            files=files\n        )\n        assert resp.status_code == 201\n        data = resp.json()\n&amp;gt;       assert data[&amp;quot;row_count&amp;quot;] == 100\nE       assert 0 == 100\n\ntest_datasets_api.py:121: AssertionError\n&#34;}], &#34;qa/api-tests/test_integration.py::TestCompleteWorkflow::test_full_workflow_csv&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Failed&#34;, &#34;testId&#34;: &#34;qa/api-tests/test_integration.py::TestCompleteWorkflow::test_full_workflow_csv&#34;, &#34;duration&#34;: &#34;56 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Failed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;qa/api-tests/test_integration.py::TestCompleteWorkflow::test_full_workflow_csv&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;56 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;self = &amp;lt;test_integration.TestCompleteWorkflow object at 0x000001342C6B7610&amp;gt;\nauth_headers = {&amp;#x27;Authorization&amp;#x27;: &amp;#x27;Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzczMzA5MDYxLCJ...mp0aSI6ImNmODcxNzJjNzg5MTQ5YmQ5MTM1NzBkMjEyNzU1NDRlIiwidXNlcl9pZCI6IjIifQ.VDx3B4UTRpX1UFNgNVAnkXahUqlt1SEVmnClrsooJy8&amp;#x27;}\n\n    def test_full_workflow_csv(self, auth_headers):\n        &amp;quot;&amp;quot;&amp;quot;Test complete workflow: upload CSV -&amp;gt; create rules -&amp;gt; run checks -&amp;gt; get report -&amp;gt; view trends.&amp;quot;&amp;quot;&amp;quot;\n    \n        # Step 1: Upload dataset\n        csv = b&amp;quot;id,name,email,age,salary\\n1,Alice,alice@test.com,30,50000\\n2,Bob,bob@test.com,25,45000\\n3,Carol,carol@test.com,35,60000&amp;quot;\n        files = {&amp;quot;file&amp;quot;: (&amp;quot;employees.csv&amp;quot;, csv, &amp;quot;text/csv&amp;quot;)}\n        upload_resp = requests.post(\n            f&amp;quot;{BASE_URL}/api/datasets/upload&amp;quot;,\n            headers=auth_headers,\n            files=files\n        )\n        assert upload_resp.status_code == 201\n        dataset_id = upload_resp.json()[&amp;quot;id&amp;quot;]\n    \n        # Step 2: Create multiple validation rules\n        rules = [\n            {\n                &amp;quot;name&amp;quot;: &amp;quot;Email Not Null&amp;quot;,\n                &amp;quot;rule_type&amp;quot;: &amp;quot;NOT_NULL&amp;quot;,\n                &amp;quot;field_name&amp;quot;: &amp;quot;email&amp;quot;,\n                &amp;quot;severity&amp;quot;: &amp;quot;HIGH&amp;quot;,\n                &amp;quot;parameters&amp;quot;: &amp;quot;{}&amp;quot;\n            },\n            {\n                &amp;quot;name&amp;quot;: &amp;quot;Age Must Be Int&amp;quot;,\n                &amp;quot;rule_type&amp;quot;: &amp;quot;DATA_TYPE&amp;quot;,\n                &amp;quot;field_name&amp;quot;: &amp;quot;age&amp;quot;,\n                &amp;quot;severity&amp;quot;: &amp;quot;MEDIUM&amp;quot;,\n                &amp;quot;parameters&amp;quot;: &amp;#x27;{&amp;quot;expected_type&amp;quot;: &amp;quot;int&amp;quot;}&amp;#x27;\n            },\n            {\n                &amp;quot;name&amp;quot;: &amp;quot;Age Range&amp;quot;,\n                &amp;quot;rule_type&amp;quot;: &amp;quot;RANGE&amp;quot;,\n                &amp;quot;field_name&amp;quot;: &amp;quot;age&amp;quot;,\n                &amp;quot;severity&amp;quot;: &amp;quot;LOW&amp;quot;,\n                &amp;quot;parameters&amp;quot;: &amp;#x27;{&amp;quot;min&amp;quot;: 18, &amp;quot;max&amp;quot;: 65}&amp;#x27;\n            }\n        ]\n    \n        for rule in rules:\n            rule_resp = requests.post(\n                f&amp;quot;{BASE_URL}/api/rules/&amp;quot;,\n                headers=auth_headers,\n                json=rule\n            )\n&amp;gt;           assert rule_resp.status_code == 201\nE           assert 400 == 201\nE            +  where 400 = &amp;lt;Response [400]&amp;gt;.status_code\n\ntest_integration.py:57: AssertionError\n&#34;}], &#34;qa/api-tests/test_integration.py::TestCompleteWorkflow::test_full_workflow_json&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Failed&#34;, &#34;testId&#34;: &#34;qa/api-tests/test_integration.py::TestCompleteWorkflow::test_full_workflow_json&#34;, &#34;duration&#34;: &#34;63 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Failed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;qa/api-tests/test_integration.py::TestCompleteWorkflow::test_full_workflow_json&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;63 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;self = &amp;lt;test_integration.TestCompleteWorkflow object at 0x000001342C6B7750&amp;gt;\nauth_headers = {&amp;#x27;Authorization&amp;#x27;: &amp;#x27;Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzczMzA5MDYxLCJ...mp0aSI6ImNmODcxNzJjNzg5MTQ5YmQ5MTM1NzBkMjEyNzU1NDRlIiwidXNlcl9pZCI6IjIifQ.VDx3B4UTRpX1UFNgNVAnkXahUqlt1SEVmnClrsooJy8&amp;#x27;}\n\n    def test_full_workflow_json(self, auth_headers):\n        &amp;quot;&amp;quot;&amp;quot;Test complete workflow with JSON file.&amp;quot;&amp;quot;&amp;quot;\n    \n        # Step 1: Upload JSON dataset\n        json_data = b&amp;#x27;[{&amp;quot;id&amp;quot;:1,&amp;quot;name&amp;quot;:&amp;quot;Alice&amp;quot;,&amp;quot;age&amp;quot;:30},{&amp;quot;id&amp;quot;:2,&amp;quot;name&amp;quot;:&amp;quot;Bob&amp;quot;,&amp;quot;age&amp;quot;:25}]&amp;#x27;\n        files = {&amp;quot;file&amp;quot;: (&amp;quot;data.json&amp;quot;, json_data, &amp;quot;application/json&amp;quot;)}\n        upload_resp = requests.post(\n            f&amp;quot;{BASE_URL}/api/datasets/upload&amp;quot;,\n            headers=auth_headers,\n            files=files\n        )\n        assert upload_resp.status_code == 201\n        dataset_id = upload_resp.json()[&amp;quot;id&amp;quot;]\n    \n        # Step 2: Create rule\n        rule_data = {\n            &amp;quot;name&amp;quot;: &amp;quot;Name Not Null&amp;quot;,\n            &amp;quot;rule_type&amp;quot;: &amp;quot;NOT_NULL&amp;quot;,\n            &amp;quot;field_name&amp;quot;: &amp;quot;name&amp;quot;,\n            &amp;quot;severity&amp;quot;: &amp;quot;HIGH&amp;quot;,\n            &amp;quot;parameters&amp;quot;: &amp;quot;{}&amp;quot;\n        }\n        rule_resp = requests.post(\n            f&amp;quot;{BASE_URL}/api/rules/&amp;quot;,\n            headers=auth_headers,\n            json=rule_data\n        )\n&amp;gt;       assert rule_resp.status_code == 201\nE       assert 400 == 201\nE        +  where 400 = &amp;lt;Response [400]&amp;gt;.status_code\n\ntest_integration.py:114: AssertionError\n&#34;}], &#34;qa/api-tests/test_integration.py::TestMultipleDatasets::test_multiple_datasets_dashboard&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;qa/api-tests/test_integration.py::TestMultipleDatasets::test_multiple_datasets_dashboard&#34;, &#34;duration&#34;: &#34;221 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;qa/api-tests/test_integration.py::TestMultipleDatasets::test_multiple_datasets_dashboard&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;221 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;No log output captured.&#34;}], &#34;qa/api-tests/test_integration.py::TestRuleManagement::test_update_rule_and_rerun_checks&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Failed&#34;, &#34;testId&#34;: &#34;qa/api-tests/test_integration.py::TestRuleManagement::test_update_rule_and_rerun_checks&#34;, &#34;duration&#34;: &#34;49 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Failed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;qa/api-tests/test_integration.py::TestRuleManagement::test_update_rule_and_rerun_checks&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;49 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;self = &amp;lt;test_integration.TestRuleManagement object at 0x000001342C6B79D0&amp;gt;\nauth_headers = {&amp;#x27;Authorization&amp;#x27;: &amp;#x27;Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzczMzA5MDYxLCJ...mp0aSI6ImNmODcxNzJjNzg5MTQ5YmQ5MTM1NzBkMjEyNzU1NDRlIiwidXNlcl9pZCI6IjIifQ.VDx3B4UTRpX1UFNgNVAnkXahUqlt1SEVmnClrsooJy8&amp;#x27;}\n\n    def test_update_rule_and_rerun_checks(self, auth_headers):\n        &amp;quot;&amp;quot;&amp;quot;Test updating rule and re-running checks.&amp;quot;&amp;quot;&amp;quot;\n    \n        # Upload dataset\n        csv = b&amp;quot;id,age\\n1,30\\n2,25\\n3,35&amp;quot;\n        files = {&amp;quot;file&amp;quot;: (&amp;quot;test.csv&amp;quot;, csv, &amp;quot;text/csv&amp;quot;)}\n        upload_resp = requests.post(\n            f&amp;quot;{BASE_URL}/api/datasets/upload&amp;quot;,\n            headers=auth_headers,\n            files=files\n        )\n        dataset_id = upload_resp.json()[&amp;quot;id&amp;quot;]\n    \n        # Create rule\n        rule_data = {\n            &amp;quot;name&amp;quot;: &amp;quot;Age Range&amp;quot;,\n            &amp;quot;rule_type&amp;quot;: &amp;quot;RANGE&amp;quot;,\n            &amp;quot;field_name&amp;quot;: &amp;quot;age&amp;quot;,\n            &amp;quot;severity&amp;quot;: &amp;quot;LOW&amp;quot;,\n            &amp;quot;parameters&amp;quot;: &amp;#x27;{&amp;quot;min&amp;quot;: 20, &amp;quot;max&amp;quot;: 40}&amp;#x27;\n        }\n        rule_resp = requests.post(\n            f&amp;quot;{BASE_URL}/api/rules/&amp;quot;,\n            headers=auth_headers,\n            json=rule_data\n        )\n&amp;gt;       rule_id = rule_resp.json()[&amp;quot;id&amp;quot;]\n                  ^^^^^^^^^^^^^^^^^^^^^^\nE       KeyError: &amp;#x27;id&amp;#x27;\n\ntest_integration.py:201: KeyError\n&#34;}], &#34;qa/api-tests/test_integration.py::TestDataQualityScoring::test_perfect_score&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Failed&#34;, &#34;testId&#34;: &#34;qa/api-tests/test_integration.py::TestDataQualityScoring::test_perfect_score&#34;, &#34;duration&#34;: &#34;82 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Failed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;qa/api-tests/test_integration.py::TestDataQualityScoring::test_perfect_score&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;82 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;self = &amp;lt;test_integration.TestDataQualityScoring object at 0x000001342C6B7B10&amp;gt;\nauth_headers = {&amp;#x27;Authorization&amp;#x27;: &amp;#x27;Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzczMzA5MDYxLCJ...mp0aSI6ImNmODcxNzJjNzg5MTQ5YmQ5MTM1NzBkMjEyNzU1NDRlIiwidXNlcl9pZCI6IjIifQ.VDx3B4UTRpX1UFNgNVAnkXahUqlt1SEVmnClrsooJy8&amp;#x27;}\n\n    def test_perfect_score(self, auth_headers):\n        &amp;quot;&amp;quot;&amp;quot;Test dataset with perfect quality score.&amp;quot;&amp;quot;&amp;quot;\n        csv = b&amp;quot;id,name,age\\n1,Alice,30\\n2,Bob,25\\n3,Carol,35&amp;quot;\n        files = {&amp;quot;file&amp;quot;: (&amp;quot;perfect.csv&amp;quot;, csv, &amp;quot;text/csv&amp;quot;)}\n        upload_resp = requests.post(\n            f&amp;quot;{BASE_URL}/api/datasets/upload&amp;quot;,\n            headers=auth_headers,\n            files=files\n        )\n        dataset_id = upload_resp.json()[&amp;quot;id&amp;quot;]\n    \n        rule_data = {\n            &amp;quot;name&amp;quot;: &amp;quot;Name Not Null&amp;quot;,\n            &amp;quot;rule_type&amp;quot;: &amp;quot;NOT_NULL&amp;quot;,\n            &amp;quot;field_name&amp;quot;: &amp;quot;name&amp;quot;,\n            &amp;quot;severity&amp;quot;: &amp;quot;HIGH&amp;quot;,\n            &amp;quot;parameters&amp;quot;: &amp;quot;{}&amp;quot;\n        }\n        requests.post(f&amp;quot;{BASE_URL}/api/rules/&amp;quot;, headers=auth_headers, json=rule_data)\n    \n        check_resp = requests.post(\n            f&amp;quot;{BASE_URL}/api/checks/run/{dataset_id}&amp;quot;,\n            headers=auth_headers\n        )\n&amp;gt;       assert check_resp.json()[&amp;quot;quality_score&amp;quot;] == 100\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nE       KeyError: &amp;#x27;quality_score&amp;#x27;\n\ntest_integration.py:257: KeyError\n&#34;}], &#34;qa/api-tests/test_integration.py::TestDataQualityScoring::test_failing_score&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Failed&#34;, &#34;testId&#34;: &#34;qa/api-tests/test_integration.py::TestDataQualityScoring::test_failing_score&#34;, &#34;duration&#34;: &#34;86 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Failed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;qa/api-tests/test_integration.py::TestDataQualityScoring::test_failing_score&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;86 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;self = &amp;lt;test_integration.TestDataQualityScoring object at 0x000001342C6B7C50&amp;gt;\nauth_headers = {&amp;#x27;Authorization&amp;#x27;: &amp;#x27;Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzczMzA5MDYxLCJ...mp0aSI6ImNmODcxNzJjNzg5MTQ5YmQ5MTM1NzBkMjEyNzU1NDRlIiwidXNlcl9pZCI6IjIifQ.VDx3B4UTRpX1UFNgNVAnkXahUqlt1SEVmnClrsooJy8&amp;#x27;}\n\n    def test_failing_score(self, auth_headers):\n        &amp;quot;&amp;quot;&amp;quot;Test dataset with quality issues.&amp;quot;&amp;quot;&amp;quot;\n        csv = b&amp;quot;id,name,age\\n1,,30\\n2,,25\\n3,,35&amp;quot;\n        files = {&amp;quot;file&amp;quot;: (&amp;quot;failing.csv&amp;quot;, csv, &amp;quot;text/csv&amp;quot;)}\n        upload_resp = requests.post(\n            f&amp;quot;{BASE_URL}/api/datasets/upload&amp;quot;,\n            headers=auth_headers,\n            files=files\n        )\n        dataset_id = upload_resp.json()[&amp;quot;id&amp;quot;]\n    \n        rule_data = {\n            &amp;quot;name&amp;quot;: &amp;quot;Name Not Null&amp;quot;,\n            &amp;quot;rule_type&amp;quot;: &amp;quot;NOT_NULL&amp;quot;,\n            &amp;quot;field_name&amp;quot;: &amp;quot;name&amp;quot;,\n            &amp;quot;severity&amp;quot;: &amp;quot;HIGH&amp;quot;,\n            &amp;quot;parameters&amp;quot;: &amp;quot;{}&amp;quot;\n        }\n        requests.post(f&amp;quot;{BASE_URL}/api/rules/&amp;quot;, headers=auth_headers, json=rule_data)\n    \n        check_resp = requests.post(\n            f&amp;quot;{BASE_URL}/api/checks/run/{dataset_id}&amp;quot;,\n            headers=auth_headers\n        )\n&amp;gt;       score = check_resp.json()[&amp;quot;quality_score&amp;quot;]\n                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nE       KeyError: &amp;#x27;quality_score&amp;#x27;\n\ntest_integration.py:283: KeyError\n&#34;}], &#34;qa/api-tests/test_integration.py::TestErrorHandling::test_check_without_rules&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;qa/api-tests/test_integration.py::TestErrorHandling::test_check_without_rules&#34;, &#34;duration&#34;: &#34;66 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;qa/api-tests/test_integration.py::TestErrorHandling::test_check_without_rules&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;66 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;No log output captured.&#34;}], &#34;qa/api-tests/test_metrics_api.py::test_get_metrics&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;qa/api-tests/test_metrics_api.py::test_get_metrics&#34;, &#34;duration&#34;: &#34;15 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;qa/api-tests/test_metrics_api.py::test_get_metrics&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;15 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;No log output captured.&#34;}], &#34;qa/api-tests/test_metrics_api.py::test_metrics_format&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;qa/api-tests/test_metrics_api.py::test_metrics_format&#34;, &#34;duration&#34;: &#34;12 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;qa/api-tests/test_metrics_api.py::test_metrics_format&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;12 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;No log output captured.&#34;}], &#34;qa/api-tests/test_metrics_api.py::test_metrics_contains_expected_metrics&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;qa/api-tests/test_metrics_api.py::test_metrics_contains_expected_metrics&#34;, &#34;duration&#34;: &#34;12 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;qa/api-tests/test_metrics_api.py::test_metrics_contains_expected_metrics&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;12 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;No log output captured.&#34;}], &#34;qa/api-tests/test_metrics_api.py::test_metrics_no_auth_required&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;qa/api-tests/test_metrics_api.py::test_metrics_no_auth_required&#34;, &#34;duration&#34;: &#34;13 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;qa/api-tests/test_metrics_api.py::test_metrics_no_auth_required&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;13 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;No log output captured.&#34;}], &#34;qa/api-tests/test_metrics_api.py::test_metrics_performance&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;qa/api-tests/test_metrics_api.py::test_metrics_performance&#34;, &#34;duration&#34;: &#34;12 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;qa/api-tests/test_metrics_api.py::test_metrics_performance&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;12 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;No log output captured.&#34;}], &#34;qa/api-tests/test_metrics_api.py::test_metrics_multiple_requests&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;qa/api-tests/test_metrics_api.py::test_metrics_multiple_requests&#34;, &#34;duration&#34;: &#34;39 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;qa/api-tests/test_metrics_api.py::test_metrics_multiple_requests&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;39 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;No log output captured.&#34;}], &#34;qa/api-tests/test_metrics_api.py::test_metrics_content_consistency&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Failed&#34;, &#34;testId&#34;: &#34;qa/api-tests/test_metrics_api.py::test_metrics_content_consistency&#34;, &#34;duration&#34;: &#34;19 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Failed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;qa/api-tests/test_metrics_api.py::test_metrics_content_consistency&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;19 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;def test_metrics_content_consistency():\n        &amp;quot;&amp;quot;&amp;quot;Test that metrics content is consistent across requests.&amp;quot;&amp;quot;&amp;quot;\n        resp1 = requests.get(f&amp;quot;{BASE_URL}/metrics/&amp;quot;)\n        resp2 = requests.get(f&amp;quot;{BASE_URL}/metrics/&amp;quot;)\n    \n        # Both should have same status\n&amp;gt;       assert resp1.status_code == resp2.status_code\nE       assert 200 == 429\nE        +  where 200 = &amp;lt;Response [200]&amp;gt;.status_code\nE        +  and   429 = &amp;lt;Response [429]&amp;gt;.status_code\n\ntest_metrics_api.py:125: AssertionError\n&#34;}], &#34;qa/api-tests/test_reports_api.py::test_get_quality_report&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;qa/api-tests/test_reports_api.py::test_get_quality_report&#34;, &#34;duration&#34;: &#34;117 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;qa/api-tests/test_reports_api.py::test_get_quality_report&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;117 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;No log output captured.&#34;}], &#34;qa/api-tests/test_reports_api.py::test_get_report_without_auth&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;qa/api-tests/test_reports_api.py::test_get_report_without_auth&#34;, &#34;duration&#34;: &#34;38 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;qa/api-tests/test_reports_api.py::test_get_report_without_auth&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;38 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;No log output captured.&#34;}], &#34;qa/api-tests/test_reports_api.py::test_get_report_nonexistent_dataset&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;qa/api-tests/test_reports_api.py::test_get_report_nonexistent_dataset&#34;, &#34;duration&#34;: &#34;18 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;qa/api-tests/test_reports_api.py::test_get_report_nonexistent_dataset&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;18 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;No log output captured.&#34;}], &#34;qa/api-tests/test_reports_api.py::test_get_quality_trends&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Failed&#34;, &#34;testId&#34;: &#34;qa/api-tests/test_reports_api.py::test_get_quality_trends&#34;, &#34;duration&#34;: &#34;122 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Failed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;qa/api-tests/test_reports_api.py::test_get_quality_trends&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;122 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;auth_headers = {&amp;#x27;Authorization&amp;#x27;: &amp;#x27;Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzczMzA5MDYxLCJ...mp0aSI6ImNmODcxNzJjNzg5MTQ5YmQ5MTM1NzBkMjEyNzU1NDRlIiwidXNlcl9pZCI6IjIifQ.VDx3B4UTRpX1UFNgNVAnkXahUqlt1SEVmnClrsooJy8&amp;#x27;}\nuploaded_dataset = 80, created_rule = 24\n\n    def test_get_quality_trends(auth_headers, uploaded_dataset, created_rule):\n        &amp;quot;&amp;quot;&amp;quot;Test retrieving quality trends over time.&amp;quot;&amp;quot;&amp;quot;\n        # Run multiple checks\n        for _ in range(2):\n            requests.post(\n                f&amp;quot;{BASE_URL}/api/checks/run/{uploaded_dataset}&amp;quot;,\n                headers=auth_headers\n            )\n    \n        # Get trends\n        resp = requests.get(\n            f&amp;quot;{BASE_URL}/api/reports/{uploaded_dataset}/trends&amp;quot;,\n            headers=auth_headers\n        )\n&amp;gt;       assert resp.status_code == 200\nE       assert 429 == 200\nE        +  where 429 = &amp;lt;Response [429]&amp;gt;.status_code\n\ntest_reports_api.py:53: AssertionError\n&#34;}], &#34;qa/api-tests/test_reports_api.py::test_get_trends_with_date_filter&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;qa/api-tests/test_reports_api.py::test_get_trends_with_date_filter&#34;, &#34;duration&#34;: &#34;115 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;qa/api-tests/test_reports_api.py::test_get_trends_with_date_filter&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;115 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;No log output captured.&#34;}], &#34;qa/api-tests/test_reports_api.py::test_get_trends_with_pagination&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Error&#34;, &#34;testId&#34;: &#34;qa/api-tests/test_reports_api.py::test_get_trends_with_pagination::setup&#34;, &#34;duration&#34;: &#34;52 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Error&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;qa/api-tests/test_reports_api.py::test_get_trends_with_pagination::setup&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;52 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;fixturedef = &amp;lt;FixtureDef argname=&amp;#x27;created_rule&amp;#x27; scope=&amp;#x27;function&amp;#x27; baseid=&amp;#x27;qa/api-tests&amp;#x27;&amp;gt;\nrequest = &amp;lt;SubRequest &amp;#x27;created_rule&amp;#x27; for &amp;lt;Function test_get_trends_with_pagination&amp;gt;&amp;gt;\n\n    @pytest.hookimpl(wrapper=True)\n    def pytest_fixture_setup(fixturedef: FixtureDef, request) -&amp;gt; object | None:\n        asyncio_mode = _get_asyncio_mode(request.config)\n        if not _is_asyncio_fixture_function(fixturedef.func):\n            if asyncio_mode == Mode.STRICT:\n                # Ignore async fixtures without explicit asyncio mark in strict mode\n                # This applies to pytest_trio fixtures, for example\n&amp;gt;               return (yield)\n                        ^^^^^\n\n..\\..\\..\\..\\AppData\\Local\\Python\\pythoncore-3.14-64\\Lib\\site-packages\\pytest_asyncio\\plugin.py:728: \n_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ \n\nauth_headers = {&amp;#x27;Authorization&amp;#x27;: &amp;#x27;Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzczMzA5MDYxLCJ...mp0aSI6ImNmODcxNzJjNzg5MTQ5YmQ5MTM1NzBkMjEyNzU1NDRlIiwidXNlcl9pZCI6IjIifQ.VDx3B4UTRpX1UFNgNVAnkXahUqlt1SEVmnClrsooJy8&amp;#x27;}\nuploaded_dataset = 82\n\n    @pytest.fixture\n    def created_rule(auth_headers, uploaded_dataset):\n        &amp;quot;&amp;quot;&amp;quot;Create a validation rule and return its ID.&amp;quot;&amp;quot;&amp;quot;\n        rule_data = {\n            &amp;quot;name&amp;quot;: &amp;quot;Test Age Not Null&amp;quot;,\n            &amp;quot;dataset_type&amp;quot;: &amp;quot;csv&amp;quot;,\n            &amp;quot;rule_type&amp;quot;: &amp;quot;NOT_NULL&amp;quot;,\n            &amp;quot;field_name&amp;quot;: &amp;quot;age&amp;quot;,\n            &amp;quot;severity&amp;quot;: &amp;quot;HIGH&amp;quot;,\n            &amp;quot;parameters&amp;quot;: &amp;quot;{}&amp;quot;\n        }\n        resp = requests.post(\n            f&amp;quot;{BASE_URL}/api/rules/&amp;quot;,\n            headers=auth_headers,\n            json=rule_data\n        )\n&amp;gt;       assert resp.status_code == 201, f&amp;quot;Rule creation failed: {resp.text}&amp;quot;\nE       AssertionError: Rule creation failed: {&amp;quot;detail&amp;quot;:&amp;quot;Request was throttled. Expected available in 2844 seconds.&amp;quot;,&amp;quot;code&amp;quot;:&amp;quot;throttled&amp;quot;}\nE       assert 429 == 201\nE        +  where 429 = &amp;lt;Response [429]&amp;gt;.status_code\n\nconftest.py:101: AssertionError\n&#34;}], &#34;qa/api-tests/test_reports_api.py::test_get_dashboard_summary&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Error&#34;, &#34;testId&#34;: &#34;qa/api-tests/test_reports_api.py::test_get_dashboard_summary::setup&#34;, &#34;duration&#34;: &#34;23 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Error&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;qa/api-tests/test_reports_api.py::test_get_dashboard_summary::setup&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;23 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;fixturedef = &amp;lt;FixtureDef argname=&amp;#x27;uploaded_dataset&amp;#x27; scope=&amp;#x27;function&amp;#x27; baseid=&amp;#x27;qa/api-tests&amp;#x27;&amp;gt;\nrequest = &amp;lt;SubRequest &amp;#x27;uploaded_dataset&amp;#x27; for &amp;lt;Function test_get_dashboard_summary&amp;gt;&amp;gt;\n\n    @pytest.hookimpl(wrapper=True)\n    def pytest_fixture_setup(fixturedef: FixtureDef, request) -&amp;gt; object | None:\n        asyncio_mode = _get_asyncio_mode(request.config)\n        if not _is_asyncio_fixture_function(fixturedef.func):\n            if asyncio_mode == Mode.STRICT:\n                # Ignore async fixtures without explicit asyncio mark in strict mode\n                # This applies to pytest_trio fixtures, for example\n&amp;gt;               return (yield)\n                        ^^^^^\n\n..\\..\\..\\..\\AppData\\Local\\Python\\pythoncore-3.14-64\\Lib\\site-packages\\pytest_asyncio\\plugin.py:728: \n_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ \n\nauth_headers = {&amp;#x27;Authorization&amp;#x27;: &amp;#x27;Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzczMzA5MDYxLCJ...mp0aSI6ImNmODcxNzJjNzg5MTQ5YmQ5MTM1NzBkMjEyNzU1NDRlIiwidXNlcl9pZCI6IjIifQ.VDx3B4UTRpX1UFNgNVAnkXahUqlt1SEVmnClrsooJy8&amp;#x27;}\nsample_csv_file = (&amp;#x27;test.csv&amp;#x27;, b&amp;#x27;id,name,email,age,salary\\n1,Alice,alice@test.com,30,50000\\n2,Bob,bob@test.com,25,45000\\n3,Carol,carol@test.com,35,60000\\n4,David,david@test.com,28,48000\\n5,Eve,eve@test.com,32,55000&amp;#x27;, &amp;#x27;text/csv&amp;#x27;)\n\n    @pytest.fixture\n    def uploaded_dataset(auth_headers, sample_csv_file):\n        &amp;quot;&amp;quot;&amp;quot;Upload a dataset and return its ID.&amp;quot;&amp;quot;&amp;quot;\n        resp = requests.post(\n            f&amp;quot;{BASE_URL}/api/datasets/upload&amp;quot;,\n            headers=auth_headers,\n            files={&amp;quot;file&amp;quot;: sample_csv_file}\n        )\n&amp;gt;       assert resp.status_code == 201, f&amp;quot;Dataset upload failed: {resp.text}&amp;quot;\nE       AssertionError: Dataset upload failed: {&amp;quot;detail&amp;quot;:&amp;quot;Request was throttled. Expected available in 2844 seconds.&amp;quot;,&amp;quot;code&amp;quot;:&amp;quot;throttled&amp;quot;}\nE       assert 429 == 201\nE        +  where 429 = &amp;lt;Response [429]&amp;gt;.status_code\n\nconftest.py:81: AssertionError\n&#34;}], &#34;qa/api-tests/test_reports_api.py::test_dashboard_without_auth&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;qa/api-tests/test_reports_api.py::test_dashboard_without_auth&#34;, &#34;duration&#34;: &#34;6 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;qa/api-tests/test_reports_api.py::test_dashboard_without_auth&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;6 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;No log output captured.&#34;}], &#34;qa/api-tests/test_reports_api.py::test_report_contains_rule_breakdown&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Error&#34;, &#34;testId&#34;: &#34;qa/api-tests/test_reports_api.py::test_report_contains_rule_breakdown::setup&#34;, &#34;duration&#34;: &#34;17 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Error&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;qa/api-tests/test_reports_api.py::test_report_contains_rule_breakdown::setup&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;17 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;fixturedef = &amp;lt;FixtureDef argname=&amp;#x27;uploaded_dataset&amp;#x27; scope=&amp;#x27;function&amp;#x27; baseid=&amp;#x27;qa/api-tests&amp;#x27;&amp;gt;\nrequest = &amp;lt;SubRequest &amp;#x27;uploaded_dataset&amp;#x27; for &amp;lt;Function test_report_contains_rule_breakdown&amp;gt;&amp;gt;\n\n    @pytest.hookimpl(wrapper=True)\n    def pytest_fixture_setup(fixturedef: FixtureDef, request) -&amp;gt; object | None:\n        asyncio_mode = _get_asyncio_mode(request.config)\n        if not _is_asyncio_fixture_function(fixturedef.func):\n            if asyncio_mode == Mode.STRICT:\n                # Ignore async fixtures without explicit asyncio mark in strict mode\n                # This applies to pytest_trio fixtures, for example\n&amp;gt;               return (yield)\n                        ^^^^^\n\n..\\..\\..\\..\\AppData\\Local\\Python\\pythoncore-3.14-64\\Lib\\site-packages\\pytest_asyncio\\plugin.py:728: \n_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ \n\nauth_headers = {&amp;#x27;Authorization&amp;#x27;: &amp;#x27;Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzczMzA5MDYxLCJ...mp0aSI6ImNmODcxNzJjNzg5MTQ5YmQ5MTM1NzBkMjEyNzU1NDRlIiwidXNlcl9pZCI6IjIifQ.VDx3B4UTRpX1UFNgNVAnkXahUqlt1SEVmnClrsooJy8&amp;#x27;}\nsample_csv_file = (&amp;#x27;test.csv&amp;#x27;, b&amp;#x27;id,name,email,age,salary\\n1,Alice,alice@test.com,30,50000\\n2,Bob,bob@test.com,25,45000\\n3,Carol,carol@test.com,35,60000\\n4,David,david@test.com,28,48000\\n5,Eve,eve@test.com,32,55000&amp;#x27;, &amp;#x27;text/csv&amp;#x27;)\n\n    @pytest.fixture\n    def uploaded_dataset(auth_headers, sample_csv_file):\n        &amp;quot;&amp;quot;&amp;quot;Upload a dataset and return its ID.&amp;quot;&amp;quot;&amp;quot;\n        resp = requests.post(\n            f&amp;quot;{BASE_URL}/api/datasets/upload&amp;quot;,\n            headers=auth_headers,\n            files={&amp;quot;file&amp;quot;: sample_csv_file}\n        )\n&amp;gt;       assert resp.status_code == 201, f&amp;quot;Dataset upload failed: {resp.text}&amp;quot;\nE       AssertionError: Dataset upload failed: {&amp;quot;detail&amp;quot;:&amp;quot;Request was throttled. Expected available in 2844 seconds.&amp;quot;,&amp;quot;code&amp;quot;:&amp;quot;throttled&amp;quot;}\nE       assert 429 == 201\nE        +  where 429 = &amp;lt;Response [429]&amp;gt;.status_code\n\nconftest.py:81: AssertionError\n&#34;}], &#34;qa/api-tests/test_rules_api.py::test_create_not_null_rule&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;qa/api-tests/test_rules_api.py::test_create_not_null_rule&#34;, &#34;duration&#34;: &#34;55 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;qa/api-tests/test_rules_api.py::test_create_not_null_rule&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;55 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;No log output captured.&#34;}], &#34;qa/api-tests/test_rules_api.py::test_create_data_type_rule&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;qa/api-tests/test_rules_api.py::test_create_data_type_rule&#34;, &#34;duration&#34;: &#34;23 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;qa/api-tests/test_rules_api.py::test_create_data_type_rule&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;23 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;No log output captured.&#34;}], &#34;qa/api-tests/test_rules_api.py::test_create_range_rule&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Failed&#34;, &#34;testId&#34;: &#34;qa/api-tests/test_rules_api.py::test_create_range_rule&#34;, &#34;duration&#34;: &#34;19 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Failed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;qa/api-tests/test_rules_api.py::test_create_range_rule&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;19 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;auth_headers = {&amp;#x27;Authorization&amp;#x27;: &amp;#x27;Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzczMzA5MDYxLCJ...mp0aSI6ImNmODcxNzJjNzg5MTQ5YmQ5MTM1NzBkMjEyNzU1NDRlIiwidXNlcl9pZCI6IjIifQ.VDx3B4UTRpX1UFNgNVAnkXahUqlt1SEVmnClrsooJy8&amp;#x27;}\n\n    def test_create_range_rule(auth_headers):\n        &amp;quot;&amp;quot;&amp;quot;Test creating a RANGE validation rule.&amp;quot;&amp;quot;&amp;quot;\n        rule_data = {\n            &amp;quot;name&amp;quot;: &amp;quot;Age Range 18-65&amp;quot;,\n            &amp;quot;dataset_type&amp;quot;: &amp;quot;csv&amp;quot;,\n            &amp;quot;rule_type&amp;quot;: &amp;quot;RANGE&amp;quot;,\n            &amp;quot;field_name&amp;quot;: &amp;quot;age&amp;quot;,\n            &amp;quot;severity&amp;quot;: &amp;quot;MEDIUM&amp;quot;,\n            &amp;quot;parameters&amp;quot;: &amp;#x27;{&amp;quot;min&amp;quot;: 18, &amp;quot;max&amp;quot;: 65}&amp;#x27;\n        }\n        resp = requests.post(f&amp;quot;{BASE_URL}/api/rules/&amp;quot;, headers=auth_headers, json=rule_data)\n&amp;gt;       assert resp.status_code == 201\nE       assert 429 == 201\nE        +  where 429 = &amp;lt;Response [429]&amp;gt;.status_code\n\ntest_rules_api.py:52: AssertionError\n&#34;}], &#34;qa/api-tests/test_rules_api.py::test_create_unique_rule&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Failed&#34;, &#34;testId&#34;: &#34;qa/api-tests/test_rules_api.py::test_create_unique_rule&#34;, &#34;duration&#34;: &#34;19 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Failed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;qa/api-tests/test_rules_api.py::test_create_unique_rule&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;19 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;auth_headers = {&amp;#x27;Authorization&amp;#x27;: &amp;#x27;Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzczMzA5MDYxLCJ...mp0aSI6ImNmODcxNzJjNzg5MTQ5YmQ5MTM1NzBkMjEyNzU1NDRlIiwidXNlcl9pZCI6IjIifQ.VDx3B4UTRpX1UFNgNVAnkXahUqlt1SEVmnClrsooJy8&amp;#x27;}\n\n    def test_create_unique_rule(auth_headers):\n        &amp;quot;&amp;quot;&amp;quot;Test creating a UNIQUE validation rule.&amp;quot;&amp;quot;&amp;quot;\n        rule_data = {\n            &amp;quot;name&amp;quot;: &amp;quot;ID Must Be Unique&amp;quot;,\n            &amp;quot;dataset_type&amp;quot;: &amp;quot;csv&amp;quot;,\n            &amp;quot;rule_type&amp;quot;: &amp;quot;UNIQUE&amp;quot;,\n            &amp;quot;field_name&amp;quot;: &amp;quot;id&amp;quot;,\n            &amp;quot;severity&amp;quot;: &amp;quot;HIGH&amp;quot;,\n            &amp;quot;parameters&amp;quot;: &amp;quot;{}&amp;quot;\n        }\n        resp = requests.post(f&amp;quot;{BASE_URL}/api/rules/&amp;quot;, headers=auth_headers, json=rule_data)\n&amp;gt;       assert resp.status_code == 201\nE       assert 429 == 201\nE        +  where 429 = &amp;lt;Response [429]&amp;gt;.status_code\n\ntest_rules_api.py:68: AssertionError\n&#34;}], &#34;qa/api-tests/test_rules_api.py::test_create_regex_rule&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Failed&#34;, &#34;testId&#34;: &#34;qa/api-tests/test_rules_api.py::test_create_regex_rule&#34;, &#34;duration&#34;: &#34;16 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Failed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;qa/api-tests/test_rules_api.py::test_create_regex_rule&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;16 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;auth_headers = {&amp;#x27;Authorization&amp;#x27;: &amp;#x27;Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzczMzA5MDYxLCJ...mp0aSI6ImNmODcxNzJjNzg5MTQ5YmQ5MTM1NzBkMjEyNzU1NDRlIiwidXNlcl9pZCI6IjIifQ.VDx3B4UTRpX1UFNgNVAnkXahUqlt1SEVmnClrsooJy8&amp;#x27;}\n\n    def test_create_regex_rule(auth_headers):\n        &amp;quot;&amp;quot;&amp;quot;Test creating a REGEX validation rule.&amp;quot;&amp;quot;&amp;quot;\n        rule_data = {\n            &amp;quot;name&amp;quot;: &amp;quot;Email Format Check&amp;quot;,\n            &amp;quot;dataset_type&amp;quot;: &amp;quot;csv&amp;quot;,\n            &amp;quot;rule_type&amp;quot;: &amp;quot;REGEX&amp;quot;,\n            &amp;quot;field_name&amp;quot;: &amp;quot;email&amp;quot;,\n            &amp;quot;severity&amp;quot;: &amp;quot;LOW&amp;quot;,\n            &amp;quot;parameters&amp;quot;: &amp;#x27;{&amp;quot;pattern&amp;quot;: &amp;quot;^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\\\\\\\.[a-zA-Z]{2,}$&amp;quot;}&amp;#x27;\n        }\n        resp = requests.post(f&amp;quot;{BASE_URL}/api/rules/&amp;quot;, headers=auth_headers, json=rule_data)\n&amp;gt;       assert resp.status_code == 201\nE       assert 429 == 201\nE        +  where 429 = &amp;lt;Response [429]&amp;gt;.status_code\n\ntest_rules_api.py:84: AssertionError\n&#34;}], &#34;qa/api-tests/test_rules_api.py::test_create_rule_without_auth&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;qa/api-tests/test_rules_api.py::test_create_rule_without_auth&#34;, &#34;duration&#34;: &#34;7 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;qa/api-tests/test_rules_api.py::test_create_rule_without_auth&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;7 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;No log output captured.&#34;}], &#34;qa/api-tests/test_rules_api.py::test_create_rule_invalid_type&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Failed&#34;, &#34;testId&#34;: &#34;qa/api-tests/test_rules_api.py::test_create_rule_invalid_type&#34;, &#34;duration&#34;: &#34;17 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Failed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;qa/api-tests/test_rules_api.py::test_create_rule_invalid_type&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;17 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;auth_headers = {&amp;#x27;Authorization&amp;#x27;: &amp;#x27;Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzczMzA5MDYxLCJ...mp0aSI6ImNmODcxNzJjNzg5MTQ5YmQ5MTM1NzBkMjEyNzU1NDRlIiwidXNlcl9pZCI6IjIifQ.VDx3B4UTRpX1UFNgNVAnkXahUqlt1SEVmnClrsooJy8&amp;#x27;}\n\n    def test_create_rule_invalid_type(auth_headers):\n        &amp;quot;&amp;quot;&amp;quot;Test creating rule with invalid rule_type.&amp;quot;&amp;quot;&amp;quot;\n        rule_data = {\n            &amp;quot;name&amp;quot;: &amp;quot;Invalid Rule&amp;quot;,\n            &amp;quot;rule_type&amp;quot;: &amp;quot;INVALID_TYPE&amp;quot;,\n            &amp;quot;field_name&amp;quot;: &amp;quot;test&amp;quot;,\n            &amp;quot;severity&amp;quot;: &amp;quot;LOW&amp;quot;,\n            &amp;quot;parameters&amp;quot;: &amp;quot;{}&amp;quot;\n        }\n        resp = requests.post(f&amp;quot;{BASE_URL}/api/rules/&amp;quot;, headers=auth_headers, json=rule_data)\n&amp;gt;       assert resp.status_code == 422\nE       assert 429 == 422\nE        +  where 429 = &amp;lt;Response [429]&amp;gt;.status_code\n\ntest_rules_api.py:112: AssertionError\n&#34;}], &#34;qa/api-tests/test_rules_api.py::test_create_rule_invalid_severity&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Failed&#34;, &#34;testId&#34;: &#34;qa/api-tests/test_rules_api.py::test_create_rule_invalid_severity&#34;, &#34;duration&#34;: &#34;18 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Failed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;qa/api-tests/test_rules_api.py::test_create_rule_invalid_severity&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;18 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;auth_headers = {&amp;#x27;Authorization&amp;#x27;: &amp;#x27;Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzczMzA5MDYxLCJ...mp0aSI6ImNmODcxNzJjNzg5MTQ5YmQ5MTM1NzBkMjEyNzU1NDRlIiwidXNlcl9pZCI6IjIifQ.VDx3B4UTRpX1UFNgNVAnkXahUqlt1SEVmnClrsooJy8&amp;#x27;}\n\n    def test_create_rule_invalid_severity(auth_headers):\n        &amp;quot;&amp;quot;&amp;quot;Test creating rule with invalid severity.&amp;quot;&amp;quot;&amp;quot;\n        rule_data = {\n            &amp;quot;name&amp;quot;: &amp;quot;Invalid Severity&amp;quot;,\n            &amp;quot;rule_type&amp;quot;: &amp;quot;NOT_NULL&amp;quot;,\n            &amp;quot;field_name&amp;quot;: &amp;quot;test&amp;quot;,\n            &amp;quot;severity&amp;quot;: &amp;quot;CRITICAL&amp;quot;,\n            &amp;quot;parameters&amp;quot;: &amp;quot;{}&amp;quot;\n        }\n        resp = requests.post(f&amp;quot;{BASE_URL}/api/rules/&amp;quot;, headers=auth_headers, json=rule_data)\n&amp;gt;       assert resp.status_code == 422\nE       assert 400 == 422\nE        +  where 400 = &amp;lt;Response [400]&amp;gt;.status_code\n\ntest_rules_api.py:125: AssertionError\n&#34;}], &#34;qa/api-tests/test_rules_api.py::test_list_rules&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Error&#34;, &#34;testId&#34;: &#34;qa/api-tests/test_rules_api.py::test_list_rules::setup&#34;, &#34;duration&#34;: &#34;15 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Error&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;qa/api-tests/test_rules_api.py::test_list_rules::setup&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;15 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;fixturedef = &amp;lt;FixtureDef argname=&amp;#x27;uploaded_dataset&amp;#x27; scope=&amp;#x27;function&amp;#x27; baseid=&amp;#x27;qa/api-tests&amp;#x27;&amp;gt;\nrequest = &amp;lt;SubRequest &amp;#x27;uploaded_dataset&amp;#x27; for &amp;lt;Function test_list_rules&amp;gt;&amp;gt;\n\n    @pytest.hookimpl(wrapper=True)\n    def pytest_fixture_setup(fixturedef: FixtureDef, request) -&amp;gt; object | None:\n        asyncio_mode = _get_asyncio_mode(request.config)\n        if not _is_asyncio_fixture_function(fixturedef.func):\n            if asyncio_mode == Mode.STRICT:\n                # Ignore async fixtures without explicit asyncio mark in strict mode\n                # This applies to pytest_trio fixtures, for example\n&amp;gt;               return (yield)\n                        ^^^^^\n\n..\\..\\..\\..\\AppData\\Local\\Python\\pythoncore-3.14-64\\Lib\\site-packages\\pytest_asyncio\\plugin.py:728: \n_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ \n\nauth_headers = {&amp;#x27;Authorization&amp;#x27;: &amp;#x27;Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzczMzA5MDYxLCJ...mp0aSI6ImNmODcxNzJjNzg5MTQ5YmQ5MTM1NzBkMjEyNzU1NDRlIiwidXNlcl9pZCI6IjIifQ.VDx3B4UTRpX1UFNgNVAnkXahUqlt1SEVmnClrsooJy8&amp;#x27;}\nsample_csv_file = (&amp;#x27;test.csv&amp;#x27;, b&amp;#x27;id,name,email,age,salary\\n1,Alice,alice@test.com,30,50000\\n2,Bob,bob@test.com,25,45000\\n3,Carol,carol@test.com,35,60000\\n4,David,david@test.com,28,48000\\n5,Eve,eve@test.com,32,55000&amp;#x27;, &amp;#x27;text/csv&amp;#x27;)\n\n    @pytest.fixture\n    def uploaded_dataset(auth_headers, sample_csv_file):\n        &amp;quot;&amp;quot;&amp;quot;Upload a dataset and return its ID.&amp;quot;&amp;quot;&amp;quot;\n        resp = requests.post(\n            f&amp;quot;{BASE_URL}/api/datasets/upload&amp;quot;,\n            headers=auth_headers,\n            files={&amp;quot;file&amp;quot;: sample_csv_file}\n        )\n&amp;gt;       assert resp.status_code == 201, f&amp;quot;Dataset upload failed: {resp.text}&amp;quot;\nE       AssertionError: Dataset upload failed: {&amp;quot;detail&amp;quot;:&amp;quot;Request was throttled. Expected available in 2844 seconds.&amp;quot;,&amp;quot;code&amp;quot;:&amp;quot;throttled&amp;quot;}\nE       assert 429 == 201\nE        +  where 429 = &amp;lt;Response [429]&amp;gt;.status_code\n\nconftest.py:81: AssertionError\n&#34;}], &#34;qa/api-tests/test_rules_api.py::test_update_rule&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Error&#34;, &#34;testId&#34;: &#34;qa/api-tests/test_rules_api.py::test_update_rule::setup&#34;, &#34;duration&#34;: &#34;16 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Error&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;qa/api-tests/test_rules_api.py::test_update_rule::setup&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;16 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;fixturedef = &amp;lt;FixtureDef argname=&amp;#x27;uploaded_dataset&amp;#x27; scope=&amp;#x27;function&amp;#x27; baseid=&amp;#x27;qa/api-tests&amp;#x27;&amp;gt;\nrequest = &amp;lt;SubRequest &amp;#x27;uploaded_dataset&amp;#x27; for &amp;lt;Function test_update_rule&amp;gt;&amp;gt;\n\n    @pytest.hookimpl(wrapper=True)\n    def pytest_fixture_setup(fixturedef: FixtureDef, request) -&amp;gt; object | None:\n        asyncio_mode = _get_asyncio_mode(request.config)\n        if not _is_asyncio_fixture_function(fixturedef.func):\n            if asyncio_mode == Mode.STRICT:\n                # Ignore async fixtures without explicit asyncio mark in strict mode\n                # This applies to pytest_trio fixtures, for example\n&amp;gt;               return (yield)\n                        ^^^^^\n\n..\\..\\..\\..\\AppData\\Local\\Python\\pythoncore-3.14-64\\Lib\\site-packages\\pytest_asyncio\\plugin.py:728: \n_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ \n\nauth_headers = {&amp;#x27;Authorization&amp;#x27;: &amp;#x27;Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzczMzA5MDYxLCJ...mp0aSI6ImNmODcxNzJjNzg5MTQ5YmQ5MTM1NzBkMjEyNzU1NDRlIiwidXNlcl9pZCI6IjIifQ.VDx3B4UTRpX1UFNgNVAnkXahUqlt1SEVmnClrsooJy8&amp;#x27;}\nsample_csv_file = (&amp;#x27;test.csv&amp;#x27;, b&amp;#x27;id,name,email,age,salary\\n1,Alice,alice@test.com,30,50000\\n2,Bob,bob@test.com,25,45000\\n3,Carol,carol@test.com,35,60000\\n4,David,david@test.com,28,48000\\n5,Eve,eve@test.com,32,55000&amp;#x27;, &amp;#x27;text/csv&amp;#x27;)\n\n    @pytest.fixture\n    def uploaded_dataset(auth_headers, sample_csv_file):\n        &amp;quot;&amp;quot;&amp;quot;Upload a dataset and return its ID.&amp;quot;&amp;quot;&amp;quot;\n        resp = requests.post(\n            f&amp;quot;{BASE_URL}/api/datasets/upload&amp;quot;,\n            headers=auth_headers,\n            files={&amp;quot;file&amp;quot;: sample_csv_file}\n        )\n&amp;gt;       assert resp.status_code == 201, f&amp;quot;Dataset upload failed: {resp.text}&amp;quot;\nE       AssertionError: Dataset upload failed: {&amp;quot;detail&amp;quot;:&amp;quot;Request was throttled. Expected available in 2844 seconds.&amp;quot;,&amp;quot;code&amp;quot;:&amp;quot;throttled&amp;quot;}\nE       assert 429 == 201\nE        +  where 429 = &amp;lt;Response [429]&amp;gt;.status_code\n\nconftest.py:81: AssertionError\n&#34;}], &#34;qa/api-tests/test_rules_api.py::test_update_nonexistent_rule&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Failed&#34;, &#34;testId&#34;: &#34;qa/api-tests/test_rules_api.py::test_update_nonexistent_rule&#34;, &#34;duration&#34;: &#34;16 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Failed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;qa/api-tests/test_rules_api.py::test_update_nonexistent_rule&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;16 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;auth_headers = {&amp;#x27;Authorization&amp;#x27;: &amp;#x27;Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzczMzA5MDYxLCJ...mp0aSI6ImNmODcxNzJjNzg5MTQ5YmQ5MTM1NzBkMjEyNzU1NDRlIiwidXNlcl9pZCI6IjIifQ.VDx3B4UTRpX1UFNgNVAnkXahUqlt1SEVmnClrsooJy8&amp;#x27;}\n\n    def test_update_nonexistent_rule(auth_headers):\n        &amp;quot;&amp;quot;&amp;quot;Test updating non-existent rule.&amp;quot;&amp;quot;&amp;quot;\n        resp = requests.put(\n            f&amp;quot;{BASE_URL}/api/rules/99999&amp;quot;,\n            headers=auth_headers,\n            json={&amp;quot;name&amp;quot;: &amp;quot;Updated&amp;quot;}\n        )\n&amp;gt;       assert resp.status_code == 404\nE       assert 429 == 404\nE        +  where 429 = &amp;lt;Response [429]&amp;gt;.status_code\n\ntest_rules_api.py:160: AssertionError\n&#34;}], &#34;qa/api-tests/test_rules_api.py::test_delete_rule&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Failed&#34;, &#34;testId&#34;: &#34;qa/api-tests/test_rules_api.py::test_delete_rule&#34;, &#34;duration&#34;: &#34;15 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Failed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;qa/api-tests/test_rules_api.py::test_delete_rule&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;15 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;auth_headers = {&amp;#x27;Authorization&amp;#x27;: &amp;#x27;Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzczMzA5MDYxLCJ...mp0aSI6ImNmODcxNzJjNzg5MTQ5YmQ5MTM1NzBkMjEyNzU1NDRlIiwidXNlcl9pZCI6IjIifQ.VDx3B4UTRpX1UFNgNVAnkXahUqlt1SEVmnClrsooJy8&amp;#x27;}\n\n    def test_delete_rule(auth_headers):\n        &amp;quot;&amp;quot;&amp;quot;Test deleting a rule.&amp;quot;&amp;quot;&amp;quot;\n        # Create a rule to delete\n        rule_data = {\n            &amp;quot;name&amp;quot;: &amp;quot;Rule To Delete&amp;quot;,\n            &amp;quot;rule_type&amp;quot;: &amp;quot;NOT_NULL&amp;quot;,\n            &amp;quot;field_name&amp;quot;: &amp;quot;test&amp;quot;,\n            &amp;quot;severity&amp;quot;: &amp;quot;LOW&amp;quot;,\n            &amp;quot;parameters&amp;quot;: &amp;quot;{}&amp;quot;\n        }\n        create_resp = requests.post(f&amp;quot;{BASE_URL}/api/rules/&amp;quot;, headers=auth_headers, json=rule_data)\n&amp;gt;       rule_id = create_resp.json()[&amp;quot;id&amp;quot;]\n                  ^^^^^^^^^^^^^^^^^^^^^^^^\nE       KeyError: &amp;#x27;id&amp;#x27;\n\ntest_rules_api.py:174: KeyError\n&#34;}], &#34;qa/api-tests/test_rules_api.py::test_delete_nonexistent_rule&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;qa/api-tests/test_rules_api.py::test_delete_nonexistent_rule&#34;, &#34;duration&#34;: &#34;60 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;qa/api-tests/test_rules_api.py::test_delete_nonexistent_rule&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;60 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;No log output captured.&#34;}], &#34;qa/api-tests/test_scheduling_api.py::test_create_schedule&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Failed&#34;, &#34;testId&#34;: &#34;qa/api-tests/test_scheduling_api.py::test_create_schedule&#34;, &#34;duration&#34;: &#34;75 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Failed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;qa/api-tests/test_scheduling_api.py::test_create_schedule&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;75 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;auth_headers = {&amp;#x27;Authorization&amp;#x27;: &amp;#x27;Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzczMzA5MDYxLCJ...mp0aSI6ImNmODcxNzJjNzg5MTQ5YmQ5MTM1NzBkMjEyNzU1NDRlIiwidXNlcl9pZCI6IjIifQ.VDx3B4UTRpX1UFNgNVAnkXahUqlt1SEVmnClrsooJy8&amp;#x27;}\nuploaded_dataset = 83\n\n    def test_create_schedule(auth_headers, uploaded_dataset):\n        &amp;quot;&amp;quot;&amp;quot;Test creating a new schedule.&amp;quot;&amp;quot;&amp;quot;\n        schedule_data = {\n            &amp;quot;dataset_id&amp;quot;: uploaded_dataset,\n            &amp;quot;cron_expression&amp;quot;: &amp;quot;0 9 * * 1&amp;quot;,  # Every Monday at 9 AM\n            &amp;quot;name&amp;quot;: &amp;quot;Weekly Quality Check&amp;quot;,\n            &amp;quot;is_active&amp;quot;: True\n        }\n        resp = requests.post(\n            f&amp;quot;{BASE_URL}/api/schedule/&amp;quot;,\n            headers=auth_headers,\n            json=schedule_data\n        )\n&amp;gt;       assert resp.status_code in [200, 201]\nE       assert 404 in [200, 201]\nE        +  where 404 = &amp;lt;Response [404]&amp;gt;.status_code\n\ntest_scheduling_api.py:21: AssertionError\n&#34;}], &#34;qa/api-tests/test_scheduling_api.py::test_create_schedule_without_auth&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Failed&#34;, &#34;testId&#34;: &#34;qa/api-tests/test_scheduling_api.py::test_create_schedule_without_auth&#34;, &#34;duration&#34;: &#34;49 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Failed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;qa/api-tests/test_scheduling_api.py::test_create_schedule_without_auth&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;49 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;uploaded_dataset = 84\n\n    def test_create_schedule_without_auth(uploaded_dataset):\n        &amp;quot;&amp;quot;&amp;quot;Test creating schedule without authentication.&amp;quot;&amp;quot;&amp;quot;\n        schedule_data = {\n            &amp;quot;dataset_id&amp;quot;: uploaded_dataset,\n            &amp;quot;cron_expression&amp;quot;: &amp;quot;0 9 * * 1&amp;quot;,\n            &amp;quot;name&amp;quot;: &amp;quot;Test Schedule&amp;quot;\n        }\n        resp = requests.post(f&amp;quot;{BASE_URL}/api/schedule/&amp;quot;, json=schedule_data)\n&amp;gt;       assert resp.status_code == 401\nE       assert 404 == 401\nE        +  where 404 = &amp;lt;Response [404]&amp;gt;.status_code\n\ntest_scheduling_api.py:36: AssertionError\n&#34;}], &#34;qa/api-tests/test_scheduling_api.py::test_create_schedule_invalid_cron&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Error&#34;, &#34;testId&#34;: &#34;qa/api-tests/test_scheduling_api.py::test_create_schedule_invalid_cron::setup&#34;, &#34;duration&#34;: &#34;16 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Error&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;qa/api-tests/test_scheduling_api.py::test_create_schedule_invalid_cron::setup&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;16 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;fixturedef = &amp;lt;FixtureDef argname=&amp;#x27;uploaded_dataset&amp;#x27; scope=&amp;#x27;function&amp;#x27; baseid=&amp;#x27;qa/api-tests&amp;#x27;&amp;gt;\nrequest = &amp;lt;SubRequest &amp;#x27;uploaded_dataset&amp;#x27; for &amp;lt;Function test_create_schedule_invalid_cron&amp;gt;&amp;gt;\n\n    @pytest.hookimpl(wrapper=True)\n    def pytest_fixture_setup(fixturedef: FixtureDef, request) -&amp;gt; object | None:\n        asyncio_mode = _get_asyncio_mode(request.config)\n        if not _is_asyncio_fixture_function(fixturedef.func):\n            if asyncio_mode == Mode.STRICT:\n                # Ignore async fixtures without explicit asyncio mark in strict mode\n                # This applies to pytest_trio fixtures, for example\n&amp;gt;               return (yield)\n                        ^^^^^\n\n..\\..\\..\\..\\AppData\\Local\\Python\\pythoncore-3.14-64\\Lib\\site-packages\\pytest_asyncio\\plugin.py:728: \n_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ \n\nauth_headers = {&amp;#x27;Authorization&amp;#x27;: &amp;#x27;Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzczMzA5MDYxLCJ...mp0aSI6ImNmODcxNzJjNzg5MTQ5YmQ5MTM1NzBkMjEyNzU1NDRlIiwidXNlcl9pZCI6IjIifQ.VDx3B4UTRpX1UFNgNVAnkXahUqlt1SEVmnClrsooJy8&amp;#x27;}\nsample_csv_file = (&amp;#x27;test.csv&amp;#x27;, b&amp;#x27;id,name,email,age,salary\\n1,Alice,alice@test.com,30,50000\\n2,Bob,bob@test.com,25,45000\\n3,Carol,carol@test.com,35,60000\\n4,David,david@test.com,28,48000\\n5,Eve,eve@test.com,32,55000&amp;#x27;, &amp;#x27;text/csv&amp;#x27;)\n\n    @pytest.fixture\n    def uploaded_dataset(auth_headers, sample_csv_file):\n        &amp;quot;&amp;quot;&amp;quot;Upload a dataset and return its ID.&amp;quot;&amp;quot;&amp;quot;\n        resp = requests.post(\n            f&amp;quot;{BASE_URL}/api/datasets/upload&amp;quot;,\n            headers=auth_headers,\n            files={&amp;quot;file&amp;quot;: sample_csv_file}\n        )\n&amp;gt;       assert resp.status_code == 201, f&amp;quot;Dataset upload failed: {resp.text}&amp;quot;\nE       AssertionError: Dataset upload failed: {&amp;quot;detail&amp;quot;:&amp;quot;Request was throttled. Expected available in 2843 seconds.&amp;quot;,&amp;quot;code&amp;quot;:&amp;quot;throttled&amp;quot;}\nE       assert 429 == 201\nE        +  where 429 = &amp;lt;Response [429]&amp;gt;.status_code\n\nconftest.py:81: AssertionError\n&#34;}], &#34;qa/api-tests/test_scheduling_api.py::test_list_schedules&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Failed&#34;, &#34;testId&#34;: &#34;qa/api-tests/test_scheduling_api.py::test_list_schedules&#34;, &#34;duration&#34;: &#34;11 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Failed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;qa/api-tests/test_scheduling_api.py::test_list_schedules&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;11 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;auth_headers = {&amp;#x27;Authorization&amp;#x27;: &amp;#x27;Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzczMzA5MDYxLCJ...mp0aSI6ImNmODcxNzJjNzg5MTQ5YmQ5MTM1NzBkMjEyNzU1NDRlIiwidXNlcl9pZCI6IjIifQ.VDx3B4UTRpX1UFNgNVAnkXahUqlt1SEVmnClrsooJy8&amp;#x27;}\n\n    def test_list_schedules(auth_headers):\n        &amp;quot;&amp;quot;&amp;quot;Test listing all schedules.&amp;quot;&amp;quot;&amp;quot;\n        resp = requests.get(f&amp;quot;{BASE_URL}/api/schedule/&amp;quot;, headers=auth_headers)\n&amp;gt;       assert resp.status_code == 200\nE       assert 404 == 200\nE        +  where 404 = &amp;lt;Response [404]&amp;gt;.status_code\n\ntest_scheduling_api.py:57: AssertionError\n&#34;}], &#34;qa/api-tests/test_scheduling_api.py::test_list_schedules_without_auth&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Failed&#34;, &#34;testId&#34;: &#34;qa/api-tests/test_scheduling_api.py::test_list_schedules_without_auth&#34;, &#34;duration&#34;: &#34;10 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Failed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;qa/api-tests/test_scheduling_api.py::test_list_schedules_without_auth&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;10 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;def test_list_schedules_without_auth():\n        &amp;quot;&amp;quot;&amp;quot;Test listing schedules without authentication.&amp;quot;&amp;quot;&amp;quot;\n        resp = requests.get(f&amp;quot;{BASE_URL}/api/schedule/&amp;quot;)\n&amp;gt;       assert resp.status_code == 401\nE       assert 404 == 401\nE        +  where 404 = &amp;lt;Response [404]&amp;gt;.status_code\n\ntest_scheduling_api.py:65: AssertionError\n&#34;}], &#34;qa/api-tests/test_scheduling_api.py::test_pause_schedule&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Error&#34;, &#34;testId&#34;: &#34;qa/api-tests/test_scheduling_api.py::test_pause_schedule::setup&#34;, &#34;duration&#34;: &#34;15 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Error&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;qa/api-tests/test_scheduling_api.py::test_pause_schedule::setup&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;15 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;fixturedef = &amp;lt;FixtureDef argname=&amp;#x27;uploaded_dataset&amp;#x27; scope=&amp;#x27;function&amp;#x27; baseid=&amp;#x27;qa/api-tests&amp;#x27;&amp;gt;\nrequest = &amp;lt;SubRequest &amp;#x27;uploaded_dataset&amp;#x27; for &amp;lt;Function test_pause_schedule&amp;gt;&amp;gt;\n\n    @pytest.hookimpl(wrapper=True)\n    def pytest_fixture_setup(fixturedef: FixtureDef, request) -&amp;gt; object | None:\n        asyncio_mode = _get_asyncio_mode(request.config)\n        if not _is_asyncio_fixture_function(fixturedef.func):\n            if asyncio_mode == Mode.STRICT:\n                # Ignore async fixtures without explicit asyncio mark in strict mode\n                # This applies to pytest_trio fixtures, for example\n&amp;gt;               return (yield)\n                        ^^^^^\n\n..\\..\\..\\..\\AppData\\Local\\Python\\pythoncore-3.14-64\\Lib\\site-packages\\pytest_asyncio\\plugin.py:728: \n_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ \n\nauth_headers = {&amp;#x27;Authorization&amp;#x27;: &amp;#x27;Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzczMzA5MDYxLCJ...mp0aSI6ImNmODcxNzJjNzg5MTQ5YmQ5MTM1NzBkMjEyNzU1NDRlIiwidXNlcl9pZCI6IjIifQ.VDx3B4UTRpX1UFNgNVAnkXahUqlt1SEVmnClrsooJy8&amp;#x27;}\nsample_csv_file = (&amp;#x27;test.csv&amp;#x27;, b&amp;#x27;id,name,email,age,salary\\n1,Alice,alice@test.com,30,50000\\n2,Bob,bob@test.com,25,45000\\n3,Carol,carol@test.com,35,60000\\n4,David,david@test.com,28,48000\\n5,Eve,eve@test.com,32,55000&amp;#x27;, &amp;#x27;text/csv&amp;#x27;)\n\n    @pytest.fixture\n    def uploaded_dataset(auth_headers, sample_csv_file):\n        &amp;quot;&amp;quot;&amp;quot;Upload a dataset and return its ID.&amp;quot;&amp;quot;&amp;quot;\n        resp = requests.post(\n            f&amp;quot;{BASE_URL}/api/datasets/upload&amp;quot;,\n            headers=auth_headers,\n            files={&amp;quot;file&amp;quot;: sample_csv_file}\n        )\n&amp;gt;       assert resp.status_code == 201, f&amp;quot;Dataset upload failed: {resp.text}&amp;quot;\nE       AssertionError: Dataset upload failed: {&amp;quot;detail&amp;quot;:&amp;quot;Request was throttled. Expected available in 2843 seconds.&amp;quot;,&amp;quot;code&amp;quot;:&amp;quot;throttled&amp;quot;}\nE       assert 429 == 201\nE        +  where 429 = &amp;lt;Response [429]&amp;gt;.status_code\n\nconftest.py:81: AssertionError\n&#34;}], &#34;qa/api-tests/test_scheduling_api.py::test_pause_nonexistent_schedule&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;qa/api-tests/test_scheduling_api.py::test_pause_nonexistent_schedule&#34;, &#34;duration&#34;: &#34;9 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;qa/api-tests/test_scheduling_api.py::test_pause_nonexistent_schedule&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;9 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;No log output captured.&#34;}], &#34;qa/api-tests/test_scheduling_api.py::test_resume_schedule&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Error&#34;, &#34;testId&#34;: &#34;qa/api-tests/test_scheduling_api.py::test_resume_schedule::setup&#34;, &#34;duration&#34;: &#34;18 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Error&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;qa/api-tests/test_scheduling_api.py::test_resume_schedule::setup&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;18 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;fixturedef = &amp;lt;FixtureDef argname=&amp;#x27;uploaded_dataset&amp;#x27; scope=&amp;#x27;function&amp;#x27; baseid=&amp;#x27;qa/api-tests&amp;#x27;&amp;gt;\nrequest = &amp;lt;SubRequest &amp;#x27;uploaded_dataset&amp;#x27; for &amp;lt;Function test_resume_schedule&amp;gt;&amp;gt;\n\n    @pytest.hookimpl(wrapper=True)\n    def pytest_fixture_setup(fixturedef: FixtureDef, request) -&amp;gt; object | None:\n        asyncio_mode = _get_asyncio_mode(request.config)\n        if not _is_asyncio_fixture_function(fixturedef.func):\n            if asyncio_mode == Mode.STRICT:\n                # Ignore async fixtures without explicit asyncio mark in strict mode\n                # This applies to pytest_trio fixtures, for example\n&amp;gt;               return (yield)\n                        ^^^^^\n\n..\\..\\..\\..\\AppData\\Local\\Python\\pythoncore-3.14-64\\Lib\\site-packages\\pytest_asyncio\\plugin.py:728: \n_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ \n\nauth_headers = {&amp;#x27;Authorization&amp;#x27;: &amp;#x27;Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzczMzA5MDYxLCJ...mp0aSI6ImNmODcxNzJjNzg5MTQ5YmQ5MTM1NzBkMjEyNzU1NDRlIiwidXNlcl9pZCI6IjIifQ.VDx3B4UTRpX1UFNgNVAnkXahUqlt1SEVmnClrsooJy8&amp;#x27;}\nsample_csv_file = (&amp;#x27;test.csv&amp;#x27;, b&amp;#x27;id,name,email,age,salary\\n1,Alice,alice@test.com,30,50000\\n2,Bob,bob@test.com,25,45000\\n3,Carol,carol@test.com,35,60000\\n4,David,david@test.com,28,48000\\n5,Eve,eve@test.com,32,55000&amp;#x27;, &amp;#x27;text/csv&amp;#x27;)\n\n    @pytest.fixture\n    def uploaded_dataset(auth_headers, sample_csv_file):\n        &amp;quot;&amp;quot;&amp;quot;Upload a dataset and return its ID.&amp;quot;&amp;quot;&amp;quot;\n        resp = requests.post(\n            f&amp;quot;{BASE_URL}/api/datasets/upload&amp;quot;,\n            headers=auth_headers,\n            files={&amp;quot;file&amp;quot;: sample_csv_file}\n        )\n&amp;gt;       assert resp.status_code == 201, f&amp;quot;Dataset upload failed: {resp.text}&amp;quot;\nE       AssertionError: Dataset upload failed: {&amp;quot;detail&amp;quot;:&amp;quot;Request was throttled. Expected available in 2843 seconds.&amp;quot;,&amp;quot;code&amp;quot;:&amp;quot;throttled&amp;quot;}\nE       assert 429 == 201\nE        +  where 429 = &amp;lt;Response [429]&amp;gt;.status_code\n\nconftest.py:81: AssertionError\n&#34;}], &#34;qa/api-tests/test_scheduling_api.py::test_resume_nonexistent_schedule&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;qa/api-tests/test_scheduling_api.py::test_resume_nonexistent_schedule&#34;, &#34;duration&#34;: &#34;10 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;qa/api-tests/test_scheduling_api.py::test_resume_nonexistent_schedule&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;10 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;No log output captured.&#34;}], &#34;qa/api-tests/test_scheduling_api.py::test_delete_schedule&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Error&#34;, &#34;testId&#34;: &#34;qa/api-tests/test_scheduling_api.py::test_delete_schedule::setup&#34;, &#34;duration&#34;: &#34;17 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Error&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;qa/api-tests/test_scheduling_api.py::test_delete_schedule::setup&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;17 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;fixturedef = &amp;lt;FixtureDef argname=&amp;#x27;uploaded_dataset&amp;#x27; scope=&amp;#x27;function&amp;#x27; baseid=&amp;#x27;qa/api-tests&amp;#x27;&amp;gt;\nrequest = &amp;lt;SubRequest &amp;#x27;uploaded_dataset&amp;#x27; for &amp;lt;Function test_delete_schedule&amp;gt;&amp;gt;\n\n    @pytest.hookimpl(wrapper=True)\n    def pytest_fixture_setup(fixturedef: FixtureDef, request) -&amp;gt; object | None:\n        asyncio_mode = _get_asyncio_mode(request.config)\n        if not _is_asyncio_fixture_function(fixturedef.func):\n            if asyncio_mode == Mode.STRICT:\n                # Ignore async fixtures without explicit asyncio mark in strict mode\n                # This applies to pytest_trio fixtures, for example\n&amp;gt;               return (yield)\n                        ^^^^^\n\n..\\..\\..\\..\\AppData\\Local\\Python\\pythoncore-3.14-64\\Lib\\site-packages\\pytest_asyncio\\plugin.py:728: \n_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ \n\nauth_headers = {&amp;#x27;Authorization&amp;#x27;: &amp;#x27;Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzczMzA5MDYxLCJ...mp0aSI6ImNmODcxNzJjNzg5MTQ5YmQ5MTM1NzBkMjEyNzU1NDRlIiwidXNlcl9pZCI6IjIifQ.VDx3B4UTRpX1UFNgNVAnkXahUqlt1SEVmnClrsooJy8&amp;#x27;}\nsample_csv_file = (&amp;#x27;test.csv&amp;#x27;, b&amp;#x27;id,name,email,age,salary\\n1,Alice,alice@test.com,30,50000\\n2,Bob,bob@test.com,25,45000\\n3,Carol,carol@test.com,35,60000\\n4,David,david@test.com,28,48000\\n5,Eve,eve@test.com,32,55000&amp;#x27;, &amp;#x27;text/csv&amp;#x27;)\n\n    @pytest.fixture\n    def uploaded_dataset(auth_headers, sample_csv_file):\n        &amp;quot;&amp;quot;&amp;quot;Upload a dataset and return its ID.&amp;quot;&amp;quot;&amp;quot;\n        resp = requests.post(\n            f&amp;quot;{BASE_URL}/api/datasets/upload&amp;quot;,\n            headers=auth_headers,\n            files={&amp;quot;file&amp;quot;: sample_csv_file}\n        )\n&amp;gt;       assert resp.status_code == 201, f&amp;quot;Dataset upload failed: {resp.text}&amp;quot;\nE       AssertionError: Dataset upload failed: {&amp;quot;detail&amp;quot;:&amp;quot;Request was throttled. Expected available in 2843 seconds.&amp;quot;,&amp;quot;code&amp;quot;:&amp;quot;throttled&amp;quot;}\nE       assert 429 == 201\nE        +  where 429 = &amp;lt;Response [429]&amp;gt;.status_code\n\nconftest.py:81: AssertionError\n&#34;}], &#34;qa/api-tests/test_scheduling_api.py::test_delete_nonexistent_schedule&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;qa/api-tests/test_scheduling_api.py::test_delete_nonexistent_schedule&#34;, &#34;duration&#34;: &#34;13 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;qa/api-tests/test_scheduling_api.py::test_delete_nonexistent_schedule&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;13 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;No log output captured.&#34;}], &#34;qa/api-tests/test_scheduling_api.py::test_set_alert_threshold&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Error&#34;, &#34;testId&#34;: &#34;qa/api-tests/test_scheduling_api.py::test_set_alert_threshold::setup&#34;, &#34;duration&#34;: &#34;16 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Error&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;qa/api-tests/test_scheduling_api.py::test_set_alert_threshold::setup&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;16 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;fixturedef = &amp;lt;FixtureDef argname=&amp;#x27;uploaded_dataset&amp;#x27; scope=&amp;#x27;function&amp;#x27; baseid=&amp;#x27;qa/api-tests&amp;#x27;&amp;gt;\nrequest = &amp;lt;SubRequest &amp;#x27;uploaded_dataset&amp;#x27; for &amp;lt;Function test_set_alert_threshold&amp;gt;&amp;gt;\n\n    @pytest.hookimpl(wrapper=True)\n    def pytest_fixture_setup(fixturedef: FixtureDef, request) -&amp;gt; object | None:\n        asyncio_mode = _get_asyncio_mode(request.config)\n        if not _is_asyncio_fixture_function(fixturedef.func):\n            if asyncio_mode == Mode.STRICT:\n                # Ignore async fixtures without explicit asyncio mark in strict mode\n                # This applies to pytest_trio fixtures, for example\n&amp;gt;               return (yield)\n                        ^^^^^\n\n..\\..\\..\\..\\AppData\\Local\\Python\\pythoncore-3.14-64\\Lib\\site-packages\\pytest_asyncio\\plugin.py:728: \n_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ \n\nauth_headers = {&amp;#x27;Authorization&amp;#x27;: &amp;#x27;Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzczMzA5MDYxLCJ...mp0aSI6ImNmODcxNzJjNzg5MTQ5YmQ5MTM1NzBkMjEyNzU1NDRlIiwidXNlcl9pZCI6IjIifQ.VDx3B4UTRpX1UFNgNVAnkXahUqlt1SEVmnClrsooJy8&amp;#x27;}\nsample_csv_file = (&amp;#x27;test.csv&amp;#x27;, b&amp;#x27;id,name,email,age,salary\\n1,Alice,alice@test.com,30,50000\\n2,Bob,bob@test.com,25,45000\\n3,Carol,carol@test.com,35,60000\\n4,David,david@test.com,28,48000\\n5,Eve,eve@test.com,32,55000&amp;#x27;, &amp;#x27;text/csv&amp;#x27;)\n\n    @pytest.fixture\n    def uploaded_dataset(auth_headers, sample_csv_file):\n        &amp;quot;&amp;quot;&amp;quot;Upload a dataset and return its ID.&amp;quot;&amp;quot;&amp;quot;\n        resp = requests.post(\n            f&amp;quot;{BASE_URL}/api/datasets/upload&amp;quot;,\n            headers=auth_headers,\n            files={&amp;quot;file&amp;quot;: sample_csv_file}\n        )\n&amp;gt;       assert resp.status_code == 201, f&amp;quot;Dataset upload failed: {resp.text}&amp;quot;\nE       AssertionError: Dataset upload failed: {&amp;quot;detail&amp;quot;:&amp;quot;Request was throttled. Expected available in 2843 seconds.&amp;quot;,&amp;quot;code&amp;quot;:&amp;quot;throttled&amp;quot;}\nE       assert 429 == 201\nE        +  where 429 = &amp;lt;Response [429]&amp;gt;.status_code\n\nconftest.py:81: AssertionError\n&#34;}], &#34;qa/api-tests/test_scheduling_api.py::test_set_alert_invalid_threshold&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Error&#34;, &#34;testId&#34;: &#34;qa/api-tests/test_scheduling_api.py::test_set_alert_invalid_threshold::setup&#34;, &#34;duration&#34;: &#34;16 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Error&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;qa/api-tests/test_scheduling_api.py::test_set_alert_invalid_threshold::setup&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;16 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;fixturedef = &amp;lt;FixtureDef argname=&amp;#x27;uploaded_dataset&amp;#x27; scope=&amp;#x27;function&amp;#x27; baseid=&amp;#x27;qa/api-tests&amp;#x27;&amp;gt;\nrequest = &amp;lt;SubRequest &amp;#x27;uploaded_dataset&amp;#x27; for &amp;lt;Function test_set_alert_invalid_threshold&amp;gt;&amp;gt;\n\n    @pytest.hookimpl(wrapper=True)\n    def pytest_fixture_setup(fixturedef: FixtureDef, request) -&amp;gt; object | None:\n        asyncio_mode = _get_asyncio_mode(request.config)\n        if not _is_asyncio_fixture_function(fixturedef.func):\n            if asyncio_mode == Mode.STRICT:\n                # Ignore async fixtures without explicit asyncio mark in strict mode\n                # This applies to pytest_trio fixtures, for example\n&amp;gt;               return (yield)\n                        ^^^^^\n\n..\\..\\..\\..\\AppData\\Local\\Python\\pythoncore-3.14-64\\Lib\\site-packages\\pytest_asyncio\\plugin.py:728: \n_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ \n\nauth_headers = {&amp;#x27;Authorization&amp;#x27;: &amp;#x27;Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzczMzA5MDYxLCJ...mp0aSI6ImNmODcxNzJjNzg5MTQ5YmQ5MTM1NzBkMjEyNzU1NDRlIiwidXNlcl9pZCI6IjIifQ.VDx3B4UTRpX1UFNgNVAnkXahUqlt1SEVmnClrsooJy8&amp;#x27;}\nsample_csv_file = (&amp;#x27;test.csv&amp;#x27;, b&amp;#x27;id,name,email,age,salary\\n1,Alice,alice@test.com,30,50000\\n2,Bob,bob@test.com,25,45000\\n3,Carol,carol@test.com,35,60000\\n4,David,david@test.com,28,48000\\n5,Eve,eve@test.com,32,55000&amp;#x27;, &amp;#x27;text/csv&amp;#x27;)\n\n    @pytest.fixture\n    def uploaded_dataset(auth_headers, sample_csv_file):\n        &amp;quot;&amp;quot;&amp;quot;Upload a dataset and return its ID.&amp;quot;&amp;quot;&amp;quot;\n        resp = requests.post(\n            f&amp;quot;{BASE_URL}/api/datasets/upload&amp;quot;,\n            headers=auth_headers,\n            files={&amp;quot;file&amp;quot;: sample_csv_file}\n        )\n&amp;gt;       assert resp.status_code == 201, f&amp;quot;Dataset upload failed: {resp.text}&amp;quot;\nE       AssertionError: Dataset upload failed: {&amp;quot;detail&amp;quot;:&amp;quot;Request was throttled. Expected available in 2843 seconds.&amp;quot;,&amp;quot;code&amp;quot;:&amp;quot;throttled&amp;quot;}\nE       assert 429 == 201\nE        +  where 429 = &amp;lt;Response [429]&amp;gt;.status_code\n\nconftest.py:81: AssertionError\n&#34;}], &#34;qa/api-tests/test_scheduling_api.py::test_set_alert_without_auth&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Failed&#34;, &#34;testId&#34;: &#34;qa/api-tests/test_scheduling_api.py::test_set_alert_without_auth&#34;, &#34;duration&#34;: &#34;41 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Failed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;qa/api-tests/test_scheduling_api.py::test_set_alert_without_auth&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;41 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;uploaded_dataset = 85\n\n    def test_set_alert_without_auth(uploaded_dataset):\n        &amp;quot;&amp;quot;&amp;quot;Test setting alert without authentication.&amp;quot;&amp;quot;&amp;quot;\n        alert_data = {\n            &amp;quot;threshold&amp;quot;: 75,\n            &amp;quot;email&amp;quot;: &amp;quot;test@example.com&amp;quot;\n        }\n        resp = requests.post(\n            f&amp;quot;{BASE_URL}/api/schedule/alerts/{uploaded_dataset}/&amp;quot;,\n            json=alert_data\n        )\n&amp;gt;       assert resp.status_code == 401\nE       assert 404 == 401\nE        +  where 404 = &amp;lt;Response [404]&amp;gt;.status_code\n\ntest_scheduling_api.py:213: AssertionError\n&#34;}], &#34;qa/api-tests/test_scheduling_api.py::test_set_alert_nonexistent_dataset&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;qa/api-tests/test_scheduling_api.py::test_set_alert_nonexistent_dataset&#34;, &#34;duration&#34;: &#34;9 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;qa/api-tests/test_scheduling_api.py::test_set_alert_nonexistent_dataset&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;9 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;No log output captured.&#34;}], &#34;qa/api-tests/test_upload_api.py::test_upload_valid_csv&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Failed&#34;, &#34;testId&#34;: &#34;qa/api-tests/test_upload_api.py::test_upload_valid_csv&#34;, &#34;duration&#34;: &#34;8 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Failed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;qa/api-tests/test_upload_api.py::test_upload_valid_csv&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;8 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;def test_upload_valid_csv():\n        &amp;quot;&amp;quot;&amp;quot;Upload a valid CSV file - expect 201.&amp;quot;&amp;quot;&amp;quot;\n        csv = &amp;quot;&amp;quot;&amp;quot;id,name,age\n    1,Alice,30\n    2,Bob,25\n    &amp;quot;&amp;quot;&amp;quot;\n        files = {&amp;quot;file&amp;quot;: (&amp;quot;test.csv&amp;quot;, csv.encode(), &amp;quot;text/csv&amp;quot;)}\n        resp = requests.post(f&amp;quot;{BASE_URL}/api/datasets/upload&amp;quot;, files=files)\n&amp;gt;       assert resp.status_code == 201\nE       assert 401 == 201\nE        +  where 401 = &amp;lt;Response [401]&amp;gt;.status_code\n\ntest_upload_api.py:18: AssertionError\n&#34;}], &#34;qa/api-tests/test_upload_api.py::test_upload_invalid_file_type&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Failed&#34;, &#34;testId&#34;: &#34;qa/api-tests/test_upload_api.py::test_upload_invalid_file_type&#34;, &#34;duration&#34;: &#34;8 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Failed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;qa/api-tests/test_upload_api.py::test_upload_invalid_file_type&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;8 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;def test_upload_invalid_file_type():\n        &amp;quot;&amp;quot;&amp;quot;Upload an unsupported file type - expect 400.&amp;quot;&amp;quot;&amp;quot;\n        files = {&amp;quot;file&amp;quot;: (&amp;quot;test.txt&amp;quot;, b&amp;quot;hello world&amp;quot;, &amp;quot;text/plain&amp;quot;)}\n        resp = requests.post(f&amp;quot;{BASE_URL}/api/datasets/upload&amp;quot;, files=files)\n&amp;gt;       assert resp.status_code == 400\nE       assert 401 == 400\nE        +  where 401 = &amp;lt;Response [401]&amp;gt;.status_code\n\ntest_upload_api.py:28: AssertionError\n&#34;}], &#34;qa/api-tests/test_upload_api.py::test_upload_empty_file&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Failed&#34;, &#34;testId&#34;: &#34;qa/api-tests/test_upload_api.py::test_upload_empty_file&#34;, &#34;duration&#34;: &#34;7 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Failed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;qa/api-tests/test_upload_api.py::test_upload_empty_file&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;7 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;def test_upload_empty_file():\n        &amp;quot;&amp;quot;&amp;quot;Upload an empty file - expect 400.&amp;quot;&amp;quot;&amp;quot;\n        files = {&amp;quot;file&amp;quot;: (&amp;quot;empty.csv&amp;quot;, b&amp;quot;&amp;quot;, &amp;quot;text/csv&amp;quot;)}\n        resp = requests.post(f&amp;quot;{BASE_URL}/api/datasets/upload&amp;quot;, files=files)\n&amp;gt;       assert resp.status_code == 400\nE       assert 401 == 400\nE        +  where 401 = &amp;lt;Response [401]&amp;gt;.status_code\n\ntest_upload_api.py:35: AssertionError\n&#34;}], &#34;qa/api-tests/test_validation_rules.py::TestNotNullValidation::test_not_null_all_valid&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Failed&#34;, &#34;testId&#34;: &#34;qa/api-tests/test_validation_rules.py::TestNotNullValidation::test_not_null_all_valid&#34;, &#34;duration&#34;: &#34;82 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Failed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;qa/api-tests/test_validation_rules.py::TestNotNullValidation::test_not_null_all_valid&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;82 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;self = &amp;lt;test_validation_rules.TestNotNullValidation object at 0x000001342C788A50&amp;gt;\nauth_headers = {&amp;#x27;Authorization&amp;#x27;: &amp;#x27;Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzczMzA5MDYxLCJ...mp0aSI6ImNmODcxNzJjNzg5MTQ5YmQ5MTM1NzBkMjEyNzU1NDRlIiwidXNlcl9pZCI6IjIifQ.VDx3B4UTRpX1UFNgNVAnkXahUqlt1SEVmnClrsooJy8&amp;#x27;}\n\n    def test_not_null_all_valid(self, auth_headers):\n        &amp;quot;&amp;quot;&amp;quot;Test NOT_NULL with all valid (non-null) values.&amp;quot;&amp;quot;&amp;quot;\n        csv = b&amp;quot;id,name\\n1,Alice\\n2,Bob\\n3,Carol&amp;quot;\n        files = {&amp;quot;file&amp;quot;: (&amp;quot;test.csv&amp;quot;, csv, &amp;quot;text/csv&amp;quot;)}\n        upload_resp = requests.post(\n            f&amp;quot;{BASE_URL}/api/datasets/upload&amp;quot;,\n            headers=auth_headers,\n            files=files\n        )\n        dataset_id = upload_resp.json()[&amp;quot;id&amp;quot;]\n    \n        rule_data = {\n            &amp;quot;name&amp;quot;: &amp;quot;Name Not Null&amp;quot;,\n            &amp;quot;rule_type&amp;quot;: &amp;quot;NOT_NULL&amp;quot;,\n            &amp;quot;field_name&amp;quot;: &amp;quot;name&amp;quot;,\n            &amp;quot;severity&amp;quot;: &amp;quot;HIGH&amp;quot;,\n            &amp;quot;parameters&amp;quot;: &amp;quot;{}&amp;quot;\n        }\n        requests.post(f&amp;quot;{BASE_URL}/api/rules/&amp;quot;, headers=auth_headers, json=rule_data)\n    \n        check_resp = requests.post(\n            f&amp;quot;{BASE_URL}/api/checks/run/{dataset_id}&amp;quot;,\n            headers=auth_headers\n        )\n        assert check_resp.status_code in [200, 201]\n&amp;gt;       assert check_resp.json()[&amp;quot;quality_score&amp;quot;] == 100\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nE       KeyError: &amp;#x27;quality_score&amp;#x27;\n\ntest_validation_rules.py:36: KeyError\n&#34;}], &#34;qa/api-tests/test_validation_rules.py::TestNotNullValidation::test_not_null_with_nulls&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Failed&#34;, &#34;testId&#34;: &#34;qa/api-tests/test_validation_rules.py::TestNotNullValidation::test_not_null_with_nulls&#34;, &#34;duration&#34;: &#34;20 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Failed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;qa/api-tests/test_validation_rules.py::TestNotNullValidation::test_not_null_with_nulls&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;20 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;self = &amp;lt;test_validation_rules.TestNotNullValidation object at 0x000001342C788B90&amp;gt;\nauth_headers = {&amp;#x27;Authorization&amp;#x27;: &amp;#x27;Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzczMzA5MDYxLCJ...mp0aSI6ImNmODcxNzJjNzg5MTQ5YmQ5MTM1NzBkMjEyNzU1NDRlIiwidXNlcl9pZCI6IjIifQ.VDx3B4UTRpX1UFNgNVAnkXahUqlt1SEVmnClrsooJy8&amp;#x27;}\n\n    def test_not_null_with_nulls(self, auth_headers):\n        &amp;quot;&amp;quot;&amp;quot;Test NOT_NULL with some null values.&amp;quot;&amp;quot;&amp;quot;\n        csv = b&amp;quot;id,name\\n1,Alice\\n2,\\n3,Carol&amp;quot;\n        files = {&amp;quot;file&amp;quot;: (&amp;quot;test.csv&amp;quot;, csv, &amp;quot;text/csv&amp;quot;)}\n        upload_resp = requests.post(\n            f&amp;quot;{BASE_URL}/api/datasets/upload&amp;quot;,\n            headers=auth_headers,\n            files=files\n        )\n&amp;gt;       dataset_id = upload_resp.json()[&amp;quot;id&amp;quot;]\n                     ^^^^^^^^^^^^^^^^^^^^^^^^\nE       KeyError: &amp;#x27;id&amp;#x27;\n\ntest_validation_rules.py:47: KeyError\n&#34;}], &#34;qa/api-tests/test_validation_rules.py::TestDataTypeValidation::test_data_type_int_valid&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Failed&#34;, &#34;testId&#34;: &#34;qa/api-tests/test_validation_rules.py::TestDataTypeValidation::test_data_type_int_valid&#34;, &#34;duration&#34;: &#34;67 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Failed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;qa/api-tests/test_validation_rules.py::TestDataTypeValidation::test_data_type_int_valid&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;67 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;self = &amp;lt;test_validation_rules.TestDataTypeValidation object at 0x000001342C788CD0&amp;gt;\nauth_headers = {&amp;#x27;Authorization&amp;#x27;: &amp;#x27;Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzczMzA5MDYxLCJ...mp0aSI6ImNmODcxNzJjNzg5MTQ5YmQ5MTM1NzBkMjEyNzU1NDRlIiwidXNlcl9pZCI6IjIifQ.VDx3B4UTRpX1UFNgNVAnkXahUqlt1SEVmnClrsooJy8&amp;#x27;}\n\n    def test_data_type_int_valid(self, auth_headers):\n        &amp;quot;&amp;quot;&amp;quot;Test DATA_TYPE with valid integers.&amp;quot;&amp;quot;&amp;quot;\n        csv = b&amp;quot;id,age\\n1,30\\n2,25\\n3,35&amp;quot;\n        files = {&amp;quot;file&amp;quot;: (&amp;quot;test.csv&amp;quot;, csv, &amp;quot;text/csv&amp;quot;)}\n        upload_resp = requests.post(\n            f&amp;quot;{BASE_URL}/api/datasets/upload&amp;quot;,\n            headers=auth_headers,\n            files=files\n        )\n        dataset_id = upload_resp.json()[&amp;quot;id&amp;quot;]\n    \n        rule_data = {\n            &amp;quot;name&amp;quot;: &amp;quot;Age Must Be Int&amp;quot;,\n            &amp;quot;rule_type&amp;quot;: &amp;quot;DATA_TYPE&amp;quot;,\n            &amp;quot;field_name&amp;quot;: &amp;quot;age&amp;quot;,\n            &amp;quot;severity&amp;quot;: &amp;quot;MEDIUM&amp;quot;,\n            &amp;quot;parameters&amp;quot;: &amp;#x27;{&amp;quot;expected_type&amp;quot;: &amp;quot;int&amp;quot;}&amp;#x27;\n        }\n        requests.post(f&amp;quot;{BASE_URL}/api/rules/&amp;quot;, headers=auth_headers, json=rule_data)\n    \n        check_resp = requests.post(\n            f&amp;quot;{BASE_URL}/api/checks/run/{dataset_id}&amp;quot;,\n            headers=auth_headers\n        )\n&amp;gt;       assert check_resp.status_code in [200, 201]\nE       assert 429 in [200, 201]\nE        +  where 429 = &amp;lt;Response [429]&amp;gt;.status_code\n\ntest_validation_rules.py:94: AssertionError\n&#34;}], &#34;qa/api-tests/test_validation_rules.py::TestDataTypeValidation::test_data_type_int_invalid&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Failed&#34;, &#34;testId&#34;: &#34;qa/api-tests/test_validation_rules.py::TestDataTypeValidation::test_data_type_int_invalid&#34;, &#34;duration&#34;: &#34;16 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Failed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;qa/api-tests/test_validation_rules.py::TestDataTypeValidation::test_data_type_int_invalid&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;16 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;self = &amp;lt;test_validation_rules.TestDataTypeValidation object at 0x000001342C788E10&amp;gt;\nauth_headers = {&amp;#x27;Authorization&amp;#x27;: &amp;#x27;Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzczMzA5MDYxLCJ...mp0aSI6ImNmODcxNzJjNzg5MTQ5YmQ5MTM1NzBkMjEyNzU1NDRlIiwidXNlcl9pZCI6IjIifQ.VDx3B4UTRpX1UFNgNVAnkXahUqlt1SEVmnClrsooJy8&amp;#x27;}\n\n    def test_data_type_int_invalid(self, auth_headers):\n        &amp;quot;&amp;quot;&amp;quot;Test DATA_TYPE with invalid type (string instead of int).&amp;quot;&amp;quot;&amp;quot;\n        csv = b&amp;quot;id,age\\n1,30\\n2,abc\\n3,35&amp;quot;\n        files = {&amp;quot;file&amp;quot;: (&amp;quot;test.csv&amp;quot;, csv, &amp;quot;text/csv&amp;quot;)}\n        upload_resp = requests.post(\n            f&amp;quot;{BASE_URL}/api/datasets/upload&amp;quot;,\n            headers=auth_headers,\n            files=files\n        )\n&amp;gt;       dataset_id = upload_resp.json()[&amp;quot;id&amp;quot;]\n                     ^^^^^^^^^^^^^^^^^^^^^^^^\nE       KeyError: &amp;#x27;id&amp;#x27;\n\ntest_validation_rules.py:106: KeyError\n&#34;}], &#34;qa/api-tests/test_validation_rules.py::TestRangeValidation::test_range_all_within&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Failed&#34;, &#34;testId&#34;: &#34;qa/api-tests/test_validation_rules.py::TestRangeValidation::test_range_all_within&#34;, &#34;duration&#34;: &#34;103 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Failed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;qa/api-tests/test_validation_rules.py::TestRangeValidation::test_range_all_within&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;103 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;self = &amp;lt;test_validation_rules.TestRangeValidation object at 0x000001342C788F50&amp;gt;\nauth_headers = {&amp;#x27;Authorization&amp;#x27;: &amp;#x27;Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzczMzA5MDYxLCJ...mp0aSI6ImNmODcxNzJjNzg5MTQ5YmQ5MTM1NzBkMjEyNzU1NDRlIiwidXNlcl9pZCI6IjIifQ.VDx3B4UTRpX1UFNgNVAnkXahUqlt1SEVmnClrsooJy8&amp;#x27;}\n\n    def test_range_all_within(self, auth_headers):\n        &amp;quot;&amp;quot;&amp;quot;Test RANGE with all values within range.&amp;quot;&amp;quot;&amp;quot;\n        csv = b&amp;quot;id,age\\n1,25\\n2,30\\n3,40&amp;quot;\n        files = {&amp;quot;file&amp;quot;: (&amp;quot;test.csv&amp;quot;, csv, &amp;quot;text/csv&amp;quot;)}\n        upload_resp = requests.post(\n            f&amp;quot;{BASE_URL}/api/datasets/upload&amp;quot;,\n            headers=auth_headers,\n            files=files\n        )\n        dataset_id = upload_resp.json()[&amp;quot;id&amp;quot;]\n    \n        rule_data = {\n            &amp;quot;name&amp;quot;: &amp;quot;Age Range 18-65&amp;quot;,\n            &amp;quot;rule_type&amp;quot;: &amp;quot;RANGE&amp;quot;,\n            &amp;quot;field_name&amp;quot;: &amp;quot;age&amp;quot;,\n            &amp;quot;severity&amp;quot;: &amp;quot;MEDIUM&amp;quot;,\n            &amp;quot;parameters&amp;quot;: &amp;#x27;{&amp;quot;min&amp;quot;: 18, &amp;quot;max&amp;quot;: 65}&amp;#x27;\n        }\n        requests.post(f&amp;quot;{BASE_URL}/api/rules/&amp;quot;, headers=auth_headers, json=rule_data)\n    \n        check_resp = requests.post(\n            f&amp;quot;{BASE_URL}/api/checks/run/{dataset_id}&amp;quot;,\n            headers=auth_headers\n        )\n&amp;gt;       assert check_resp.status_code in [200, 201]\nE       assert 429 in [200, 201]\nE        +  where 429 = &amp;lt;Response [429]&amp;gt;.status_code\n\ntest_validation_rules.py:153: AssertionError\n&#34;}], &#34;qa/api-tests/test_validation_rules.py::TestRangeValidation::test_range_outside_bounds&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Failed&#34;, &#34;testId&#34;: &#34;qa/api-tests/test_validation_rules.py::TestRangeValidation::test_range_outside_bounds&#34;, &#34;duration&#34;: &#34;18 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Failed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;qa/api-tests/test_validation_rules.py::TestRangeValidation::test_range_outside_bounds&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;18 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;self = &amp;lt;test_validation_rules.TestRangeValidation object at 0x000001342C789090&amp;gt;\nauth_headers = {&amp;#x27;Authorization&amp;#x27;: &amp;#x27;Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzczMzA5MDYxLCJ...mp0aSI6ImNmODcxNzJjNzg5MTQ5YmQ5MTM1NzBkMjEyNzU1NDRlIiwidXNlcl9pZCI6IjIifQ.VDx3B4UTRpX1UFNgNVAnkXahUqlt1SEVmnClrsooJy8&amp;#x27;}\n\n    def test_range_outside_bounds(self, auth_headers):\n        &amp;quot;&amp;quot;&amp;quot;Test RANGE with values outside range.&amp;quot;&amp;quot;&amp;quot;\n        csv = b&amp;quot;id,age\\n1,15\\n2,30\\n3,70&amp;quot;\n        files = {&amp;quot;file&amp;quot;: (&amp;quot;test.csv&amp;quot;, csv, &amp;quot;text/csv&amp;quot;)}\n        upload_resp = requests.post(\n            f&amp;quot;{BASE_URL}/api/datasets/upload&amp;quot;,\n            headers=auth_headers,\n            files=files\n        )\n&amp;gt;       dataset_id = upload_resp.json()[&amp;quot;id&amp;quot;]\n                     ^^^^^^^^^^^^^^^^^^^^^^^^\nE       KeyError: &amp;#x27;id&amp;#x27;\n\ntest_validation_rules.py:165: KeyError\n&#34;}], &#34;qa/api-tests/test_validation_rules.py::TestRangeValidation::test_range_boundary_values&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Failed&#34;, &#34;testId&#34;: &#34;qa/api-tests/test_validation_rules.py::TestRangeValidation::test_range_boundary_values&#34;, &#34;duration&#34;: &#34;23 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Failed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;qa/api-tests/test_validation_rules.py::TestRangeValidation::test_range_boundary_values&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;23 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;self = &amp;lt;test_validation_rules.TestRangeValidation object at 0x000001342C6CE060&amp;gt;\nauth_headers = {&amp;#x27;Authorization&amp;#x27;: &amp;#x27;Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzczMzA5MDYxLCJ...mp0aSI6ImNmODcxNzJjNzg5MTQ5YmQ5MTM1NzBkMjEyNzU1NDRlIiwidXNlcl9pZCI6IjIifQ.VDx3B4UTRpX1UFNgNVAnkXahUqlt1SEVmnClrsooJy8&amp;#x27;}\n\n    def test_range_boundary_values(self, auth_headers):\n        &amp;quot;&amp;quot;&amp;quot;Test RANGE with exact boundary values.&amp;quot;&amp;quot;&amp;quot;\n        csv = b&amp;quot;id,age\\n1,18\\n2,65\\n3,30&amp;quot;\n        files = {&amp;quot;file&amp;quot;: (&amp;quot;test.csv&amp;quot;, csv, &amp;quot;text/csv&amp;quot;)}\n        upload_resp = requests.post(\n            f&amp;quot;{BASE_URL}/api/datasets/upload&amp;quot;,\n            headers=auth_headers,\n            files=files\n        )\n&amp;gt;       dataset_id = upload_resp.json()[&amp;quot;id&amp;quot;]\n                     ^^^^^^^^^^^^^^^^^^^^^^^^\nE       KeyError: &amp;#x27;id&amp;#x27;\n\ntest_validation_rules.py:193: KeyError\n&#34;}], &#34;qa/api-tests/test_validation_rules.py::TestUniqueValidation::test_unique_all_unique&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Failed&#34;, &#34;testId&#34;: &#34;qa/api-tests/test_validation_rules.py::TestUniqueValidation::test_unique_all_unique&#34;, &#34;duration&#34;: &#34;17 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Failed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;qa/api-tests/test_validation_rules.py::TestUniqueValidation::test_unique_all_unique&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;17 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;self = &amp;lt;test_validation_rules.TestUniqueValidation object at 0x000001342C7891D0&amp;gt;\nauth_headers = {&amp;#x27;Authorization&amp;#x27;: &amp;#x27;Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzczMzA5MDYxLCJ...mp0aSI6ImNmODcxNzJjNzg5MTQ5YmQ5MTM1NzBkMjEyNzU1NDRlIiwidXNlcl9pZCI6IjIifQ.VDx3B4UTRpX1UFNgNVAnkXahUqlt1SEVmnClrsooJy8&amp;#x27;}\n\n    def test_unique_all_unique(self, auth_headers):\n        &amp;quot;&amp;quot;&amp;quot;Test UNIQUE with all unique values.&amp;quot;&amp;quot;&amp;quot;\n        csv = b&amp;quot;id,email\\n1,alice@test.com\\n2,bob@test.com\\n3,carol@test.com&amp;quot;\n        files = {&amp;quot;file&amp;quot;: (&amp;quot;test.csv&amp;quot;, csv, &amp;quot;text/csv&amp;quot;)}\n        upload_resp = requests.post(\n            f&amp;quot;{BASE_URL}/api/datasets/upload&amp;quot;,\n            headers=auth_headers,\n            files=files\n        )\n&amp;gt;       dataset_id = upload_resp.json()[&amp;quot;id&amp;quot;]\n                     ^^^^^^^^^^^^^^^^^^^^^^^^\nE       KeyError: &amp;#x27;id&amp;#x27;\n\ntest_validation_rules.py:224: KeyError\n&#34;}], &#34;qa/api-tests/test_validation_rules.py::TestUniqueValidation::test_unique_with_duplicates&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Failed&#34;, &#34;testId&#34;: &#34;qa/api-tests/test_validation_rules.py::TestUniqueValidation::test_unique_with_duplicates&#34;, &#34;duration&#34;: &#34;107 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Failed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;qa/api-tests/test_validation_rules.py::TestUniqueValidation::test_unique_with_duplicates&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;107 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;self = &amp;lt;test_validation_rules.TestUniqueValidation object at 0x000001342C789310&amp;gt;\nauth_headers = {&amp;#x27;Authorization&amp;#x27;: &amp;#x27;Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzczMzA5MDYxLCJ...mp0aSI6ImNmODcxNzJjNzg5MTQ5YmQ5MTM1NzBkMjEyNzU1NDRlIiwidXNlcl9pZCI6IjIifQ.VDx3B4UTRpX1UFNgNVAnkXahUqlt1SEVmnClrsooJy8&amp;#x27;}\n\n    def test_unique_with_duplicates(self, auth_headers):\n        &amp;quot;&amp;quot;&amp;quot;Test UNIQUE with duplicate values.&amp;quot;&amp;quot;&amp;quot;\n        csv = b&amp;quot;id,email\\n1,alice@test.com\\n2,alice@test.com\\n3,carol@test.com&amp;quot;\n        files = {&amp;quot;file&amp;quot;: (&amp;quot;test.csv&amp;quot;, csv, &amp;quot;text/csv&amp;quot;)}\n        upload_resp = requests.post(\n            f&amp;quot;{BASE_URL}/api/datasets/upload&amp;quot;,\n            headers=auth_headers,\n            files=files\n        )\n        dataset_id = upload_resp.json()[&amp;quot;id&amp;quot;]\n    \n        rule_data = {\n            &amp;quot;name&amp;quot;: &amp;quot;Email Must Be Unique&amp;quot;,\n            &amp;quot;rule_type&amp;quot;: &amp;quot;UNIQUE&amp;quot;,\n            &amp;quot;field_name&amp;quot;: &amp;quot;email&amp;quot;,\n            &amp;quot;severity&amp;quot;: &amp;quot;HIGH&amp;quot;,\n            &amp;quot;parameters&amp;quot;: &amp;quot;{}&amp;quot;\n        }\n        requests.post(f&amp;quot;{BASE_URL}/api/rules/&amp;quot;, headers=auth_headers, json=rule_data)\n    \n        check_resp = requests.post(\n            f&amp;quot;{BASE_URL}/api/checks/run/{dataset_id}&amp;quot;,\n            headers=auth_headers\n        )\n        assert check_resp.status_code in [200, 201]\n&amp;gt;       score = check_resp.json()[&amp;quot;quality_score&amp;quot;]\n                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nE       KeyError: &amp;#x27;quality_score&amp;#x27;\n\ntest_validation_rules.py:267: KeyError\n&#34;}], &#34;qa/api-tests/test_validation_rules.py::TestRegexValidation::test_regex_all_match&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Failed&#34;, &#34;testId&#34;: &#34;qa/api-tests/test_validation_rules.py::TestRegexValidation::test_regex_all_match&#34;, &#34;duration&#34;: &#34;16 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Failed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;qa/api-tests/test_validation_rules.py::TestRegexValidation::test_regex_all_match&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;16 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;self = &amp;lt;test_validation_rules.TestRegexValidation object at 0x000001342C789450&amp;gt;\nauth_headers = {&amp;#x27;Authorization&amp;#x27;: &amp;#x27;Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzczMzA5MDYxLCJ...mp0aSI6ImNmODcxNzJjNzg5MTQ5YmQ5MTM1NzBkMjEyNzU1NDRlIiwidXNlcl9pZCI6IjIifQ.VDx3B4UTRpX1UFNgNVAnkXahUqlt1SEVmnClrsooJy8&amp;#x27;}\n\n    def test_regex_all_match(self, auth_headers):\n        &amp;quot;&amp;quot;&amp;quot;Test REGEX with all values matching pattern.&amp;quot;&amp;quot;&amp;quot;\n        csv = b&amp;quot;id,email\\n1,alice@test.com\\n2,bob@test.com\\n3,carol@test.com&amp;quot;\n        files = {&amp;quot;file&amp;quot;: (&amp;quot;test.csv&amp;quot;, csv, &amp;quot;text/csv&amp;quot;)}\n        upload_resp = requests.post(\n            f&amp;quot;{BASE_URL}/api/datasets/upload&amp;quot;,\n            headers=auth_headers,\n            files=files\n        )\n&amp;gt;       dataset_id = upload_resp.json()[&amp;quot;id&amp;quot;]\n                     ^^^^^^^^^^^^^^^^^^^^^^^^\nE       KeyError: &amp;#x27;id&amp;#x27;\n\ntest_validation_rules.py:283: KeyError\n&#34;}], &#34;qa/api-tests/test_validation_rules.py::TestRegexValidation::test_regex_some_mismatch&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Failed&#34;, &#34;testId&#34;: &#34;qa/api-tests/test_validation_rules.py::TestRegexValidation::test_regex_some_mismatch&#34;, &#34;duration&#34;: &#34;72 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Failed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;qa/api-tests/test_validation_rules.py::TestRegexValidation::test_regex_some_mismatch&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;72 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;self = &amp;lt;test_validation_rules.TestRegexValidation object at 0x000001342C789590&amp;gt;\nauth_headers = {&amp;#x27;Authorization&amp;#x27;: &amp;#x27;Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzczMzA5MDYxLCJ...mp0aSI6ImNmODcxNzJjNzg5MTQ5YmQ5MTM1NzBkMjEyNzU1NDRlIiwidXNlcl9pZCI6IjIifQ.VDx3B4UTRpX1UFNgNVAnkXahUqlt1SEVmnClrsooJy8&amp;#x27;}\n\n    def test_regex_some_mismatch(self, auth_headers):\n        &amp;quot;&amp;quot;&amp;quot;Test REGEX with some values not matching pattern.&amp;quot;&amp;quot;&amp;quot;\n        csv = b&amp;quot;id,email\\n1,alice@test.com\\n2,invalid-email\\n3,carol@test.com&amp;quot;\n        files = {&amp;quot;file&amp;quot;: (&amp;quot;test.csv&amp;quot;, csv, &amp;quot;text/csv&amp;quot;)}\n        upload_resp = requests.post(\n            f&amp;quot;{BASE_URL}/api/datasets/upload&amp;quot;,\n            headers=auth_headers,\n            files=files\n        )\n        dataset_id = upload_resp.json()[&amp;quot;id&amp;quot;]\n    \n        rule_data = {\n            &amp;quot;name&amp;quot;: &amp;quot;Email Format&amp;quot;,\n            &amp;quot;rule_type&amp;quot;: &amp;quot;REGEX&amp;quot;,\n            &amp;quot;field_name&amp;quot;: &amp;quot;email&amp;quot;,\n            &amp;quot;severity&amp;quot;: &amp;quot;LOW&amp;quot;,\n            &amp;quot;parameters&amp;quot;: &amp;#x27;{&amp;quot;pattern&amp;quot;: &amp;quot;^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\\\\\\\.[a-zA-Z]{2,}$&amp;quot;}&amp;#x27;\n        }\n        requests.post(f&amp;quot;{BASE_URL}/api/rules/&amp;quot;, headers=auth_headers, json=rule_data)\n    \n        check_resp = requests.post(\n            f&amp;quot;{BASE_URL}/api/checks/run/{dataset_id}&amp;quot;,\n            headers=auth_headers\n        )\n&amp;gt;       assert check_resp.status_code in [200, 201]\nE       assert 429 in [200, 201]\nE        +  where 429 = &amp;lt;Response [429]&amp;gt;.status_code\n\ntest_validation_rules.py:325: AssertionError\n&#34;}], &#34;qa/api-tests/test_validation_rules.py::TestSeverityImpact::test_high_severity_impact&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Failed&#34;, &#34;testId&#34;: &#34;qa/api-tests/test_validation_rules.py::TestSeverityImpact::test_high_severity_impact&#34;, &#34;duration&#34;: &#34;67 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Failed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;qa/api-tests/test_validation_rules.py::TestSeverityImpact::test_high_severity_impact&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;67 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;self = &amp;lt;test_validation_rules.TestSeverityImpact object at 0x000001342C7896D0&amp;gt;\nauth_headers = {&amp;#x27;Authorization&amp;#x27;: &amp;#x27;Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzczMzA5MDYxLCJ...mp0aSI6ImNmODcxNzJjNzg5MTQ5YmQ5MTM1NzBkMjEyNzU1NDRlIiwidXNlcl9pZCI6IjIifQ.VDx3B4UTRpX1UFNgNVAnkXahUqlt1SEVmnClrsooJy8&amp;#x27;}\n\n    def test_high_severity_impact(self, auth_headers):\n        &amp;quot;&amp;quot;&amp;quot;Test that HIGH severity has greater impact on score.&amp;quot;&amp;quot;&amp;quot;\n        csv = b&amp;quot;id,name\\n1,Alice\\n2,\\n3,Carol&amp;quot;\n        files = {&amp;quot;file&amp;quot;: (&amp;quot;test.csv&amp;quot;, csv, &amp;quot;text/csv&amp;quot;)}\n        upload_resp = requests.post(\n            f&amp;quot;{BASE_URL}/api/datasets/upload&amp;quot;,\n            headers=auth_headers,\n            files=files\n        )\n        dataset_id = upload_resp.json()[&amp;quot;id&amp;quot;]\n    \n        rule_data = {\n            &amp;quot;name&amp;quot;: &amp;quot;Name Not Null High&amp;quot;,\n            &amp;quot;rule_type&amp;quot;: &amp;quot;NOT_NULL&amp;quot;,\n            &amp;quot;field_name&amp;quot;: &amp;quot;name&amp;quot;,\n            &amp;quot;severity&amp;quot;: &amp;quot;HIGH&amp;quot;,\n            &amp;quot;parameters&amp;quot;: &amp;quot;{}&amp;quot;\n        }\n        requests.post(f&amp;quot;{BASE_URL}/api/rules/&amp;quot;, headers=auth_headers, json=rule_data)\n    \n        check_resp = requests.post(\n            f&amp;quot;{BASE_URL}/api/checks/run/{dataset_id}&amp;quot;,\n            headers=auth_headers\n        )\n&amp;gt;       assert check_resp.status_code in [200, 201]\nE       assert 429 in [200, 201]\nE        +  where 429 = &amp;lt;Response [429]&amp;gt;.status_code\n\ntest_validation_rules.py:357: AssertionError\n&#34;}]}, &#34;renderCollapsed&#34;: [&#34;passed&#34;], &#34;initialSort&#34;: &#34;result&#34;, &#34;title&#34;: &#34;report.html&#34;}"></div>
+    <script>
+      (function(){function r(e,n,t){function o(i,f){if(!n[i]){if(!e[i]){var c="function"==typeof require&&require;if(!f&&c)return c(i,!0);if(u)return u(i,!0);var a=new Error("Cannot find module '"+i+"'");throw a.code="MODULE_NOT_FOUND",a}var p=n[i]={exports:{}};e[i][0].call(p.exports,function(r){var n=e[i][1][r];return o(n||r)},p,p.exports,r,e,n,t)}return n[i].exports}for(var u="function"==typeof require&&require,i=0;i<t.length;i++)o(t[i]);return o}return r})()({1:[function(require,module,exports){
+const { getCollapsedCategory, setCollapsedIds } = require('./storage.js')
+
+class DataManager {
+    setManager(data) {
+        const collapsedCategories = [...getCollapsedCategory(data.renderCollapsed)]
+        const collapsedIds = []
+        const tests = Object.values(data.tests).flat().map((test, index) => {
+            const collapsed = collapsedCategories.includes(test.result.toLowerCase())
+            const id = `test_${index}`
+            if (collapsed) {
+                collapsedIds.push(id)
+            }
+            return {
+                ...test,
+                id,
+                collapsed,
+            }
+        })
+        const dataBlob = { ...data, tests }
+        this.data = { ...dataBlob }
+        this.renderData = { ...dataBlob }
+        setCollapsedIds(collapsedIds)
+    }
+
+    get allData() {
+        return { ...this.data }
+    }
+
+    resetRender() {
+        this.renderData = { ...this.data }
+    }
+
+    setRender(data) {
+        this.renderData.tests = [...data]
+    }
+
+    toggleCollapsedItem(id) {
+        this.renderData.tests = this.renderData.tests.map((test) =>
+            test.id === id ? { ...test, collapsed: !test.collapsed } : test,
+        )
+    }
+
+    set allCollapsed(collapsed) {
+        this.renderData = { ...this.renderData, tests: [...this.renderData.tests.map((test) => (
+            { ...test, collapsed }
+        ))] }
+    }
+
+    get testSubset() {
+        return [...this.renderData.tests]
+    }
+
+    get environment() {
+        return this.renderData.environment
+    }
+
+    get initialSort() {
+        return this.data.initialSort
+    }
+}
+
+module.exports = {
+    manager: new DataManager(),
+}
+
+},{"./storage.js":8}],2:[function(require,module,exports){
+const mediaViewer = require('./mediaviewer.js')
+const templateEnvRow = document.getElementById('template_environment_row')
+const templateResult = document.getElementById('template_results-table__tbody')
+
+function htmlToElements(html) {
+    const temp = document.createElement('template')
+    temp.innerHTML = html
+    return temp.content.childNodes
+}
+
+const find = (selector, elem) => {
+    if (!elem) {
+        elem = document
+    }
+    return elem.querySelector(selector)
+}
+
+const findAll = (selector, elem) => {
+    if (!elem) {
+        elem = document
+    }
+    return [...elem.querySelectorAll(selector)]
+}
+
+const dom = {
+    getStaticRow: (key, value) => {
+        const envRow = templateEnvRow.content.cloneNode(true)
+        const isObj = typeof value === 'object' && value !== null
+        const values = isObj ? Object.keys(value).map((k) => `${k}: ${value[k]}`) : null
+
+        const valuesElement = htmlToElements(
+            values ? `<ul>${values.map((val) => `<li>${val}</li>`).join('')}<ul>` : `<div>${value}</div>`)[0]
+        const td = findAll('td', envRow)
+        td[0].textContent = key
+        td[1].appendChild(valuesElement)
+
+        return envRow
+    },
+    getResultTBody: ({ testId, id, log, extras, resultsTableRow, tableHtml, result, collapsed }) => {
+        const resultBody = templateResult.content.cloneNode(true)
+        resultBody.querySelector('tbody').classList.add(result.toLowerCase())
+        resultBody.querySelector('tbody').id = testId
+        resultBody.querySelector('.collapsible').dataset.id = id
+
+        resultsTableRow.forEach((html) => {
+            const t = document.createElement('template')
+            t.innerHTML = html
+            resultBody.querySelector('.collapsible').appendChild(t.content)
+        })
+
+        if (log) {
+            // Wrap lines starting with "E" with span.error to color those lines red
+            const wrappedLog = log.replace(/^E.*$/gm, (match) => `<span class="error">${match}</span>`)
+            resultBody.querySelector('.log').innerHTML = wrappedLog
+        } else {
+            resultBody.querySelector('.log').remove()
+        }
+
+        if (collapsed) {
+            resultBody.querySelector('.collapsible > td')?.classList.add('collapsed')
+            resultBody.querySelector('.extras-row').classList.add('hidden')
+        } else {
+            resultBody.querySelector('.collapsible > td')?.classList.remove('collapsed')
+        }
+
+        const media = []
+        extras?.forEach(({ name, format_type, content }) => {
+            if (['image', 'video'].includes(format_type)) {
+                media.push({ path: content, name, format_type })
+            }
+
+            if (format_type === 'html') {
+                resultBody.querySelector('.extraHTML').insertAdjacentHTML('beforeend', `<div>${content}</div>`)
+            }
+        })
+        mediaViewer.setup(resultBody, media)
+
+        // Add custom html from the pytest_html_results_table_html hook
+        tableHtml?.forEach((item) => {
+            resultBody.querySelector('td[class="extra"]').insertAdjacentHTML('beforeend', item)
+        })
+
+        return resultBody
+    },
+}
+
+module.exports = {
+    dom,
+    htmlToElements,
+    find,
+    findAll,
+}
+
+},{"./mediaviewer.js":6}],3:[function(require,module,exports){
+const { manager } = require('./datamanager.js')
+const { doSort } = require('./sort.js')
+const storageModule = require('./storage.js')
+
+const getFilteredSubSet = (filter) =>
+    manager.allData.tests.filter(({ result }) => filter.includes(result.toLowerCase()))
+
+const doInitFilter = () => {
+    const currentFilter = storageModule.getVisible()
+    const filteredSubset = getFilteredSubSet(currentFilter)
+    manager.setRender(filteredSubset)
+}
+
+const doFilter = (type, show) => {
+    if (show) {
+        storageModule.showCategory(type)
+    } else {
+        storageModule.hideCategory(type)
+    }
+
+    const currentFilter = storageModule.getVisible()
+    const filteredSubset = getFilteredSubSet(currentFilter)
+    manager.setRender(filteredSubset)
+
+    const sortColumn = storageModule.getSort()
+    doSort(sortColumn, true)
+}
+
+module.exports = {
+    doFilter,
+    doInitFilter,
+}
+
+},{"./datamanager.js":1,"./sort.js":7,"./storage.js":8}],4:[function(require,module,exports){
+const { redraw, bindEvents, renderStatic } = require('./main.js')
+const { doInitFilter } = require('./filter.js')
+const { doInitSort } = require('./sort.js')
+const { manager } = require('./datamanager.js')
+const data = JSON.parse(document.getElementById('data-container').dataset.jsonblob)
+
+function init() {
+    manager.setManager(data)
+    doInitFilter()
+    doInitSort()
+    renderStatic()
+    redraw()
+    bindEvents()
+}
+
+init()
+
+},{"./datamanager.js":1,"./filter.js":3,"./main.js":5,"./sort.js":7}],5:[function(require,module,exports){
+const { dom, find, findAll } = require('./dom.js')
+const { manager } = require('./datamanager.js')
+const { doSort } = require('./sort.js')
+const { doFilter } = require('./filter.js')
+const {
+    getVisible,
+    getCollapsedIds,
+    setCollapsedIds,
+    getSort,
+    getSortDirection,
+    possibleFilters,
+} = require('./storage.js')
+
+const removeChildren = (node) => {
+    while (node.firstChild) {
+        node.removeChild(node.firstChild)
+    }
+}
+
+const renderStatic = () => {
+    const renderEnvironmentTable = () => {
+        const environment = manager.environment
+        const rows = Object.keys(environment).map((key) => dom.getStaticRow(key, environment[key]))
+        const table = document.getElementById('environment')
+        removeChildren(table)
+        rows.forEach((row) => table.appendChild(row))
+    }
+    renderEnvironmentTable()
+}
+
+const addItemToggleListener = (elem) => {
+    elem.addEventListener('click', ({ target }) => {
+        const id = target.parentElement.dataset.id
+        manager.toggleCollapsedItem(id)
+
+        const collapsedIds = getCollapsedIds()
+        if (collapsedIds.includes(id)) {
+            const updated = collapsedIds.filter((item) => item !== id)
+            setCollapsedIds(updated)
+        } else {
+            collapsedIds.push(id)
+            setCollapsedIds(collapsedIds)
+        }
+        redraw()
+    })
+}
+
+const renderContent = (tests) => {
+    const sortAttr = getSort(manager.initialSort)
+    const sortAsc = JSON.parse(getSortDirection())
+    const rows = tests.map(dom.getResultTBody)
+    const table = document.getElementById('results-table')
+    const tableHeader = document.getElementById('results-table-head')
+
+    const newTable = document.createElement('table')
+    newTable.id = 'results-table'
+
+    // remove all sorting classes and set the relevant
+    findAll('.sortable', tableHeader).forEach((elem) => elem.classList.remove('asc', 'desc'))
+    tableHeader.querySelector(`.sortable[data-column-type="${sortAttr}"]`)?.classList.add(sortAsc ? 'desc' : 'asc')
+    newTable.appendChild(tableHeader)
+
+    if (!rows.length) {
+        const emptyTable = document.getElementById('template_results-table__body--empty').content.cloneNode(true)
+        newTable.appendChild(emptyTable)
+    } else {
+        rows.forEach((row) => {
+            if (!!row) {
+                findAll('.collapsible td:not(.col-links', row).forEach(addItemToggleListener)
+                find('.logexpander', row).addEventListener('click',
+                    (evt) => evt.target.parentNode.classList.toggle('expanded'),
+                )
+                newTable.appendChild(row)
+            }
+        })
+    }
+
+    table.replaceWith(newTable)
+}
+
+const renderDerived = () => {
+    const currentFilter = getVisible()
+    possibleFilters.forEach((result) => {
+        const input = document.querySelector(`input[data-test-result="${result}"]`)
+        input.checked = currentFilter.includes(result)
+    })
+}
+
+const bindEvents = () => {
+    const filterColumn = (evt) => {
+        const { target: element } = evt
+        const { testResult } = element.dataset
+
+        doFilter(testResult, element.checked)
+        const collapsedIds = getCollapsedIds()
+        const updated = manager.renderData.tests.map((test) => {
+            return {
+                ...test,
+                collapsed: collapsedIds.includes(test.id),
+            }
+        })
+        manager.setRender(updated)
+        redraw()
+    }
+
+    const header = document.getElementById('environment-header')
+    header.addEventListener('click', () => {
+        const table = document.getElementById('environment')
+        table.classList.toggle('hidden')
+        header.classList.toggle('collapsed')
+    })
+
+    findAll('input[name="filter_checkbox"]').forEach((elem) => {
+        elem.addEventListener('click', filterColumn)
+    })
+
+    findAll('.sortable').forEach((elem) => {
+        elem.addEventListener('click', (evt) => {
+            const { target: element } = evt
+            const { columnType } = element.dataset
+            doSort(columnType)
+            redraw()
+        })
+    })
+
+    document.getElementById('show_all_details').addEventListener('click', () => {
+        manager.allCollapsed = false
+        setCollapsedIds([])
+        redraw()
+    })
+    document.getElementById('hide_all_details').addEventListener('click', () => {
+        manager.allCollapsed = true
+        const allIds = manager.renderData.tests.map((test) => test.id)
+        setCollapsedIds(allIds)
+        redraw()
+    })
+}
+
+const redraw = () => {
+    const { testSubset } = manager
+
+    renderContent(testSubset)
+    renderDerived()
+}
+
+module.exports = {
+    redraw,
+    bindEvents,
+    renderStatic,
+}
+
+},{"./datamanager.js":1,"./dom.js":2,"./filter.js":3,"./sort.js":7,"./storage.js":8}],6:[function(require,module,exports){
+class MediaViewer {
+    constructor(assets) {
+        this.assets = assets
+        this.index = 0
+    }
+
+    nextActive() {
+        this.index = this.index === this.assets.length - 1 ? 0 : this.index + 1
+        return [this.activeFile, this.index]
+    }
+
+    prevActive() {
+        this.index = this.index === 0 ? this.assets.length - 1 : this.index -1
+        return [this.activeFile, this.index]
+    }
+
+    get currentIndex() {
+        return this.index
+    }
+
+    get activeFile() {
+        return this.assets[this.index]
+    }
+}
+
+
+const setup = (resultBody, assets) => {
+    if (!assets.length) {
+        resultBody.querySelector('.media').classList.add('hidden')
+        return
+    }
+
+    const mediaViewer = new MediaViewer(assets)
+    const container = resultBody.querySelector('.media-container')
+    const leftArrow = resultBody.querySelector('.media-container__nav--left')
+    const rightArrow = resultBody.querySelector('.media-container__nav--right')
+    const mediaName = resultBody.querySelector('.media__name')
+    const counter = resultBody.querySelector('.media__counter')
+    const imageEl = resultBody.querySelector('img')
+    const sourceEl = resultBody.querySelector('source')
+    const videoEl = resultBody.querySelector('video')
+
+    const setImg = (media, index) => {
+        if (media?.format_type === 'image') {
+            imageEl.src = media.path
+
+            imageEl.classList.remove('hidden')
+            videoEl.classList.add('hidden')
+        } else if (media?.format_type === 'video') {
+            sourceEl.src = media.path
+
+            videoEl.classList.remove('hidden')
+            imageEl.classList.add('hidden')
+        }
+
+        mediaName.innerText = media?.name
+        counter.innerText = `${index + 1} / ${assets.length}`
+    }
+    setImg(mediaViewer.activeFile, mediaViewer.currentIndex)
+
+    const moveLeft = () => {
+        const [media, index] = mediaViewer.prevActive()
+        setImg(media, index)
+    }
+    const doRight = () => {
+        const [media, index] = mediaViewer.nextActive()
+        setImg(media, index)
+    }
+    const openImg = () => {
+        window.open(mediaViewer.activeFile.path, '_blank')
+    }
+    if (assets.length === 1) {
+        container.classList.add('media-container--fullscreen')
+    } else {
+        leftArrow.addEventListener('click', moveLeft)
+        rightArrow.addEventListener('click', doRight)
+    }
+    imageEl.addEventListener('click', openImg)
+}
+
+module.exports = {
+    setup,
+}
+
+},{}],7:[function(require,module,exports){
+const { manager } = require('./datamanager.js')
+const storageModule = require('./storage.js')
+
+const genericSort = (list, key, ascending, customOrder) => {
+    let sorted
+    if (customOrder) {
+        sorted = list.sort((a, b) => {
+            const aValue = a.result.toLowerCase()
+            const bValue = b.result.toLowerCase()
+
+            const aIndex = customOrder.findIndex((item) => item.toLowerCase() === aValue)
+            const bIndex = customOrder.findIndex((item) => item.toLowerCase() === bValue)
+
+            // Compare the indices to determine the sort order
+            return aIndex - bIndex
+        })
+    } else {
+        sorted = list.sort((a, b) => a[key] === b[key] ? 0 : a[key] > b[key] ? 1 : -1)
+    }
+
+    if (ascending) {
+        sorted.reverse()
+    }
+    return sorted
+}
+
+const durationSort = (list, ascending) => {
+    const parseDuration = (duration) => {
+        if (duration.includes(':')) {
+            // If it's in the format "HH:mm:ss"
+            const [hours, minutes, seconds] = duration.split(':').map(Number)
+            return (hours * 3600 + minutes * 60 + seconds) * 1000
+        } else {
+            // If it's in the format "nnn ms"
+            return parseInt(duration)
+        }
+    }
+    const sorted = list.sort((a, b) => parseDuration(a['duration']) - parseDuration(b['duration']))
+    if (ascending) {
+        sorted.reverse()
+    }
+    return sorted
+}
+
+const doInitSort = () => {
+    const type = storageModule.getSort(manager.initialSort)
+    const ascending = storageModule.getSortDirection()
+    const list = manager.testSubset
+    const initialOrder = ['Error', 'Failed', 'Rerun', 'XFailed', 'XPassed', 'Skipped', 'Passed']
+
+    storageModule.setSort(type)
+    storageModule.setSortDirection(ascending)
+
+    if (type?.toLowerCase() === 'original') {
+        manager.setRender(list)
+    } else {
+        let sortedList
+        switch (type) {
+        case 'duration':
+            sortedList = durationSort(list, ascending)
+            break
+        case 'result':
+            sortedList = genericSort(list, type, ascending, initialOrder)
+            break
+        default:
+            sortedList = genericSort(list, type, ascending)
+            break
+        }
+        manager.setRender(sortedList)
+    }
+}
+
+const doSort = (type, skipDirection) => {
+    const newSortType = storageModule.getSort(manager.initialSort) !== type
+    const currentAsc = storageModule.getSortDirection()
+    let ascending
+    if (skipDirection) {
+        ascending = currentAsc
+    } else {
+        ascending = newSortType ? false : !currentAsc
+    }
+    storageModule.setSort(type)
+    storageModule.setSortDirection(ascending)
+
+    const list = manager.testSubset
+    const sortedList = type === 'duration' ? durationSort(list, ascending) : genericSort(list, type, ascending)
+    manager.setRender(sortedList)
+}
+
+module.exports = {
+    doInitSort,
+    doSort,
+}
+
+},{"./datamanager.js":1,"./storage.js":8}],8:[function(require,module,exports){
+const possibleFilters = [
+    'passed',
+    'skipped',
+    'failed',
+    'error',
+    'xfailed',
+    'xpassed',
+    'rerun',
+]
+
+const getVisible = () => {
+    const url = new URL(window.location.href)
+    const settings = new URLSearchParams(url.search).get('visible')
+    const lower = (item) => {
+        const lowerItem = item.toLowerCase()
+        if (possibleFilters.includes(lowerItem)) {
+            return lowerItem
+        }
+        return null
+    }
+    return settings === null ?
+        possibleFilters :
+        [...new Set(settings?.split(',').map(lower).filter((item) => item))]
+}
+
+const hideCategory = (categoryToHide) => {
+    const url = new URL(window.location.href)
+    const visibleParams = new URLSearchParams(url.search).get('visible')
+    const currentVisible = visibleParams ? visibleParams.split(',') : [...possibleFilters]
+    const settings = [...new Set(currentVisible)].filter((f) => f !== categoryToHide).join(',')
+
+    url.searchParams.set('visible', settings)
+    window.history.pushState({}, null, unescape(url.href))
+}
+
+const showCategory = (categoryToShow) => {
+    if (typeof window === 'undefined') {
+        return
+    }
+    const url = new URL(window.location.href)
+    const currentVisible = new URLSearchParams(url.search).get('visible')?.split(',').filter(Boolean) ||
+        [...possibleFilters]
+    const settings = [...new Set([categoryToShow, ...currentVisible])]
+    const noFilter = possibleFilters.length === settings.length || !settings.length
+
+    noFilter ? url.searchParams.delete('visible') : url.searchParams.set('visible', settings.join(','))
+    window.history.pushState({}, null, unescape(url.href))
+}
+
+const getSort = (initialSort) => {
+    const url = new URL(window.location.href)
+    let sort = new URLSearchParams(url.search).get('sort')
+    if (!sort) {
+        sort = initialSort || 'result'
+    }
+    return sort
+}
+
+const setSort = (type) => {
+    const url = new URL(window.location.href)
+    url.searchParams.set('sort', type)
+    window.history.pushState({}, null, unescape(url.href))
+}
+
+const getCollapsedCategory = (renderCollapsed) => {
+    let categories
+    if (typeof window !== 'undefined') {
+        const url = new URL(window.location.href)
+        const collapsedItems = new URLSearchParams(url.search).get('collapsed')
+        switch (true) {
+        case !renderCollapsed && collapsedItems === null:
+            categories = ['passed']
+            break
+        case collapsedItems?.length === 0 || /^["']{2}$/.test(collapsedItems):
+            categories = []
+            break
+        case /^all$/.test(collapsedItems) || collapsedItems === null && /^all$/.test(renderCollapsed):
+            categories = [...possibleFilters]
+            break
+        default:
+            categories = collapsedItems?.split(',').map((item) => item.toLowerCase()) || renderCollapsed
+            break
+        }
+    } else {
+        categories = []
+    }
+    return categories
+}
+
+const getSortDirection = () => JSON.parse(sessionStorage.getItem('sortAsc')) || false
+const setSortDirection = (ascending) => sessionStorage.setItem('sortAsc', ascending)
+
+const getCollapsedIds = () => JSON.parse(sessionStorage.getItem('collapsedIds')) || []
+const setCollapsedIds = (list) => sessionStorage.setItem('collapsedIds', JSON.stringify(list))
+
+module.exports = {
+    getVisible,
+    hideCategory,
+    showCategory,
+    getCollapsedIds,
+    setCollapsedIds,
+    getSort,
+    setSort,
+    getSortDirection,
+    setSortDirection,
+    getCollapsedCategory,
+    possibleFilters,
+}
+
+},{}]},{},[4]);
+    </script>
+  </footer>
+</html>

@@ -2,7 +2,7 @@ name: Branch Protection
 
 on:
   pull_request:
-    branches: [develop, main]
+    branches: [develop, staging, main]
     types: [opened, synchronize, reopened]
 
 jobs:
@@ -13,14 +13,22 @@ jobs:
         if: github.base_ref == 'develop'
         run: |
           if [[ ! "${{ github.head_ref }}" =~ ^(feature|bugfix|hotfix|docs)/ ]]; then
-            echo "Error: Only feature/, bugfix/,docs/ or hotfix/ branches can merge to develop"
+            echo "Error: Only feature/, bugfix/, docs/ or hotfix/ branches can merge to develop"
+            exit 1
+          fi
+
+      - name: Validate merge to staging
+        if: github.base_ref == 'staging'
+        run: |
+          if [[ "${{ github.head_ref }}" != "develop" && ! "${{ github.head_ref }}" =~ ^hotfix/ ]]; then
+            echo "Error: Only develop or hotfix/ branches can merge to staging"
             exit 1
           fi
 
       - name: Validate merge to main
         if: github.base_ref == 'main'
         run: |
-          if [[ "${{ github.head_ref }}" != "develop" && ! "${{ github.head_ref }}" =~ ^hotfix/ ]]; then
-            echo "Error: Only develop or hotfix/ branches can merge to main"
+          if [[ "${{ github.head_ref }}" != "staging" && ! "${{ github.head_ref }}" =~ ^hotfix/ ]]; then
+            echo "Error: Only staging or hotfix/ branches can merge to main"
             exit 1
           fi
