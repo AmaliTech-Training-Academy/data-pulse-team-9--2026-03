@@ -123,7 +123,7 @@ export default function AdminSettingsPage() {
     };
 
     loadConfig();
-  }, [selectedDatasetId, FREQUENCY_PRESETS]);
+  }, [selectedDatasetId]);
 
   const handleSaveSettings = async () => {
     if (!selectedDatasetId || !alertConfig || !schedule) return;

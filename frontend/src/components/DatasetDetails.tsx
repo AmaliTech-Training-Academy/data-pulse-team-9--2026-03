@@ -14,8 +14,17 @@ import {
   AlertTriangle,
   XCircle,
   Play,
+  Activity,
+  Bell,
+  Settings,
 } from "lucide-react";
 import Link from "next/link";
+import {
+  getAlertConfig,
+  updateAlertConfig,
+  AlertConfig,
+} from "@/services/alerts";
+import Toast, { ToastType } from "@/components/Toast";
 
 interface DatasetDetailsProps {
   id: string;
@@ -31,6 +40,7 @@ interface DatasetData {
   column_names: unknown;
   status: string;
   uploaded_at: string;
+  uploaded_by_email?: string;
 }
 
 interface ReportData {
@@ -64,21 +74,35 @@ export default function DatasetDetails({ id, backUrl }: DatasetDetailsProps) {
   const [isLoading, setIsLoading] = useState(true);
   const [isChecking, setIsChecking] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [toast, setToast] = useState<{
+    message: string;
+    type: ToastType;
+  } | null>(null);
+  const [alertConfig, setAlertConfig] = useState<AlertConfig | null>(null);
+  const [isSavingAlert, setIsSavingAlert] = useState(false);
 
   const loadDetails = useCallback(async () => {
     try {
+      const cleanId = String(id).replace(/\/$/, "");
       const token = localStorage.getItem("token");
       const options = { headers: { Authorization: `Bearer ${token}` } };
 
-      const datasetRes = await fetchApi(`/datasets/${id}`, options);
+      const datasetRes = await fetchApi(`/api/datasets/${cleanId}`, options);
       setDataset(datasetRes);
 
       try {
-        const reportRes = await fetchApi(`/reports/${id}`, options);
+        const reportRes = await fetchApi(`/api/reports/${cleanId}`, options);
         setReport(reportRes);
       } catch {
-        // Report might not exist yet if pending
         setReport(null);
+      }
+
+      // Fetch Alert Config
+      try {
+        const config = await getAlertConfig(Number(cleanId));
+        setAlertConfig(config);
+      } catch (err) {
+        console.error("Failed to load alert config:", err);
       }
     } catch (err: unknown) {
       setError(
@@ -98,16 +122,43 @@ export default function DatasetDetails({ id, backUrl }: DatasetDetailsProps) {
     try {
       setIsChecking(true);
       await runCheck(dataset.id);
-      alert("Quality check completed successfully!");
+      setToast({
+        message: "Quality check completed successfully!",
+        type: "success",
+      });
       // Refresh the page data
       await loadDetails();
     } catch (err: unknown) {
-      alert(
-        "Failed to run quality check: " +
-          (err instanceof Error ? err.message : String(err))
-      );
+      setToast({
+        message:
+          "Failed to run quality check: " +
+          (err instanceof Error ? err.message : String(err)),
+        type: "error",
+      });
     } finally {
       setIsChecking(false);
+    }
+  };
+
+  const handleSaveAlertConfig = async () => {
+    if (!alertConfig) return;
+    console.log("💾 Attempting to save alert preferences...", alertConfig);
+    try {
+      setIsSavingAlert(true);
+      const updated = await updateAlertConfig(Number(id), alertConfig);
+      console.log("🎊 Alert settings saved successfully:", updated);
+      setToast({
+        message: "Alert settings updated successfully",
+        type: "success",
+      });
+    } catch (err: unknown) {
+      console.error("🧨 Failed to save alert settings:", err);
+      setToast({
+        message: "Failed to update alert settings",
+        type: "error",
+      });
+    } finally {
+      setIsSavingAlert(false);
     }
   };
 
@@ -257,19 +308,21 @@ export default function DatasetDetails({ id, backUrl }: DatasetDetailsProps) {
             <div
               className={`w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4
                             ${
-                              dataset.status === "COMPLETED"
+                              ["COMPLETED", "VALIDATED"].includes(
+                                dataset.status
+                              )
                                 ? "bg-green-50 text-green-600"
                                 : dataset.status === "FAILED"
                                   ? "bg-red-50 text-red-600"
-                                  : "bg-blue-50 text-blue-600 animate-pulse"
+                                  : "bg-blue-50 text-blue-600"
                             }`}
             >
-              {dataset.status === "COMPLETED" ? (
+              {["COMPLETED", "VALIDATED"].includes(dataset.status) ? (
                 <CheckCircle size={32} />
               ) : dataset.status === "FAILED" ? (
                 <AlertTriangle size={32} />
               ) : (
-                <Loader2 size={32} className="animate-spin" />
+                <Activity size={32} />
               )}
             </div>
             <h3 className="font-bold text-lg text-primary mb-1">
@@ -294,8 +347,95 @@ export default function DatasetDetails({ id, backUrl }: DatasetDetailsProps) {
               </button>
             )}
           </div>
+
+          {/* Alert Configuration */}
+          <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+            <div className="flex items-center gap-2 mb-4 border-b border-gray-50 pb-2">
+              <Bell size={18} className="text-accent" />
+              <h3 className="font-bold text-primary">Notification Settings</h3>
+            </div>
+
+            <div className="space-y-4 text-left">
+              <div>
+                <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2 block">
+                  Quality Threshold ({alertConfig?.threshold || 80}%)
+                </label>
+                <input
+                  type="range"
+                  min="0"
+                  max="100"
+                  value={alertConfig?.threshold || 80}
+                  onChange={(e) =>
+                    setAlertConfig((prev) =>
+                      prev
+                        ? { ...prev, threshold: parseInt(e.target.value) }
+                        : null
+                    )
+                  }
+                  className="w-full h-1.5 bg-gray-100 rounded-lg appearance-none cursor-pointer accent-accent"
+                />
+                <p className="text-[10px] text-gray-400 mt-1">
+                  Alert when score falls below this value.
+                </p>
+              </div>
+
+              <div className="flex items-center justify-between py-2">
+                <div>
+                  <p className="text-sm font-semibold text-primary">
+                    Email Alerts
+                  </p>
+                  <p className="text-xs text-gray-500">
+                    To: {dataset.uploaded_by_email || "uploaded owner"}
+                  </p>
+                </div>
+                <button
+                  onClick={() =>
+                    setAlertConfig((prev) =>
+                      prev
+                        ? {
+                            ...prev,
+                            email_notifications: !prev.email_notifications,
+                          }
+                        : null
+                    )
+                  }
+                  className={`w-10 h-5 rounded-full transition-colors relative ${
+                    alertConfig?.email_notifications
+                      ? "bg-accent"
+                      : "bg-gray-200"
+                  }`}
+                >
+                  <div
+                    className={`absolute top-1 w-3 h-3 bg-white rounded-full transition-all ${
+                      alertConfig?.email_notifications ? "left-6" : "left-1"
+                    }`}
+                  />
+                </button>
+              </div>
+
+              <button
+                onClick={handleSaveAlertConfig}
+                disabled={isSavingAlert}
+                className="w-full py-2 bg-primary/5 hover:bg-primary/10 text-primary text-sm font-bold rounded-lg transition-all flex items-center justify-center gap-2"
+              >
+                {isSavingAlert ? (
+                  <Loader2 size={16} className="animate-spin" />
+                ) : (
+                  <Settings size={16} />
+                )}
+                Save Preferences
+              </button>
+            </div>
+          </div>
         </div>
       </div>
+      {toast && (
+        <Toast
+          message={toast.message}
+          type={toast.type}
+          onClose={() => setToast(null)}
+        />
+      )}
     </div>
   );
 }

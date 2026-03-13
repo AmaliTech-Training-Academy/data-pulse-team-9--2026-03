@@ -11,6 +11,7 @@ import {
   User,
   Loader2,
 } from "lucide-react";
+import Toast, { ToastType } from "@/components/Toast";
 import {
   getDashboardReports,
   getDatasetReport,
@@ -46,6 +47,10 @@ export default function AdminReportsPage() {
   const [selectedReportId, setSelectedReportId] = useState<number | null>(null);
   const [reportDetail, setReportDetail] = useState<QualityReport | null>(null);
   const [isDetailLoading, setIsDetailLoading] = useState(false);
+  const [toast, setToast] = useState<{
+    message: string;
+    type: ToastType;
+  } | null>(null);
 
   useEffect(() => {
     const loadDashboard = async () => {
@@ -127,7 +132,10 @@ export default function AdminReportsPage() {
         const detail = await getDatasetReport(datasetId);
         setReportDetail(detail);
       } catch {
-        alert("Failed to load report details.");
+        setToast({
+          message: "Failed to load report details.",
+          type: "error",
+        });
         setSelectedReportId(null);
       }
     } finally {
@@ -504,5 +512,16 @@ export default function AdminReportsPage() {
     );
   };
 
-  return selectedReportId ? renderDetailView() : renderListView();
+  return (
+    <>
+      {selectedReportId ? renderDetailView() : renderListView()}
+      {toast && (
+        <Toast
+          message={toast.message}
+          type={toast.type}
+          onClose={() => setToast(null)}
+        />
+      )}
+    </>
+  );
 }
