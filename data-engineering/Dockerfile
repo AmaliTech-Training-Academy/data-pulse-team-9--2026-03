@@ -19,4 +19,4 @@ COPY . .
 EXPOSE 8501
 
 # Run Streamlit
-CMD ["streamlit", "run", "dashboards/quality_dashboard.py", "--server.port=8501", "--server.address=0.0.0.0"]
+CMD ["streamlit", "run", "dashboards/quality_dashboard.py", "--server.port=8501", "--server.address=0.0.0.0", "--server.baseUrlPath=/streamlit"]

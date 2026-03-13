@@ -224,7 +224,7 @@ resource "aws_ecs_task_definition" "backend" {
       interval    = 30
       timeout     = 10
       retries     = 3
-      startPeriod = 60
+      startPeriod = 120
     }
   }])
 }
@@ -343,7 +343,7 @@ resource "aws_ecs_task_definition" "streamlit" {
       interval    = 30
       timeout     = 10
       retries     = 3
-      startPeriod = 60
+      startPeriod = 120
     }
   }])
 }
