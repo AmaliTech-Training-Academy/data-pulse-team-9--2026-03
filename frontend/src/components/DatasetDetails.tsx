@@ -14,8 +14,10 @@ import {
   AlertTriangle,
   XCircle,
   Play,
+  Activity,
 } from "lucide-react";
 import Link from "next/link";
+import Toast, { ToastType } from "@/components/Toast";
 
 interface DatasetDetailsProps {
   id: string;
@@ -64,17 +66,22 @@ export default function DatasetDetails({ id, backUrl }: DatasetDetailsProps) {
   const [isLoading, setIsLoading] = useState(true);
   const [isChecking, setIsChecking] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [toast, setToast] = useState<{
+    message: string;
+    type: ToastType;
+  } | null>(null);
 
   const loadDetails = useCallback(async () => {
     try {
+      const cleanId = String(id).replace(/\/$/, "");
       const token = localStorage.getItem("token");
       const options = { headers: { Authorization: `Bearer ${token}` } };
 
-      const datasetRes = await fetchApi(`/datasets/${id}`, options);
+      const datasetRes = await fetchApi(`/api/datasets/${cleanId}`, options);
       setDataset(datasetRes);
 
       try {
-        const reportRes = await fetchApi(`/reports/${id}`, options);
+        const reportRes = await fetchApi(`/api/reports/${cleanId}`, options);
         setReport(reportRes);
       } catch {
         // Report might not exist yet if pending
@@ -98,14 +105,19 @@ export default function DatasetDetails({ id, backUrl }: DatasetDetailsProps) {
     try {
       setIsChecking(true);
       await runCheck(dataset.id);
-      alert("Quality check completed successfully!");
+      setToast({
+        message: "Quality check completed successfully!",
+        type: "success",
+      });
       // Refresh the page data
       await loadDetails();
     } catch (err: unknown) {
-      alert(
-        "Failed to run quality check: " +
-          (err instanceof Error ? err.message : String(err))
-      );
+      setToast({
+        message:
+          "Failed to run quality check: " +
+          (err instanceof Error ? err.message : String(err)),
+        type: "error",
+      });
     } finally {
       setIsChecking(false);
     }
@@ -257,19 +269,19 @@ export default function DatasetDetails({ id, backUrl }: DatasetDetailsProps) {
             <div
               className={`w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4
                             ${
-                              dataset.status === "COMPLETED"
+                              ["COMPLETED", "VALIDATED"].includes(dataset.status)
                                 ? "bg-green-50 text-green-600"
                                 : dataset.status === "FAILED"
                                   ? "bg-red-50 text-red-600"
-                                  : "bg-blue-50 text-blue-600 animate-pulse"
+                                  : "bg-blue-50 text-blue-600"
                             }`}
             >
-              {dataset.status === "COMPLETED" ? (
+              {["COMPLETED", "VALIDATED"].includes(dataset.status) ? (
                 <CheckCircle size={32} />
               ) : dataset.status === "FAILED" ? (
                 <AlertTriangle size={32} />
               ) : (
-                <Loader2 size={32} className="animate-spin" />
+                <Activity size={32} />
               )}
             </div>
             <h3 className="font-bold text-lg text-primary mb-1">
@@ -296,6 +308,13 @@ export default function DatasetDetails({ id, backUrl }: DatasetDetailsProps) {
           </div>
         </div>
       </div>
+      {toast && (
+        <Toast
+          message={toast.message}
+          type={toast.type}
+          onClose={() => setToast(null)}
+        />
+      )}
     </div>
   );
 }

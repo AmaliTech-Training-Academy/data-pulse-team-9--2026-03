@@ -1,6 +1,18 @@
 export const API_URL =
   process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
+export class ApiError extends Error {
+  status: number;
+  fieldErrors?: Record<string, string[]>;
+
+  constructor(message: string, status: number, fieldErrors?: Record<string, string[]>) {
+    super(message);
+    this.name = "ApiError";
+    this.status = status;
+    this.fieldErrors = fieldErrors;
+  }
+}
+
 export async function fetchApi(
   endpoint: string,
   options: RequestInit & { skipAuth?: boolean } = {}
@@ -23,12 +35,13 @@ export async function fetchApi(
   const data = await response.json().catch(() => null);
 
   if (!response.ok) {
-    throw new Error(
+    const fieldErrors = data?.field_errors || data;
+    const errorMessage =
       data?.detail ||
-        data?.non_field_errors?.[0] ||
-        response.statusText ||
-        "An error occurred"
-    );
+      data?.non_field_errors?.[0] ||
+      (typeof data === "string" ? data : "An error occurred");
+
+    throw new ApiError(errorMessage, response.status, fieldErrors);
   }
 
   return data;

@@ -9,13 +9,14 @@ import {
   Play,
   Eye,
   Settings,
-  Trash2,
   Loader2,
   MoreVertical,
 } from "lucide-react";
 import { fetchApi } from "@/services/api";
 import { runCheck } from "@/services/checks";
+import { getDatasets } from "@/services/datasets";
 import Link from "next/link";
+import Toast, { ToastType } from "@/components/Toast";
 
 // Helper functions
 
@@ -51,6 +52,10 @@ export default function MyDatasetsPage() {
   const [statusFilter, setStatusFilter] = useState("all");
   const [checkingId, setCheckingId] = useState<number | null>(null);
   const [openDropdownId, setOpenDropdownId] = useState<number | null>(null);
+  const [toast, setToast] = useState<{
+    message: string;
+    type: ToastType;
+  } | null>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -116,14 +121,19 @@ export default function MyDatasetsPage() {
     try {
       setCheckingId(id);
       await runCheck(id);
-      alert("Quality check completed successfully!");
+      setToast({
+        message: "Quality check completed successfully!",
+        type: "success",
+      });
       // Refresh the list to reflect validated status
       fetchDatasets();
     } catch (err: unknown) {
-      alert(
-        "Failed to run quality check: " +
-          (err instanceof Error ? err.message : String(err))
-      );
+      setToast({
+        message:
+          "Failed to run quality check: " +
+          (err instanceof Error ? err.message : String(err)),
+        type: "error",
+      });
     } finally {
       setCheckingId(null);
     }
@@ -334,15 +344,6 @@ export default function MyDatasetsPage() {
                               <Eye size={16} className="text-gray-400" />
                               View Details
                             </Link>
-                            <button className="w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-3">
-                              <Settings size={16} className="text-gray-400" />
-                              Manage Rules
-                            </button>
-                            <div className="h-px bg-gray-100 my-1"></div>
-                            <button className="w-full px-4 py-2 text-sm text-danger hover:bg-red-50 flex items-center gap-3 cursor-pointer">
-                              <Trash2 size={16} className="text-danger" />
-                              Delete Dataset
-                            </button>
                           </div>
                         )}
                       </div>
@@ -354,6 +355,13 @@ export default function MyDatasetsPage() {
           </table>
         </div>
       </div>
+      {toast && (
+        <Toast
+          message={toast.message}
+          type={toast.type}
+          onClose={() => setToast(null)}
+        />
+      )}
     </div>
   );
 }

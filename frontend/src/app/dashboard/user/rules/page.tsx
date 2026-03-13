@@ -24,6 +24,7 @@ import {
   RuleCreateData,
 } from "@/services/rules";
 import { getDatasets, Dataset } from "@/services/datasets";
+import Toast, { ToastType } from "@/components/Toast";
 
 // Status color helper adapted for is_active
 const getStatusColor = (isActive: boolean) => {
@@ -54,6 +55,10 @@ export default function UserRulesPage() {
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [currentRule, setCurrentRule] = useState<ValidationRule | null>(null);
   const [openDropdownId, setOpenDropdownId] = useState<number | null>(null);
+  const [toast, setToast] = useState<{
+    message: string;
+    type: ToastType;
+  } | null>(null);
 
   const dropdownRef = useRef<HTMLDivElement>(null);
 
@@ -141,9 +146,15 @@ export default function UserRulesPage() {
       try {
         await createRule(formData);
         setIsAddModalOpen(false);
+        setToast({ message: "Rule created successfully!", type: "success" });
         fetchData();
       } catch (err: unknown) {
-        alert(err instanceof Error ? err.message : "Failed to create rule");
+        setToast({
+          message:
+            "Failed to create rule: " +
+            (err instanceof Error ? err.message : String(err)),
+          type: "error",
+        });
       }
     },
     [formData, fetchData]
@@ -156,9 +167,15 @@ export default function UserRulesPage() {
       try {
         await updateRule(currentRule.id, formData);
         setIsEditModalOpen(false);
+        setToast({ message: "Rule updated successfully!", type: "success" });
         fetchData();
       } catch (err: unknown) {
-        alert(err instanceof Error ? err.message : "Failed to update rule");
+        setToast({
+          message:
+            "Failed to update rule: " +
+            (err instanceof Error ? err.message : String(err)),
+          type: "error",
+        });
       }
     },
     [currentRule, formData, fetchData]
@@ -169,9 +186,15 @@ export default function UserRulesPage() {
     try {
       await deleteRule(currentRule.id);
       setIsDeleteModalOpen(false);
+      setToast({ message: "Rule deleted successfully!", type: "success" });
       fetchData();
     } catch (err: unknown) {
-      alert(err instanceof Error ? err.message : "Failed to delete rule");
+      setToast({
+        message:
+          "Failed to delete rule: " +
+          (err instanceof Error ? err.message : String(err)),
+        type: "error",
+      });
     }
   }, [currentRule, fetchData]);
 
@@ -765,6 +788,13 @@ export default function UserRulesPage() {
             </div>
           </div>
         </div>
+      )}
+      {toast && (
+        <Toast
+          message={toast.message}
+          type={toast.type}
+          onClose={() => setToast(null)}
+        />
       )}
     </div>
   );
