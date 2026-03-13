@@ -43,6 +43,14 @@ jobs:
             git checkout staging
             git pull origin staging
 
+            # Refresh .env from SSM (EC2 has IAM role for Parameter Store)
+            if [ -f scripts/refresh-env.sh ]; then
+              echo "🔧 Refreshing environment from SSM..."
+              export AWS_REGION="${AWS_REGION:-eu-west-1}"
+              export SSM_PREFIX="${SSM_PREFIX:-/datapulse/dev}"
+              source scripts/refresh-env.sh || true
+            fi
+
             # Stop running containers
             echo "🛑 Stopping existing containers..."
             docker compose --profile all down
@@ -76,16 +84,18 @@ jobs:
         run: |
           ssh -o StrictHostKeyChecking=no $SSH_USER@$SSH_HOST << 'ENDSSH'
             echo "🔍 Verifying deployment..."
+            cd /opt/datapulse
 
-            # Check if backend is responding
-            curl -f http://localhost:8000/health || echo "⚠️  Backend health check failed"
+            # Backend (Django) — /health/ with trailing slash
+            curl -sf http://localhost:8000/health/ > /dev/null && echo "✅ Backend OK" || echo "⚠️ Backend health check failed"
 
-            # Check if frontend is accessible (if running locally)
-            # curl -f http://localhost:3000 || echo "⚠️  Frontend check failed"
+            # Frontend (Next.js on 3001)
+            curl -sf http://localhost:3001/ > /dev/null && echo "✅ Frontend OK" || echo "⚠️ Frontend check failed"
 
-            # Show running containers
+            # Streamlit
+            curl -sf http://localhost:8501/ > /dev/null && echo "✅ Streamlit OK" || echo "⚠️ Streamlit check failed"
+
             docker compose ps
-
             echo "✅ Verification complete"
           ENDSSH
 
