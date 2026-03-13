@@ -66,6 +66,13 @@ resource "aws_security_group" "ecs" {
     security_groups = [aws_security_group.alb.id]
     description     = "Streamlit from ALB"
   }
+  ingress {
+    from_port       = 3000
+    to_port         = 3000
+    protocol        = "tcp"
+    security_groups = [aws_security_group.alb.id]
+    description     = "Grafana from ALB"
+  }
   # ECS tasks also need to talk to each other (Celery → Redis etc.)
   ingress {
     from_port = 0

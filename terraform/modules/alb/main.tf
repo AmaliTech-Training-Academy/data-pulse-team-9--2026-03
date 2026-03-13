@@ -19,6 +19,7 @@ resource "aws_lb" "main" {
   subnets            = var.public_subnet_ids
 
   enable_deletion_protection = true
+  idle_timeout               = 300
 
   tags = { Name = "datapulse-${var.env}-alb" }
 }
