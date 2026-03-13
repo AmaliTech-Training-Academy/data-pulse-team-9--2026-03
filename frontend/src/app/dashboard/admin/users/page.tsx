@@ -1,22 +1,10 @@
 "use client";
 
 import { useEffect, useState, useMemo } from "react";
-import {
-  Search,
-  Database,
-} from "lucide-react";
+import { Search, Database } from "lucide-react";
 import { getUsers, User } from "@/services/user";
 import { getDatasets, Dataset } from "@/services/datasets";
 import { Loader2, Users } from "lucide-react";
-
-const REAL_DATA_START_DATE = "2026-03-09";
-
-const getScoreColor = (score: number | null) => {
-  if (score === null || score === undefined) return "text-gray-500 bg-gray-100";
-  if (score >= 80) return "text-success bg-success/10 border-success/20";
-  if (score >= 50) return "text-warning bg-warning/10 border-warning/20";
-  return "text-danger bg-danger/10 border-danger/20";
-};
 
 interface EnrichedUser extends User {
   name: string;
@@ -131,8 +119,6 @@ export default function AdminUsersPage() {
       );
   }, [users, datasets, searchTerm]);
 
-
-
   if (loading) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[60vh] gap-4">
@@ -231,7 +217,6 @@ export default function AdminUsersPage() {
                         {user.status}
                       </span>
                     </td>
-
                   </tr>
                 ))
               ) : (

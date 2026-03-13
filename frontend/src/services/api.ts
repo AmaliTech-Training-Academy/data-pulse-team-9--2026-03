@@ -5,7 +5,11 @@ export class ApiError extends Error {
   status: number;
   fieldErrors?: Record<string, string[]>;
 
-  constructor(message: string, status: number, fieldErrors?: Record<string, string[]>) {
+  constructor(
+    message: string,
+    status: number,
+    fieldErrors?: Record<string, string[]>
+  ) {
     super(message);
     this.name = "ApiError";
     this.status = status;
@@ -27,7 +31,9 @@ export async function fetchApi(
     ...fetchOptions.headers,
   });
 
-  console.log(`📡 API Request: ${fetchOptions.method || "GET"} ${API_URL}${endpoint}`);
+  console.log(
+    `📡 API Request: ${fetchOptions.method || "GET"} ${API_URL}${endpoint}`
+  );
   const response = await fetch(`${API_URL}${endpoint}`, {
     ...fetchOptions,
     headers,

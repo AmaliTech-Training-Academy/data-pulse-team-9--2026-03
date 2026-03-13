@@ -8,7 +8,6 @@ import {
   FileJson,
   Play,
   Eye,
-  Settings,
   Loader2,
   MoreVertical,
 } from "lucide-react";

@@ -19,7 +19,11 @@ import {
   Settings,
 } from "lucide-react";
 import Link from "next/link";
-import { getAlertConfig, updateAlertConfig, AlertConfig } from "@/services/alerts";
+import {
+  getAlertConfig,
+  updateAlertConfig,
+  AlertConfig,
+} from "@/services/alerts";
 import Toast, { ToastType } from "@/components/Toast";
 
 interface DatasetDetailsProps {
@@ -304,7 +308,9 @@ export default function DatasetDetails({ id, backUrl }: DatasetDetailsProps) {
             <div
               className={`w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4
                             ${
-                              ["COMPLETED", "VALIDATED"].includes(dataset.status)
+                              ["COMPLETED", "VALIDATED"].includes(
+                                dataset.status
+                              )
                                 ? "bg-green-50 text-green-600"
                                 : dataset.status === "FAILED"
                                   ? "bg-red-50 text-red-600"
@@ -375,8 +381,12 @@ export default function DatasetDetails({ id, backUrl }: DatasetDetailsProps) {
 
               <div className="flex items-center justify-between py-2">
                 <div>
-                  <p className="text-sm font-semibold text-primary">Email Alerts</p>
-                  <p className="text-xs text-gray-500">To: {dataset.uploaded_by_email || "uploaded owner"}</p>
+                  <p className="text-sm font-semibold text-primary">
+                    Email Alerts
+                  </p>
+                  <p className="text-xs text-gray-500">
+                    To: {dataset.uploaded_by_email || "uploaded owner"}
+                  </p>
                 </div>
                 <button
                   onClick={() =>
@@ -390,7 +400,9 @@ export default function DatasetDetails({ id, backUrl }: DatasetDetailsProps) {
                     )
                   }
                   className={`w-10 h-5 rounded-full transition-colors relative ${
-                    alertConfig?.email_notifications ? "bg-accent" : "bg-gray-200"
+                    alertConfig?.email_notifications
+                      ? "bg-accent"
+                      : "bg-gray-200"
                   }`}
                 >
                   <div

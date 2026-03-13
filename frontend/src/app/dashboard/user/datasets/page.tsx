@@ -8,13 +8,11 @@ import {
   FileJson,
   Play,
   Eye,
-  Settings,
   Loader2,
   MoreVertical,
 } from "lucide-react";
 import { fetchApi } from "@/services/api";
 import { runCheck } from "@/services/checks";
-import { getDatasets } from "@/services/datasets";
 import Link from "next/link";
 import Toast, { ToastType } from "@/components/Toast";
 
