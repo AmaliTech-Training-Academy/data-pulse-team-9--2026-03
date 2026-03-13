@@ -27,6 +27,7 @@ export async function fetchApi(
     ...fetchOptions.headers,
   });
 
+  console.log(`📡 API Request: ${fetchOptions.method || "GET"} ${API_URL}${endpoint}`);
   const response = await fetch(`${API_URL}${endpoint}`, {
     ...fetchOptions,
     headers,
@@ -35,6 +36,7 @@ export async function fetchApi(
   const data = await response.json().catch(() => null);
 
   if (!response.ok) {
+    console.error(`❌ API Error: ${response.status} ${endpoint}`, data);
     const fieldErrors = data?.field_errors || data;
     const errorMessage =
       data?.detail ||
@@ -44,5 +46,6 @@ export async function fetchApi(
     throw new ApiError(errorMessage, response.status, fieldErrors);
   }
 
+  console.log(`✅ API Success: ${endpoint}`, data);
   return data;
 }
