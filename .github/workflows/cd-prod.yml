@@ -112,11 +112,12 @@ jobs:
           }
           EOF
 
-          APPSPEC_CONTENT=$(cat appspec.json | jq -c .)
+          jq -n --arg content "$(cat appspec.json | jq -c .)" \
+            '{revisionType: "AppSpecContent", appSpecContent: {content: $content}}' > revision.json
           aws deploy create-deployment \
             --application-name datapulse-prod \
             --deployment-group-name datapulse-prod-streamlit \
-            --revision "{\"revisionType\":\"AppSpecContent\",\"appSpecContent\":{\"content\":\"$APPSPEC_CONTENT\"}}"
+            --revision file://revision.json
 
       - name: Deploy Grafana via CodeDeploy
         env:
@@ -148,11 +149,12 @@ jobs:
           }
           EOF
 
-          APPSPEC_CONTENT=$(cat appspec.json | jq -c .)
+          jq -n --arg content "$(cat appspec.json | jq -c .)" \
+            '{revisionType: "AppSpecContent", appSpecContent: {content: $content}}' > revision.json
           aws deploy create-deployment \
             --application-name datapulse-prod \
             --deployment-group-name datapulse-prod-grafana \
-            --revision "{\"revisionType\":\"AppSpecContent\",\"appSpecContent\":{\"content\":\"$APPSPEC_CONTENT\"}}"
+            --revision file://revision.json
 
       - name: Update Celery Worker
         env:
