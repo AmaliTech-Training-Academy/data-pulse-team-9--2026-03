@@ -304,6 +304,7 @@ resource "aws_lb_listener_rule" "backend" {
 
   condition {
     path_pattern {
+      # Max 5 values per rule; /api/* and /health/* cover trailing slash
       values = ["/api", "/api/*", "/health/*", "/admin", "/admin/*"]
     }
   }
@@ -320,7 +321,7 @@ resource "aws_lb_listener_rule" "streamlit" {
 
   condition {
     path_pattern {
-      values = ["/streamlit", "/streamlit/*"]
+      values = ["/streamlit", "/streamlit/", "/streamlit/*"]
     }
   }
   action {
@@ -336,7 +337,7 @@ resource "aws_lb_listener_rule" "grafana" {
 
   condition {
     path_pattern {
-      values = ["/grafana", "/grafana/*"]
+      values = ["/grafana", "/grafana/", "/grafana/*"]
     }
   }
   action {

@@ -1,6 +1,6 @@
 <mxfile host="65bd71144e">
     <diagram id="hrctXB_QAcDY0z00MSz9" name="Page-1">
-        <mxGraphModel dx="2500" dy="2358" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1920" pageHeight="1080" math="0" shadow="1">
+        <mxGraphModel dx="2835" dy="673" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1920" pageHeight="1080" math="0" shadow="1">
             <root>
                 <mxCell id="0"/>
                 <mxCell id="1" parent="0"/>
@@ -8,7 +8,7 @@
                     <mxGeometry x="460" y="20" width="1000" height="40" as="geometry"/>
                 </mxCell>
                 <mxCell id="aws-cloud" value="AWS Cloud (eu-west-1)" style="points=[[0,0],[0.25,0],[0.5,0],[0.75,0],[1,0],[1,0.25],[1,0.5],[1,0.75],[1,1],[0.75,1],[0.5,1],[0.25,1],[0,1],[0,0.75],[0,0.5],[0,0.25]];shape=mxgraph.aws4.group;grIcon=mxgraph.aws4.group_aws_cloud_alt;strokeColor=#232F3E;fillColor=#ffffff;verticalAlign=top;align=center;spacingTop=25;fontSize=14;fontStyle=1;fontColor=#232F3E;dashed=0;" parent="1" vertex="1">
-                    <mxGeometry x="-130" y="-100" width="1970" height="1270" as="geometry"/>
+                    <mxGeometry x="30" y="60" width="1880" height="1110" as="geometry"/>
                 </mxCell>
                 <mxCell id="vpc" value="VPC: datapulse-dev&#xa;10.1.0.0/16" style="points=[[0,0],[0.25,0],[0.5,0],[0.75,0],[1,0],[1,0.25],[1,0.5],[1,0.75],[1,1],[0.75,1],[0.5,1],[0.25,1],[0,1],[0,0.75],[0,0.5],[0,0.25]];shape=mxgraph.aws4.group;grIcon=mxgraph.aws4.group_vpc;strokeColor=#8C4FFF;fillColor=#F4F0FA;verticalAlign=top;align=center;spacingTop=25;fontSize=13;fontStyle=1;fontColor=#8C4FFF;dashed=0;" parent="1" vertex="1">
                     <mxGeometry x="120" y="130" width="1350" height="870" as="geometry"/>
@@ -43,13 +43,22 @@
                 <mxCell id="ec2" value="EC2: datapulse-dev&#xa;t3.small | AL2023&#xa;30 GB gp3 (encrypted)&#xa;Tags: ScheduleStop=true" style="shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.ec2;labelBackgroundColor=#ffffff;sketch=0;fontStyle=1;fontSize=10;" parent="1" vertex="1">
                     <mxGeometry x="210" y="275" width="60" height="60" as="geometry"/>
                 </mxCell>
-                <mxCell id="eip" value="Elastic IP&#xa;datapulse-dev-eip" style="shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.elastic_ip_address;labelBackgroundColor=#ffffff;sketch=0;fontStyle=1;fontSize=10;" parent="1" vertex="1">
-                    <mxGeometry x="340" y="275" width="60" height="60" as="geometry"/>
+                <mxCell id="alb" value="ALB: datapulse-dev&#xa;HTTP :80&#xa;Path-based routing&#xa;/ → Frontend :3001&#xa;/api, /health, /admin → Backend :8000&#xa;/streamlit → :8501&#xa;/grafana → :3000" style="shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.elastic_load_balancing;labelBackgroundColor=#ffffff;sketch=0;fontStyle=1;fontSize=9;" parent="1" vertex="1">
+                    <mxGeometry x="340" y="230" width="70" height="70" as="geometry"/>
+                </mxCell>
+                <mxCell id="eip" value="Elastic IP&#xa;datapulse-dev-eip&#xa;(SSH / direct)" style="shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.elastic_ip_address;labelBackgroundColor=#ffffff;sketch=0;fontStyle=1;fontSize=9;" parent="1" vertex="1">
+                    <mxGeometry x="340" y="320" width="60" height="60" as="geometry"/>
                 </mxCell>
                 <mxCell id="e-ec2-eip" style="edgeStyle=orthogonalEdgeStyle;rounded=0;strokeColor=#E7157B;strokeWidth=2;dashed=1;" parent="1" source="eip" target="ec2" edge="1">
                     <mxGeometry relative="1" as="geometry"/>
                 </mxCell>
-                <mxCell id="e-igw-eip" style="edgeStyle=orthogonalEdgeStyle;rounded=0;strokeColor=#232F3E;strokeWidth=2;" parent="1" source="igw" target="eip" edge="1">
+                <mxCell id="e-igw-alb" style="edgeStyle=orthogonalEdgeStyle;rounded=0;strokeColor=#232F3E;strokeWidth=2;" parent="1" source="igw" target="alb" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="e-alb-ec2" style="edgeStyle=orthogonalEdgeStyle;rounded=0;strokeColor=#1A9C3E;strokeWidth=2;dashed=1;" parent="1" source="alb" target="ec2" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="e-igw-eip" style="edgeStyle=orthogonalEdgeStyle;rounded=0;strokeColor=#232F3E;strokeWidth=1.5;dashed=1;" parent="1" source="igw" target="eip" edge="1">
                     <mxGeometry relative="1" as="geometry"/>
                 </mxCell>
                 <mxCell id="iam-role-ec2" value="IAM Role&#xa;datapulse-dev-ec2&#xa;+ AmazonSSMManagedInstanceCore&#xa;+ SSM param read policy" style="shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.role;labelBackgroundColor=#ffffff;sketch=0;fontStyle=1;fontSize=10;" parent="1" vertex="1">
@@ -67,26 +76,26 @@
                 <mxCell id="keypair" value="Key Pair&#xa;datapulse-dev" style="shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.general;labelBackgroundColor=#ffffff;sketch=0;fontStyle=1;fontSize=10;" parent="1" vertex="1">
                     <mxGeometry x="300" y="690" width="60" height="60" as="geometry"/>
                 </mxCell>
-                <mxCell id="sg-ec2" value="SG: datapulse-dev-ec2&#xa;SSH:22, Django:8000&#xa;Grafana:3000, Loki:3100&#xa;Prometheus:9090&#xa;Streamlit:8501, Tempo:3200&#xa;Egress: 0.0.0.0/0 all" style="shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.security_group;labelBackgroundColor=#ffffff;sketch=0;fontStyle=1;fontSize=9;" parent="1" vertex="1">
+                <mxCell id="sg-ec2" value="SG: datapulse-dev-ec2&#xa;SSH:22, Backend:8000&#xa;Frontend:3001, Streamlit:8501&#xa;Grafana:3000, Prom:9090&#xa;Loki:3100, Tempo:3200&#xa;+ ALB → 8000,3001,8501,3000&#xa;Egress: all" style="shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.security_group;labelBackgroundColor=#ffffff;sketch=0;fontStyle=1;fontSize=9;" parent="1" vertex="1">
                     <mxGeometry x="850" y="520" width="60" height="60" as="geometry"/>
                 </mxCell>
-                <mxCell id="sg-alb" value="SG: datapulse-dev-alb&#xa;Ingress: 80, 443 (0.0.0.0/0)&#xa;8080 (10.1.0.0/16 internal)&#xa;Egress: all" style="shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.security_group;labelBackgroundColor=#ffffff;sketch=0;fontStyle=1;fontSize=9;" parent="1" vertex="1">
+                <mxCell id="sg-alb" value="SG: datapulse-dev-alb&#xa;Ingress: 80 (0.0.0.0/0)&#xa;Egress: all" style="shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.security_group;labelBackgroundColor=#ffffff;sketch=0;fontStyle=1;fontSize=9;" parent="1" vertex="1">
                     <mxGeometry x="990" y="510" width="60" height="60" as="geometry"/>
                 </mxCell>
-                <mxCell id="sg-ecs" value="SG: datapulse-dev-ecs&#xa;Django:8000 from ALB&#xa;Streamlit:8501 from ALB&#xa;Self (inter-task)&#xa;Egress: all" style="shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.security_group;labelBackgroundColor=#ffffff;sketch=0;fontStyle=1;fontSize=9;" parent="1" vertex="1">
+                <mxCell id="sg-ecs" value="SG: ecs (unused dev)" style="shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.security_group;labelBackgroundColor=#f5f5f5;sketch=0;fontStyle=0;fontSize=9;" parent="1" vertex="1">
                     <mxGeometry x="850" y="660" width="60" height="60" as="geometry"/>
                 </mxCell>
-                <mxCell id="sg-rds" value="SG: datapulse-dev-rds&#xa;Postgres:5432 from ECS SG" style="shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.security_group;labelBackgroundColor=#ffffff;sketch=0;fontStyle=1;fontSize=9;" parent="1" vertex="1">
+                <mxCell id="sg-rds" value="SG: rds (unused dev)" style="shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.security_group;labelBackgroundColor=#f5f5f5;sketch=0;fontStyle=0;fontSize=9;" parent="1" vertex="1">
                     <mxGeometry x="990" y="660" width="60" height="60" as="geometry"/>
                 </mxCell>
-                <mxCell id="sg-redis" value="SG: datapulse-dev-redis&#xa;Redis:6379 from ECS SG" style="shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.security_group;labelBackgroundColor=#ffffff;sketch=0;fontStyle=1;fontSize=9;" parent="1" vertex="1">
+                <mxCell id="sg-redis" value="SG: redis (unused dev)" style="shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.security_group;labelBackgroundColor=#f5f5f5;sketch=0;fontStyle=0;fontSize=9;" parent="1" vertex="1">
                     <mxGeometry x="850" y="800" width="60" height="60" as="geometry"/>
                 </mxCell>
-                <mxCell id="sg-endpoints" value="SG: datapulse-dev-endpoints&#xa;HTTPS:443 from 10.1.0.0/16" style="shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.security_group;labelBackgroundColor=#ffffff;sketch=0;fontStyle=1;fontSize=9;" parent="1" vertex="1">
+                <mxCell id="sg-endpoints" value="SG: endpoints&#xa;(VPC endpoints)" style="shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.security_group;labelBackgroundColor=#ffffff;sketch=0;fontStyle=0;fontSize=9;" parent="1" vertex="1">
                     <mxGeometry x="990" y="790" width="60" height="60" as="geometry"/>
                 </mxCell>
-                <mxCell id="sg-group-label" value="Security Groups" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=11;fontStyle=3;fontColor=#147EBA;" parent="1" vertex="1">
-                    <mxGeometry x="820" y="453" width="160" height="20" as="geometry"/>
+                <mxCell id="sg-group-label" value="Security Groups (dev: only ec2 + alb used)" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=11;fontStyle=3;fontColor=#147EBA;" parent="1" vertex="1">
+                    <mxGeometry x="820" y="453" width="320" height="20" as="geometry"/>
                 </mxCell>
                 <mxCell id="e-ec2-sgec2" style="edgeStyle=orthogonalEdgeStyle;rounded=0;strokeColor=#E7157B;strokeWidth=1.5;dashed=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;" parent="1" source="ec2" target="sg-ec2" edge="1">
                     <mxGeometry relative="1" as="geometry"/>
@@ -204,11 +213,14 @@
                 <mxCell id="svc-group" value="Application Services (on EC2)" style="points=[[0,0],[0.25,0],[0.5,0],[0.75,0],[1,0],[1,0.25],[1,0.5],[1,0.75],[1,1],[0.75,1],[0.5,1],[0.25,1],[0,1],[0,0.75],[0,0.5],[0,0.25]];shape=mxgraph.aws4.group;grIcon=mxgraph.aws4.group_server_contents;strokeColor=#5D8825;fillColor=#F4F9EC;verticalAlign=top;align=left;spacingTop=25;spacingLeft=10;fontSize=11;fontStyle=1;fontColor=#5D8825;" parent="1" vertex="1">
                     <mxGeometry x="400" y="560" width="340" height="400" as="geometry"/>
                 </mxCell>
-                <mxCell id="svc-django" value="Django :8000&#xa;(DJANGO_SETTINGS_MODULE)" style="shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.general;labelBackgroundColor=#ffffff;sketch=0;fontStyle=0;fontSize=10;" parent="1" vertex="1">
+                <mxCell id="svc-frontend" value="Next.js :3001" style="shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.general;labelBackgroundColor=#ffffff;sketch=0;fontStyle=0;fontSize=10;" parent="1" vertex="1">
+                    <mxGeometry x="470" y="590" width="50" height="50" as="geometry"/>
+                </mxCell>
+                <mxCell id="svc-django" value="Django :8000&#xa;(backend)" style="shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.general;labelBackgroundColor=#ffffff;sketch=0;fontStyle=0;fontSize=10;" parent="1" vertex="1">
                     <mxGeometry x="640" y="640" width="50" height="50" as="geometry"/>
                 </mxCell>
                 <mxCell id="svc-streamlit" value="Streamlit :8501" style="shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.general;labelBackgroundColor=#ffffff;sketch=0;fontStyle=0;fontSize=10;" parent="1" vertex="1">
-                    <mxGeometry x="470" y="640" width="50" height="50" as="geometry"/>
+                    <mxGeometry x="540" y="640" width="50" height="50" as="geometry"/>
                 </mxCell>
                 <mxCell id="svc-grafana" value="Grafana :3000" style="shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.general;labelBackgroundColor=#ffffff;sketch=0;fontStyle=0;fontSize=10;" parent="1" vertex="1">
                     <mxGeometry x="600" y="850" width="50" height="50" as="geometry"/>
@@ -237,8 +249,8 @@
                 <mxCell id="tags-note" value="All resources tagged:&#xa;Project=datapulse | Environment=dev | ManagedBy=terraform" style="shape=note;whiteSpace=wrap;html=1;backgroundOutline=1;size=15;fillColor=#fff9c4;strokeColor=#D6B656;fontSize=10;align=left;" parent="1" vertex="1">
                     <mxGeometry x="160" y="1065" width="360" height="50" as="geometry"/>
                 </mxCell>
-                <mxCell id="outputs-note" value="Terraform Outputs:&#xa;• instance_id (known after apply)&#xa;• public_ip (via Elastic IP)&#xa;• service_urls: backend, grafana, loki, prometheus, streamlit, tempo" style="shape=note;whiteSpace=wrap;html=1;backgroundOutline=1;size=15;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=10;align=left;" parent="1" vertex="1">
-                    <mxGeometry x="610" y="1060" width="380" height="60" as="geometry"/>
+                <mxCell id="outputs-note" value="Terraform Outputs: instance_id, public_ip, service_urls (backend, frontend, streamlit, grafana, prometheus, loki, tempo), alb_dns_name, alb_url, alb_service_paths (/, /api/, /streamlit/, /grafana/)" style="shape=note;whiteSpace=wrap;html=1;backgroundOutline=1;size=15;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=10;align=left;" parent="1" vertex="1">
+                    <mxGeometry x="610" y="1060" width="380" height="50" as="geometry"/>
                 </mxCell>
                 <mxCell id="rta-pub-a" value="Assoc: pub-subnet-a → public RT" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;fontSize=9;fontColor=#1A9C3E;" parent="1" vertex="1">
                     <mxGeometry x="170" y="430" width="240" height="15" as="geometry"/>
