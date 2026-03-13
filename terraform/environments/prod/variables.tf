@@ -42,6 +42,10 @@ variable "streamlit_image"      {
     type = string
  default = "public.ecr.aws/nginx/nginx:latest"
  }
+variable "grafana_image"        {
+    type = string
+ default = "public.ecr.aws/nginx/nginx:latest"
+ }
 
 # RDS sizing
 variable "rds_instance_class"   {

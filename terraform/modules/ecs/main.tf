@@ -4,9 +4,11 @@ variable "private_subnet_ids"     { type = list(string) }
 variable "ecs_sg_id"              { type = string }
 variable "backend_tg_arn"         { type = string }
 variable "streamlit_tg_arn"       { type = string }
+variable "grafana_tg_arn"         { type = string }
 variable "backend_image"          { type = string }
 variable "etl_image"              { type = string }
 variable "streamlit_image"        { type = string }
+variable "grafana_image"          { type = string }
 variable "backend_cpu"            {
   type = number
  default = 256
@@ -53,7 +55,7 @@ resource "aws_ecs_cluster_capacity_providers" "main" {
 # CloudWatch Log Groups — 14 day retention
 # -----------------------------------------------------------
 locals {
-  services = ["backend", "celery-worker", "celery-beat", "etl", "streamlit"]
+  services = ["backend", "celery-worker", "celery-beat", "etl", "streamlit", "grafana"]
 }
 
 resource "aws_cloudwatch_log_group" "services" {
@@ -347,6 +349,55 @@ resource "aws_ecs_task_definition" "streamlit" {
 }
 
 # -----------------------------------------------------------
+# Task Definition — Grafana
+# -----------------------------------------------------------
+resource "aws_ecs_task_definition" "grafana" {
+  family                   = "datapulse-${var.env}-grafana"
+  network_mode             = "awsvpc"
+  requires_compatibilities = ["FARGATE"]
+  cpu                      = 256
+  memory                   = 512
+  execution_role_arn       = aws_iam_role.execution.arn
+  task_role_arn            = aws_iam_role.task.arn
+
+  container_definitions = jsonencode([{
+    name      = "grafana"
+    image     = var.grafana_image
+    essential = true
+
+    portMappings = [{ containerPort = 3000, protocol = "tcp" }]
+
+    environment = [
+      { name = "GF_SECURITY_ADMIN_USER", value = "admin" },
+      { name = "GF_USERS_ALLOW_SIGN_UP", value = "false" },
+      { name = "GF_SERVER_ROOT_URL", value = "%(protocol)s://%(domain)s:%(http_port)s/grafana/" },
+      { name = "GF_SERVER_SERVE_FROM_SUB_PATH", value = "true" },
+    ]
+
+    secrets = [
+      { name = "GF_SECURITY_ADMIN_PASSWORD", valueFrom = "arn:aws:secretsmanager:${var.aws_region}:${data.aws_caller_identity.current.account_id}:secret:${var.secrets_manager_prefix}/grafana_password" },
+    ]
+
+    logConfiguration = {
+      logDriver = "awslogs"
+      options = {
+        "awslogs-group"         = "/datapulse/${var.env}/grafana"
+        "awslogs-region"        = var.aws_region
+        "awslogs-stream-prefix" = "ecs"
+      }
+    }
+
+    healthCheck = {
+      command     = ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:3000/api/health || exit 1"]
+      interval    = 30
+      timeout     = 10
+      retries     = 3
+      startPeriod = 60
+    }
+  }])
+}
+
+# -----------------------------------------------------------
 # Task Definition — ETL (scheduled, runs then exits)
 # -----------------------------------------------------------
 resource "aws_ecs_task_definition" "etl" {
@@ -506,6 +557,39 @@ resource "aws_ecs_service" "streamlit" {
   tags = { Environment = var.env, Project = "datapulse" }
 }
 
+# Grafana — 100% Spot, blue/green via CodeDeploy
+resource "aws_ecs_service" "grafana" {
+  name            = "datapulse-${var.env}-grafana"
+  cluster         = aws_ecs_cluster.main.id
+  task_definition = aws_ecs_task_definition.grafana.arn
+  desired_count   = 1
+
+  deployment_controller { type = "CODE_DEPLOY" }
+
+  capacity_provider_strategy {
+    capacity_provider = "FARGATE_SPOT"
+    weight            = 1
+  }
+
+  network_configuration {
+    subnets          = var.private_subnet_ids
+    security_groups  = [var.ecs_sg_id]
+    assign_public_ip = false
+  }
+
+  load_balancer {
+    target_group_arn = var.grafana_tg_arn
+    container_name   = "grafana"
+    container_port   = 3000
+  }
+
+  lifecycle {
+    ignore_changes = [task_definition, load_balancer]
+  }
+
+  tags = { Environment = var.env, Project = "datapulse" }
+}
+
 # -----------------------------------------------------------
 # ETL Scheduled Task — EventBridge runs it at 2am UTC daily
 # -----------------------------------------------------------
@@ -576,3 +660,5 @@ output "backend_service_name"   { value = aws_ecs_service.backend.name }
 output "streamlit_service_name" { value = aws_ecs_service.streamlit.name }
 output "backend_td_family"      { value = aws_ecs_task_definition.backend.family }
 output "streamlit_td_family"    { value = aws_ecs_task_definition.streamlit.family }
+output "grafana_service_name"    { value = aws_ecs_service.grafana.name }
+output "grafana_td_family"       { value = aws_ecs_task_definition.grafana.family }
