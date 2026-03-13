@@ -65,5 +65,6 @@ export async function updateAlertConfig(
       dataset_id: datasetId,
     }),
   };
+  console.log(`🔔 Updating Alert Config for dataset ${datasetId}:`, data);
   return await fetchApi(`/api/schedules/alerts/${datasetId}/`, options);
 }
