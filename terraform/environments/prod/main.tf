@@ -99,7 +99,7 @@ resource "aws_secretsmanager_secret_version" "main" {
 # ECR — 3 repositories, scan on push, keep last 5 images
 # -----------------------------------------------------------
 resource "aws_ecr_repository" "repos" {
-  for_each             = toset(["backend", "etl", "streamlit"])
+  for_each             = toset(["backend", "etl", "streamlit", "grafana"])
   name                 = "datapulse-${each.key}"
   image_tag_mutability = "MUTABLE"
 
@@ -178,9 +178,11 @@ module "ecs" {
   ecs_sg_id               = module.security.ecs_sg_id
   backend_tg_arn          = module.alb.backend_tg_arn
   streamlit_tg_arn        = module.alb.streamlit_tg_arn
+  grafana_tg_arn          = module.alb.grafana_tg_arn
   backend_image           = var.backend_image
   etl_image               = var.etl_image
   streamlit_image         = var.streamlit_image
+  grafana_image           = var.grafana_image
   backend_cpu             = 256
   backend_memory          = 512
   backend_task_count      = 1
@@ -204,12 +206,15 @@ module "codedeploy" {
   cluster_name             = module.ecs.cluster_name
   backend_service_name     = module.ecs.backend_service_name
   streamlit_service_name   = module.ecs.streamlit_service_name
+  grafana_service_name     = module.ecs.grafana_service_name
   https_listener_arn       = module.alb.https_listener_arn
   test_listener_arn        = module.alb.test_listener_arn
   backend_blue_tg_name     = module.alb.backend_tg_name
   backend_green_tg_name    = module.alb.backend_green_tg_name
   streamlit_blue_tg_name   = module.alb.streamlit_tg_name
   streamlit_green_tg_name  = module.alb.streamlit_green_tg_name
+  grafana_blue_tg_name     = module.alb.grafana_tg_name
+  grafana_green_tg_name    = module.alb.grafana_green_tg_name
   backend_blue_tg_arn      = module.alb.backend_tg_arn
   backend_green_tg_arn     = module.alb.backend_green_tg_arn
   alb_arn_suffix           = module.alb.alb_arn_suffix
@@ -235,6 +240,7 @@ module "scheduler" {
     "datapulse-prod-celery-worker",
     "datapulse-prod-celery-beat",
     "datapulse-prod-streamlit",
+    "datapulse-prod-grafana",
   ]
   rds_instance_ids = [
     module.rds.operational_id,

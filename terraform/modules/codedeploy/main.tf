@@ -3,12 +3,15 @@ variable "aws_region"             { type = string }
 variable "cluster_name"           { type = string }
 variable "backend_service_name"   { type = string }
 variable "streamlit_service_name" { type = string }
+variable "grafana_service_name"   { type = string }
 variable "https_listener_arn"     { type = string }
 variable "test_listener_arn"      { type = string }
 variable "backend_blue_tg_name"   { type = string }
 variable "backend_green_tg_name"  { type = string }
 variable "streamlit_blue_tg_name" { type = string }
 variable "streamlit_green_tg_name"{ type = string }
+variable "grafana_blue_tg_name"   { type = string }
+variable "grafana_green_tg_name"  { type = string }
 variable "backend_blue_tg_arn"    { type = string }
 variable "backend_green_tg_arn"   { type = string }
 variable "alb_arn_suffix"         { type = string }
@@ -391,8 +394,58 @@ resource "aws_codedeploy_deployment_group" "streamlit" {
 }
 
 # -----------------------------------------------------------
+# Deployment Group — Grafana
+# -----------------------------------------------------------
+resource "aws_codedeploy_deployment_group" "grafana" {
+  app_name              = aws_codedeploy_app.main.name
+  deployment_group_name = "datapulse-${var.env}-grafana"
+  service_role_arn      = aws_iam_role.codedeploy.arn
+  deployment_config_name = aws_codedeploy_deployment_config.canary.id
+
+  auto_rollback_configuration {
+    enabled = true
+    events  = ["DEPLOYMENT_FAILURE", "DEPLOYMENT_STOP_ON_ALARM"]
+  }
+
+  alarm_configuration {
+    alarms  = [aws_cloudwatch_metric_alarm.backend_5xx.alarm_name]
+    enabled = true
+  }
+
+  blue_green_deployment_config {
+    deployment_ready_option {
+      action_on_timeout = "CONTINUE_DEPLOYMENT"
+    }
+    terminate_blue_instances_on_deployment_success {
+      action                           = "TERMINATE"
+      termination_wait_time_in_minutes = 10
+    }
+  }
+
+  deployment_style {
+    deployment_option = "WITH_TRAFFIC_CONTROL"
+    deployment_type   = "BLUE_GREEN"
+  }
+
+  ecs_service {
+    cluster_name = var.cluster_name
+    service_name = var.grafana_service_name
+  }
+
+  load_balancer_info {
+    target_group_pair_info {
+      prod_traffic_route { listener_arns = [var.https_listener_arn] }
+      test_traffic_route { listener_arns = [var.test_listener_arn] }
+      target_group { name = var.grafana_blue_tg_name }
+      target_group { name = var.grafana_green_tg_name }
+    }
+  }
+}
+
+# -----------------------------------------------------------
 # Outputs
 # -----------------------------------------------------------
 output "app_name"                  { value = aws_codedeploy_app.main.name }
 output "backend_deployment_group"  { value = aws_codedeploy_deployment_group.backend.deployment_group_name }
 output "streamlit_deployment_group"{ value = aws_codedeploy_deployment_group.streamlit.deployment_group_name }
+output "grafana_deployment_group"  { value = aws_codedeploy_deployment_group.grafana.deployment_group_name }

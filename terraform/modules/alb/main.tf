@@ -134,6 +134,44 @@ resource "aws_lb_target_group" "streamlit_green" {
   tags = { Name = "datapulse-${var.env}-streamlit-green" }
 }
 
+resource "aws_lb_target_group" "grafana_blue" {
+  name        = "datapulse-${var.env}-grafana-blue"
+  port        = 3000
+  protocol    = "HTTP"
+  vpc_id      = var.vpc_id
+  target_type = "ip"
+
+  health_check {
+    path                = "/api/health"
+    healthy_threshold   = 2
+    unhealthy_threshold = 3
+    interval            = 30
+    timeout             = 10
+    matcher             = "200"
+  }
+
+  tags = { Name = "datapulse-${var.env}-grafana-blue" }
+}
+
+resource "aws_lb_target_group" "grafana_green" {
+  name        = "datapulse-${var.env}-grafana-green"
+  port        = 3000
+  protocol    = "HTTP"
+  vpc_id      = var.vpc_id
+  target_type = "ip"
+
+  health_check {
+    path                = "/api/health"
+    healthy_threshold   = 2
+    unhealthy_threshold = 3
+    interval            = 30
+    timeout             = 10
+    matcher             = "200"
+  }
+
+  tags = { Name = "datapulse-${var.env}-grafana-green" }
+}
+
 # -----------------------------------------------------------
 # Listeners
 # -----------------------------------------------------------
@@ -194,6 +232,24 @@ resource "aws_lb_listener_rule" "streamlit_http" {
   }
 }
 
+# Grafana path rule on HTTP listener (when no domain)
+resource "aws_lb_listener_rule" "grafana_http" {
+  count        = var.domain_name == "" ? 1 : 0
+  listener_arn = aws_lb_listener.http.arn
+  priority     = 20
+
+  condition {
+    path_pattern {
+      values = ["/grafana", "/grafana/*"]
+    }
+  }
+
+  action {
+    type             = "forward"
+    target_group_arn = aws_lb_target_group.grafana_blue.arn
+  }
+}
+
 # Streamlit path rule on HTTPS listener (when domain exists)
 resource "aws_lb_listener_rule" "streamlit_https" {
   count        = var.domain_name != "" ? 1 : 0
@@ -209,6 +265,24 @@ resource "aws_lb_listener_rule" "streamlit_https" {
   action {
     type             = "forward"
     target_group_arn = aws_lb_target_group.streamlit_blue.arn
+  }
+}
+
+# Grafana path rule on HTTPS listener (when domain exists)
+resource "aws_lb_listener_rule" "grafana_https" {
+  count        = var.domain_name != "" ? 1 : 0
+  listener_arn = aws_lb_listener.https[0].arn
+  priority     = 20
+
+  condition {
+    path_pattern {
+      values = ["/grafana", "/grafana/*"]
+    }
+  }
+
+  action {
+    type             = "forward"
+    target_group_arn = aws_lb_target_group.grafana_blue.arn
   }
 }
 
@@ -240,3 +314,6 @@ output "backend_green_tg_name"    { value = aws_lb_target_group.backend_green.na
 output "streamlit_tg_arn"         { value = aws_lb_target_group.streamlit_blue.arn }
 output "streamlit_tg_name"        { value = aws_lb_target_group.streamlit_blue.name }
 output "streamlit_green_tg_name"  { value = aws_lb_target_group.streamlit_green.name }
+output "grafana_tg_arn"           { value = aws_lb_target_group.grafana_blue.arn }
+output "grafana_tg_name"          { value = aws_lb_target_group.grafana_blue.name }
+output "grafana_green_tg_name"    { value = aws_lb_target_group.grafana_green.name }
