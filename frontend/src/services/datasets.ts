@@ -30,3 +30,7 @@ export async function getDatasets(userId?: number): Promise<Dataset[]> {
   }
   return [];
 }
+
+export async function getDataset(id: number | string): Promise<Dataset> {
+  return fetchApi(`/api/datasets/${id}`);
+}

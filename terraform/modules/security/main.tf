@@ -178,6 +178,13 @@ resource "aws_security_group" "ec2" {
     description = "Grafana"
   }
   ingress {
+    from_port   = 3001
+    to_port     = 3001
+    protocol    = "tcp"
+    cidr_blocks = [var.allowed_ssh_cidr]
+    description = "Frontend (Next.js)"
+  }
+  ingress {
     from_port   = 9090
     to_port     = 9090
     protocol    = "tcp"

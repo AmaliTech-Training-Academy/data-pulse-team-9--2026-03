@@ -115,6 +115,11 @@ resource "aws_instance" "dev" {
     Project     = "datapulse"
     ScheduleStop = "true"
   }
+
+  # Avoid replacing the instance when a newer AMI is returned by the data source
+  lifecycle {
+    ignore_changes = [ami]
+  }
 }
 
 # -----------------------------------------------------------

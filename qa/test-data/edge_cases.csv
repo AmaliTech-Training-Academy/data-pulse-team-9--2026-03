@@ -1,0 +1,11 @@
+id,name,email,age,salary,department
+1,Alice,alice@test.com,30,50000,Engineering
+2,,bob@test.com,25,45000,Marketing
+3,Carol,invalid-email,35,60000,Sales
+4,David,david@test.com,-5,48000,HR
+5,Eve,eve@test.com,150,55000,Finance
+6,Frank,frank@test.com,28,,IT
+1,Grace,grace@test.com,32,52000,Engineering
+8,Henry,,29,47000,Marketing
+9,Ivy,ivy@test.com,abc,58000,Sales
+10,Jack,jack@test.com,40,70000,

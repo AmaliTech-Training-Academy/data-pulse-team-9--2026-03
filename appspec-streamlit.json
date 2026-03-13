@@ -1,0 +1,17 @@
+{
+  "version": 1,
+  "Resources": [
+    {
+      "TargetService": {
+        "Type": "AWS::ECS::Service",
+        "Properties": {
+          "TaskDefinition": "arn:aws:ecs:eu-west-1:970547336735:task-definition/datapulse-prod-streamlit:25",
+          "LoadBalancerInfo": {
+            "ContainerName": "streamlit",
+            "ContainerPort": 8501
+          }
+        }
+      }
+    }
+  ]
+}

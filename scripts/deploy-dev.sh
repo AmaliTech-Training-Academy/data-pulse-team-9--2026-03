@@ -3,10 +3,15 @@ set -e
 
 # DataPulse Development Deployment Script
 # This script handles zero-downtime deployments to the dev environment
+# Run on the dev EC2 (e.g. via SSH or from cron). Uses refresh-env.sh to pull secrets from SSM.
 
 DEPLOY_DIR="/opt/datapulse"
 BACKUP_DIR="/opt/datapulse-backup-$(date +%Y%m%d-%H%M%S)"
 LOG_FILE="/var/log/datapulse-deploy.log"
+
+# Required by refresh-env.sh (SSM Parameter Store)
+export AWS_REGION="${AWS_REGION:-eu-west-1}"
+export SSM_PREFIX="${SSM_PREFIX:-/datapulse/dev}"
 
 # Logging function
 log() {
@@ -77,9 +82,9 @@ deploy() {
         handle_error "containers not running"
     fi
 
-    # Check backend health
+    # Check backend health (/health/ with trailing slash)
     for i in {1..10}; do
-        if curl -f http://localhost:8000/health > /dev/null 2>&1; then
+        if curl -sf http://localhost:8000/health/ > /dev/null 2>&1; then
             log "✅ Backend health check passed"
             break
         fi
@@ -89,9 +94,21 @@ deploy() {
         sleep 5
     done
 
+    # Check frontend (Next.js on 3001)
+    for i in {1..10}; do
+        if curl -sf http://localhost:3001/ > /dev/null 2>&1; then
+            log "✅ Frontend health check passed"
+            break
+        fi
+        if [ $i -eq 10 ]; then
+            log "⚠️ Frontend health check failed (non-critical)"
+        fi
+        sleep 5
+    done
+
     # Check Streamlit
     for i in {1..10}; do
-        if curl -f http://localhost:8501 > /dev/null 2>&1; then
+        if curl -sf http://localhost:8501/ > /dev/null 2>&1; then
             log "✅ Streamlit health check passed"
             break
         fi

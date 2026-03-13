@@ -111,7 +111,7 @@ export default function SettingsPage() {
     };
 
     loadConfig();
-  }, [selectedDatasetId, FREQUENCY_PRESETS]);
+  }, [selectedDatasetId]);
 
   const handleSaveSettings = async () => {
     if (!selectedDatasetId || !alertConfig || !schedule) return;

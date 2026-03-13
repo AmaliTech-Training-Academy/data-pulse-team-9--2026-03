@@ -1,0 +1,23 @@
+[
+  {
+    "id": 1,
+    "name": "",
+    "email": "alice@test.com",
+    "age": 30,
+    "department": "Engineering"
+  },
+  {
+    "id": 2,
+    "name": "Bob Smith",
+    "email": "invalid-email",
+    "age": "not-a-number",
+    "department": ""
+  },
+  {
+    "id": 1,
+    "name": "Carol Williams",
+    "email": "carol@test.com",
+    "age": -5,
+    "department": "Sales"
+  }
+]

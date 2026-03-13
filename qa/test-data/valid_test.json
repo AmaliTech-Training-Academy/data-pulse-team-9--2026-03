@@ -1,0 +1,26 @@
+[
+  {
+    "id": 1,
+    "name": "Alice Johnson",
+    "email": "alice@test.com",
+    "age": 30,
+    "department": "Engineering",
+    "salary": 75000
+  },
+  {
+    "id": 2,
+    "name": "Bob Smith",
+    "email": "bob@test.com",
+    "age": 28,
+    "department": "Marketing",
+    "salary": 65000
+  },
+  {
+    "id": 3,
+    "name": "Carol Williams",
+    "email": "carol@test.com",
+    "age": 35,
+    "department": "Sales",
+    "salary": 70000
+  }
+]
